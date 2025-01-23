@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+input, textarea {
+    @apply border-none focus:outline-0 border-transparent focus:border-transparent;
+}
+
+.stepper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.stepper-list {
+    display: flex;
+    list-style-type: none;
+    padding: 0;
+}
+
+.stepper-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 0 1rem;
+    position: relative;
+}
+
+.stepper-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -1rem;
+    width: 2rem;
+    height: 2px;
+    background-color: #ccc;
+    transform: translateY(-50%);
+}
+
+.stepper-circle {
+    width: 2rem;
+    height: 2rem;
+    background-color: #ccc;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+}
+
+.stepper-label {
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+.stepper-step.active .stepper-circle {
+    background-color: #007bff;
+}
+
+.stepper-step.completed .stepper-circle {
+    background-color: #28a745;
+}
+
+.stepper-step.completed .stepper-label {
+    color: #6c757d;
+}
+
+.stepper-step.active .stepper-label {
+    font-weight: bold;
+}
+
+.stepper-step:hover .stepper-circle {
+    background-color: #0056b3;
+}
