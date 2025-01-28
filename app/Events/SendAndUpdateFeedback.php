@@ -19,7 +19,7 @@ class SendAndUpdateFeedback implements ShouldBroadcast
     /**
      * Create a new event instance.
      */
-    public function __construct(MessageThread $message_thread, string $message = null)
+    public function __construct(MessageThread $message_thread, ?string $message = null)
     {
         $this->message_thread = $message_thread;
         $this->message = $message;
