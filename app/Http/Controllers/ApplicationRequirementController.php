@@ -68,6 +68,9 @@ class ApplicationRequirementController extends Controller
             }
 
             $application->requirements()->saveMany($newlyRequirements);
+            $application->load('requirements')->refresh();
+
+            broadcast(new ApplicationUpdated($application, message: "Researcher has uploaded $application->requirements_count requirement(s)"))->toOthers();
         }, 3);
 
 
