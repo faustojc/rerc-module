@@ -8,6 +8,7 @@ use App\Models\AppMember;
 use App\Models\AppProfile;
 use App\Models\AppStatus;
 use App\Models\Document;
+use App\Models\PanelMember;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -72,11 +74,6 @@ class AppProfileController extends Controller
             'canDelete' => $canDelete,
             'applications' => $applications,
         ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('Application/Create');
     }
 
     /**
@@ -145,12 +142,12 @@ class AppProfileController extends Controller
                 ]);
             }
 
-            $appProfile->statuses()->save(new AppStatus([
+            $appProfile->statuses()->create([
                 'name' => 'Application Submission',
                 'sequence' => 1,
                 'status' => 'In Progress',
                 'start' => now(),
-            ]));
+            ]);
             $appProfile->members()->saveMany($members);
             $appProfile->documents()->saveMany($documents);
 
@@ -169,35 +166,34 @@ class AppProfileController extends Controller
         return to_route('applications.show', ['application' => $appProfile]);
     }
 
+    public function create(): Response
+    {
+        return Inertia::render('Application/Create');
+    }
+
     /**
      * Display the specified resource.
      */
     public function show(AppProfile $application): Response
     {
         // Eager load the relationships
-        $application = $application->load([
-            'members' => function ($query) {
-                $query->select('id', 'app_profile_id', 'firstname', 'lastname');
-            },
+        $application->load([
+            'members:firstname,lastname',
             'statuses' => function ($query) {
-                $query->select('id', 'app_profile_id', 'name', 'sequence', 'status', 'start', 'end');
+                $query->select('id', 'app_profile_id', 'name', 'sequence', 'status', 'start', 'end')
+                    ->with('messages', function ($query) {
+                        $oneWeekAgo = Carbon::now()->subWeek();
+
+                        $query->select('id', 'app_status_id', 'remarks', 'by', 'created_at', 'read_status')
+                            ->where('created_at', '>=', $oneWeekAgo);
+                    });
             },
-            'requirements' => function ($query) {
-                $query->select('id', 'app_profile_id', 'name', 'file_url', 'date_uploaded', 'status');
-            },
-            'meetings' => function ($query) {
-                $query->select('id', 'app_profile_id', 'meeting_date', 'status');
-            },
-            'documents' => function ($query) {
-                $query->select('id', 'app_profile_id', 'review_result_id', 'file_url', 'remarks', 'created_at');
-            },
-            'decisionLetter' => function ($query) {
-                $query->select('id', 'app_profile_id', 'file_name', 'file_path', 'date_uploaded', 'is_signed');
-            },
-            'reviewResults' => function ($query) {
-                $query->select('id', 'app_profile_id', 'name', 'file_url', 'date_uploaded', 'status');
-            },
-            // TODO: add other relationships that need to be loaded
+            'requirements:id,app_profile_id,name,file_url,date_uploaded,status',
+            'meeting:id,app_profile_id,meeting_date,status',
+            'documents:id,app_profile_id,review_result_id,file_url,remarks',
+            'decisionLetter:id,app_profile_id,file_name,file_path,date_uploaded,is_signed',
+            'reviewResults:id,app_profile_id,name,file_url,date_uploaded,status',
+            'panels:id,app_profile_id,firstname,lastname'
         ]);
 
         return Inertia::render('Application/Show', [
@@ -206,11 +202,76 @@ class AppProfileController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Remove the specified resource from storage.
      */
-    public function edit(AppProfile $application)
+    public function destroy(AppProfile $application)
     {
-        //
+        $application->delete();
+
+        $page = request()->query('page') ?? 1;
+        $applications = AppProfile::orderByDesc('updated_at')
+            ->paginate(10, columns: ['id', 'user_id', 'research_title', 'date_applied', 'protocol_code'], page: $page);
+
+        return response()->json([
+            'message' => "$application->research_title has been deleted.",
+            'applications' => $applications,
+        ]);
+    }
+
+    public function uploadPayment(Request $request, AppProfile $application)
+    {
+        $paymentFile = $request->file('file');
+        $paymentDetails = $request->payment_details;
+        $message = $request->message;
+        $currentDateTime = Carbon::now();
+
+        $application->load('statuses');
+
+        $status = $application->statuses()->latest()->first();
+        $status->status = 'Done';
+        $status->end = $currentDateTime;
+
+        $newStatus = new AppStatus([
+            'name' => 'Assignment of Panel & Meeting Schedule',
+            'sequence' => $status->sequence + 1,
+            'status' => 'In Progress',
+            'start' => $currentDateTime,
+        ]);
+
+        $path = Storage::disk('public')->putFile("payments/$application->id", $paymentFile);
+
+        DB::beginTransaction();
+
+        try {
+            $application->update([
+                'payment_details' => $paymentDetails,
+                'payment_date' => $currentDateTime,
+                'proof_of_payment_url' => $path,
+            ]);
+            $application->statuses()->saveMany([$status, $newStatus]);
+
+            DB::commit();
+
+            $application->load('statuses')->refresh();
+
+            broadcast(new ApplicationUpdated($application, message: $message))->toOthers();
+        } catch (Exception) {
+            DB::rollBack();
+            Storage::disk('public')->delete($path);
+
+            return response()->json([
+                'message' => 'An error occurred while uploading the payment receipt.',
+                'error' => TRUE,
+            ]);
+        }
+
+        return response()->json([
+            'message' => $message ?? 'Payment receipt has been uploaded.',
+            'proof_of_payment_url' => $path,
+            'payment_details' => $paymentDetails,
+            'payment_date' => $application->payment_date,
+            'statuses' => $application->statuses,
+        ]);
     }
 
     /**
@@ -261,7 +322,7 @@ class AppProfileController extends Controller
             $application->load('statuses')->refresh();
             $status->refresh();
 
-            broadcast(new ApplicationUpdated($application, $status, $newStatus, $message))->toOthers();
+            broadcast(new ApplicationUpdated($application, $status, message: $message))->toOthers();
         });
 
         return response()->json([
@@ -272,74 +333,76 @@ class AppProfileController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(AppProfile $application)
+    public function assignPanelMeeting(Request $request, AppProfile $application)
     {
-        $application->delete();
-
-        $page = request()->query('page') ?? 1;
-        $applications = AppProfile::orderByDesc('updated_at')
-            ->paginate(10, columns: ['id', 'user_id', 'research_title', 'date_applied', 'protocol_code'], page: $page);
-
-        return response()->json([
-            'message' => "$application->research_title has been deleted.",
-            'applications' => $applications,
+        $validated = $request->validate([
+            'panel_members' => 'required|json',
+            'meeting_date' => 'required|string',
         ]);
-    }
+        $validated['panel_members'] = json_decode($validated['panel_members'], true);
+        $validated['meeting_date'] = Carbon::parse($validated['meeting_date']);
 
-    public function uploadPayment(Request $request, AppProfile $application)
-    {
-        $paymentFile = $request->file('file');
-        $paymentDetails = $request->payment_details;
-        $message = $request->message;
-        $currentDateTime = Carbon::now();
+        $message = "Panel members and meeting schedule have been assigned.";
+        $currentDateTime = now();
 
-        $status = $application->statuses()->latest()->first();
-        $status->status = 'Done';
-        $status->end = $currentDateTime;
+        $application->load('statuses');
+
+        $latestStatus = $application->statuses()->latest()->first();
+        $latestStatus->status = 'Done';
+        $latestStatus->end = $currentDateTime;
 
         $newStatus = new AppStatus([
-            'name' => 'Assignment of Panel & Meeting Schedule',
-            'sequence' => $status->sequence + 1,
+            'name' => 'Review Result',
+            'sequence' => $latestStatus->sequence + 1,
             'status' => 'In Progress',
             'start' => $currentDateTime,
         ]);
 
-        $path = Storage::disk('public')->putFile("payments/$application->id", $paymentFile);
-
-        DB::beginTransaction();
+        $meeting = [
+            'meeting_date' => $validated['meeting_date'],
+            'status' => 'Scheduled',
+        ];
 
         try {
-            $application->proof_of_payment_url = $path;
-            $application->payment_details = $paymentDetails;
-            $application->payment_date = $currentDateTime;
+            DB::transaction(function () use ($application, $latestStatus, $newStatus, $meeting, $validated) {
+                $application->statuses()->saveMany([$latestStatus, $newStatus]);
+                $application->meeting()->create($meeting);
 
-            $application->save();
-            $application->statuses()->saveMany([$status, $newStatus]);
+                $panelData = collect($validated['panel_members'])->map(function ($member) {
+                    return new PanelMember([
+                        'firstname' => $member['firstname'],
+                        'lastname' => $member['lastname'],
+                    ]);
+                })->all();
 
-            DB::commit();
+                $application->panels()->saveMany($panelData);
+            });
 
-            $application->load('statuses')->refresh();
+            $application->load(['statuses' => function ($query) {
+                $query->latest();
+            }, 'panels', 'meeting']);
 
             broadcast(new ApplicationUpdated($application, message: $message))->toOthers();
-        } catch (Exception) {
-            DB::rollBack();
-            Storage::disk('public')->delete($path);
 
             return response()->json([
-                'message' => 'An error occurred while uploading the payment receipt.',
-                'error' => TRUE,
+                'message' => $message,
+                'meeting' => [
+                    'id' => $application->meeting->id,
+                    'meeting_date' => $application->meeting->meeting_date->toIso8601String(),
+                    'status' => $application->meeting->status,
+                ],
+                'updated_status' => $latestStatus,
+                'new_status' => $newStatus,
             ]);
-        }
+        } catch (Exception $e) {
+            Log::error('Panel meeting assignment failed', [
+                'error' => $e->getMessage(),
+            ]);
 
-        return response()->json([
-            'message' => $message ?? 'Payment receipt has been uploaded.',
-            'proof_of_payment_url' => $path,
-            'payment_details' => $paymentDetails,
-            'payment_date' => $application->payment_date,
-            'statuses' => $application->statuses,
-        ]);
+            return response()->json([
+                'message' => 'An error occurred while assigning the panel members and meeting schedule.',
+                'error' => true,
+            ], 422);
+        }
     }
 }
