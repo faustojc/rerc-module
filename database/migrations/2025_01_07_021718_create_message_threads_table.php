@@ -15,6 +15,9 @@ return new class extends Migration {
             $table->foreignUlid('app_profile_id')
                 ->constrained('app_profiles', 'id')
                 ->cascadeOnDelete();
+            $table->foreignUlid('app_status_id')
+                ->constrained('app_statuses', 'id')
+                ->cascadeOnDelete();
 
             $table->text('remarks');
             $table->text('by');

@@ -10,7 +10,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('app_status', function (Blueprint $table) {
+        Schema::create('app_statuses', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignUlid('app_profile_id')
                 ->constrained('app_profiles', 'id')
@@ -31,7 +31,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('app_status', function (Blueprint $table) {
+        Schema::table('app_statuses', function (Blueprint $table) {
             $table->dropConstrainedForeignId('app_profile_id');
         });
         Schema::dropIfExists('app_status');

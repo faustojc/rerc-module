@@ -18,7 +18,6 @@ return new class extends Migration {
 
             $table->string('firstname');
             $table->string('lastname');
-            $table->string('role');
 
             $table->timestamps();
         });
