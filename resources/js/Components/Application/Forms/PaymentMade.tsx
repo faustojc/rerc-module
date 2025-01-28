@@ -3,6 +3,7 @@ import { Button, Card, CardBody, CardFooter, CardHeader, Divider, Link, Textarea
 import React, { ChangeEvent, useState } from "react";
 import InputFile from "@/Components/InputFile";
 import { toast } from "react-toastify";
+import { getLocalTimeZone } from "@internationalized/date";
 
 const PaymentMade = ({user, application, status, setApplication, setStatuses}: ApplicationFormProps) => {
     const [file, setFile] = useState<File | null>(null);
@@ -73,7 +74,7 @@ const PaymentMade = ({user, application, status, setApplication, setStatuses}: A
                                     underline="hover"
                                     color="primary"
                                     href={route('applications.payment-download', {application: application})}
-                                    className="text-ellipsis px-0 py-2"
+                                    className="px-0 py-2"
                                 >
                                     {application.proof_of_payment_url.split('\\').pop()?.split('/').pop()}
                                 </Link>
@@ -83,7 +84,7 @@ const PaymentMade = ({user, application, status, setApplication, setStatuses}: A
                                 <p>
                                     <>
                                         {Intl.DateTimeFormat('en-US', {
-                                            year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "numeric"
+                                            year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "numeric", timeZone: getLocalTimeZone()
                                         }).format(new Date(application.payment_date))}
                                     </>
                                 </p>
@@ -119,6 +120,7 @@ const PaymentMade = ({user, application, status, setApplication, setStatuses}: A
                                         <Textarea
                                             name="details"
                                             placeholder="Enter details of the payment."
+                                            maxRows={2}
                                             value={details}
                                             onValueChange={setDetails}
                                         />

@@ -1,7 +1,8 @@
 import { AppStatus } from "@/types";
 import { Card, CardBody, CardHeader, Chip, Divider } from "@nextui-org/react";
 import React, { Fragment, useMemo } from "react";
-import { Check } from "@/Components/Icons";
+import { ArrowsSwitch, Check, ClockRotateRight } from "@/Components/Icons";
+import { getLocalTimeZone } from "@internationalized/date";
 
 interface StatusesProps {
     statusList: string[];
@@ -13,8 +14,8 @@ interface StatusesProps {
 const Statuses = ({statusList, appStatuses, selectedStatus, setSelectedStatus }: StatusesProps) => {
     const steps: AppStatus[] = useMemo(() => {
         return statusList.map((name, index) => {
-            const dateTime = Intl.DateTimeFormat('en-us', {
-                month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+            const dateTime = Intl.DateTimeFormat('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: getLocalTimeZone()
             });
 
             const startDate = appStatuses[index]?.start
@@ -33,6 +34,7 @@ const Statuses = ({statusList, appStatuses, selectedStatus, setSelectedStatus }:
                 sequence: appStatuses[index]?.sequence ?? index + 1,
                 start: startDate,
                 end: endDate,
+                messages: appStatuses[index]?.messages ?? [],
             }
         });
     }, [appStatuses]);
@@ -74,27 +76,35 @@ const Statuses = ({statusList, appStatuses, selectedStatus, setSelectedStatus }:
             <CardBody className="items-start gap-4">
                 {steps.map((status, index) => (
                     <Fragment key={`${status.id}-${index}`}>
-                        <div className="flex flex-row gap-8 items-center px-4 w-full hover:bg-default-100 rounded-lg cursor-pointer" onClick={() => setSelectedStatus(status) }>
-                            <Chip size="md" variant="shadow" color={stepsColor(status)} classNames={{
-                                content: status.end != 'N/A' ? 'px-0' : 'p-1.5'
-                            }}>
-                                {status.end != 'N/A' ? <Check /> : status.sequence}
-                            </Chip>
-                            <div className="w-full">
+                        <div className="grid grid-cols-3 gap-5 items-center px-4 w-full hover:bg-default-100 rounded-lg cursor-pointer" onClick={() => setSelectedStatus(status) }>
+                            <div className="flex flex-row flex-nowrap items-center justify-end gap-3">
+                                <Chip size="md" variant="shadow" color={stepsColor(status)} classNames={{
+                                    content: status.end != 'N/A' ? 'px-0' : 'p-1.5'
+                                }}>
+                                    {statusColor(status.status) == 'primary' ?
+                                        <ArrowsSwitch />
+                                        : status.end != 'N/A' ? <Check /> : <ClockRotateRight width={16} height={16} />
+                                    }
+                                </Chip>
+                                <p className="text-nowrap">
+                                    Step {status.sequence}
+                                </p>
+                            </div>
+                            <div className="col-span-2">
                                 <p className="font-bold text-wrap">{status.name}</p>
                                 <Chip variant="dot" color={statusColor(status.status)} size="sm" className="my-1 border-none">
                                     {status.status}
                                 </Chip>
                                 <div className="w-full">
-                                    <p className="grid grid-cols-5 gap-x-1.5 text-sm">
+                                    <p className="flex flex-wrap gap-x-1.5 text-sm">
                                         Start:
-                                        <span className="col-span-4">
+                                        <span className="">
                                             {status.start}
                                         </span>
                                     </p>
-                                    <p className="grid grid-cols-5 text-sm">
+                                    <p className="flex flex-wrap gap-x-1.5 text-sm">
                                         End:
-                                        <span className="col-span-4">
+                                        <span className="">
                                             {status.end}
                                         </span>
                                     </p>

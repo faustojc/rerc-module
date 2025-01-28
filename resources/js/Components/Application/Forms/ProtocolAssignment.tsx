@@ -30,7 +30,8 @@ const ProtocolAssignment = ({user, application, status, setApplication, setStatu
         }).then(response => {
             setApplication({
                 ...application,
-                ...response.data.application
+                protocol_code: response.data.application.protocol_code,
+                protocol_date_updated: response.data.application.protocol_date_updated,
             });
             setStatuses(response.data.application.statuses);
         }).finally(() => setLoading(false));
