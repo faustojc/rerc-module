@@ -4,6 +4,7 @@ use App\Http\Controllers\ApplicationRequirementController;
 use App\Http\Controllers\AppProfileController;
 use App\Http\Controllers\AppStatusController;
 use App\Http\Controllers\DecisionLetterController;
+use App\Http\Controllers\MessageThreadsController;
 use App\Http\Controllers\ProfileController;
 use App\Models\AppProfile;
 use App\Models\Document;
@@ -28,8 +29,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::post('/applications/{application}/uploadPayment', [AppProfileController::class, 'uploadPayment'])
+    Route::post('/applications/{application}/upload-payment', [AppProfileController::class, 'uploadPayment'])
         ->name('applications.upload-payment');
+    Route::post('/applications/{application}/assign-panel-meeting', [AppProfileController::class, 'assignPanelMeeting'])
+        ->name('applications.assign-panel-meeting');
     Route::resource('applications', AppProfileController::class)
         ->except(['edit'])
         ->missing(fn() => route('applications.index'));
@@ -47,6 +50,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('decision-letter.download');
     Route::apiResource('applications.decision-letter', DecisionLetterController::class)
         ->only(['store', 'update', 'destroy']);
+
+    Route::apiResource('statuses.message-threads', MessageThreadsController::class)
+        ->only(['store', 'update']);
 
     Route::get('/requirements/{requirement}/download', [ApplicationRequirementController::class, 'download'])
         ->name('applications.requirements.download');
