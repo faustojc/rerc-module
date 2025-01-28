@@ -24,12 +24,13 @@ export interface Application {
     created_at?: string,
     updated_at?: string,
     members: Member[],
-    meetings: Meeting[],
+    meeting: Meeting,
     documents: Document[],
     statuses: AppStatus[],
     requirements: Requirement[],
     review_results: ReviewResult[],
     decision_letter: DecisionLetter | null,
+    panels: PanelMember[],
     [key: string]: any;
 }
 
@@ -43,6 +44,7 @@ export interface AppStatus {
     end: string;
     created_at?: string;
     updated_at?: string;
+    messages: MessageThread[];
     [key: string]: any;
 }
 
@@ -61,6 +63,18 @@ export interface Meeting {
     app_profile_id: string;
     meeting_date: string;
     status: string;
+    created_at?: string;
+    updated_at?: string;
+    [key: string]: any;
+}
+
+export interface MessageThread {
+    id: string;
+    app_profile_id: string;
+    app_status_id: string;
+    remarks: string;
+    by: string;
+    read_status?: string;
     created_at?: string;
     updated_at?: string;
     [key: string]: any;
@@ -109,6 +123,16 @@ export interface ReviewResult {
     status: string;
     created_at?: string;
     updated_at?: string;
+    [key: string]: any;
+}
+
+export interface PanelMember {
+    id: string,
+    app_profile_id: string,
+    firstname: string,
+    lastname: string,
+    created_at?: string,
+    updated_at?: string,
     [key: string]: any;
 }
 
