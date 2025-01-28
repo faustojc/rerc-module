@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 
 class AppProfile extends Model
 {
@@ -42,9 +43,11 @@ class AppProfile extends Model
                 $status->delete();
             });
             $application->requirements()->each(function (Requirement $requirement) {
+                Storage::disk('public')->delete($requirement->file_url);
                 $requirement->delete();
             });
             $application->documents()->each(function (Document $document) {
+                Storage::disk('public')->delete($document->file_url);
                 $document->delete();
             });
             $application->messageThreads()->each(function (MessageThread $thread) {
@@ -92,14 +95,14 @@ class AppProfile extends Model
         return $this->hasMany(ReviewResult::class);
     }
 
-    public function meetings(): HasMany
-    {
-        return $this->hasMany(Meeting::class);
-    }
-
     public function panels(): HasMany
     {
         return $this->hasMany(PanelMember::class);
+    }
+
+    public function meeting(): HasOne
+    {
+        return $this->hasOne(Meeting::class);
     }
 
     public function decisionLetter(): HasOne
@@ -110,5 +113,14 @@ class AppProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'date_applied' => 'datetime:c',
+            'protocol_date_updated' => 'datetime:c',
+            'payment_date' => 'datetime:c',
+        ];
     }
 }

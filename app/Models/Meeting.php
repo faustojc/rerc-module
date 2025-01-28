@@ -15,8 +15,20 @@ class Meeting extends Model
 
     protected $table = 'meetings';
 
+    protected $fillable = [
+        'meeting_date',
+        'status',
+    ];
+
     public function appProfile(): BelongsTo
     {
         return $this->belongsTo(AppProfile::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'meeting_date' => 'datetime:c',
+        ];
     }
 }

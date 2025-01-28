@@ -15,8 +15,20 @@ class MessageThread extends Model
 
     protected $table = 'message_threads';
 
+    protected $fillable = [
+        'app_profile_id',
+        'remarks',
+        'by',
+        'read_status',
+    ];
+
     public function appProfile(): BelongsTo
     {
         return $this->belongsTo(AppProfile::class);
+    }
+
+    public function status(): BelongsTo
+    {
+        return $this->belongsTo(AppStatus::class, );
     }
 }
