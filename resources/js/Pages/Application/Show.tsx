@@ -2,7 +2,7 @@ import Authenticated from "@/Layouts/AuthenticatedLayout";
 import { Application, AppStatus, PageProps } from "@/types";
 import { Card, CardBody, Chip, Spinner } from "@nextui-org/react";
 import { MdiCalendar, MdiCodeTags, MdiPeople } from "@/Components/Icons";
-import React, { lazy, Suspense, useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import Statuses from "@/Components/Application/Statuses";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
@@ -45,7 +45,39 @@ const Show = (props: ApplicationShowProps) => {
         lazy(() => import("@/Components/Application/Forms/EthicsClearance"))
     ];
 
-    const StatusComponent = componentForms[selectedStatus.sequence - 1];
+    const StatusComponent = useMemo(() => {
+        return componentForms[selectedStatus.sequence - 1];
+    }, [componentForms, selectedStatus]);
+
+    const updateMessage = (data: any) => {
+        setStatuses((prev) => {
+            return prev.map((status) => {
+                if (status.id !== data.message_thread.app_status_id) {
+                    return status;
+                }
+
+                let updatedMessages;
+                const messageExists = status.messages.some(
+                    (msg) => msg.id === data.message_thread.id
+                );
+
+                if (messageExists) {
+                    updatedMessages = status.messages.map((msg) =>
+                        msg.id === data.message_thread.id
+                            ? data.message_thread
+                            : msg
+                    );
+                } else {
+                    updatedMessages = [...status.messages, data.message_thread];
+                }
+
+                return {
+                    ...status,
+                    messages: updatedMessages
+                };
+            });
+        });
+    }
 
     useEffect(() => {
         console.log(props);
@@ -59,8 +91,21 @@ const Show = (props: ApplicationShowProps) => {
                 });
 
                 if (data.application.statuses) {
-                    setStatuses(data.application.statuses);
+                    setStatuses((prevStatuses) => {
+                        return prevStatuses.map((status) => {
+                            const updatedStatus = data.application.statuses.find((s: AppStatus) => s.id === status.id);
+                            const messages = status.messages;
+
+                            return updatedStatus ? {
+                                ...status,
+                                ...updatedStatus,
+                                messages: messages
+                            } : status;
+                        });
+                    });
                 }
+            }).listen('.SendAndUpdateFeedback', (data: any) => {
+                updateMessage(data);
             });
 
 
@@ -100,7 +145,7 @@ const Show = (props: ApplicationShowProps) => {
                         </div>
                     </CardBody>
                 </Card>
-                <div className="sm:grid grid-cols-3 gap-4 mt-4">
+                <div className="lg:grid grid-cols-3 gap-4 mt-4">
                     {/* Application Statuses */}
                     <Statuses statusList={statusList}
                               appStatuses={statuses}
@@ -111,20 +156,24 @@ const Show = (props: ApplicationShowProps) => {
                     <AnimatePresence>
                         <motion.div key={selectedStatus.sequence} className="col-span-2" initial={{ opacity: 0, scale: 0.99 }} animate={{ opacity: 1, scale: 1.0 }}>
                             {StatusComponent && (
-                                <Suspense fallback={
-                                    <Card>
-                                        <CardBody className="p-5 items-center justify-center">
-                                            <Spinner size="lg" />
-                                        </CardBody>
-                                    </Card>
-                                }>
-                                    <StatusComponent user={props.auth.user}
-                                                     application={application}
-                                                     status={statuses[selectedStatus.sequence - 1]}
-                                                     setApplication={setApplication}
-                                                     setStatuses={setStatuses}
-                                    />
-                                </Suspense>
+                                <>
+                                    <Suspense fallback={
+                                        <Card>
+                                            <CardBody className="p-5 items-center justify-center">
+                                                <Spinner size="lg" />
+                                            </CardBody>
+                                        </Card>
+                                    }>
+                                        <StatusComponent
+                                            key={selectedStatus.sequence}
+                                            user={props.auth.user}
+                                            application={application}
+                                            status={statuses[selectedStatus.sequence - 1]}
+                                            setApplication={setApplication}
+                                            setStatuses={setStatuses}
+                                        />
+                                    </Suspense>
+                                </>
                             )}
                         </motion.div>
                     </AnimatePresence>
