@@ -5,7 +5,7 @@ import NavStatus from "@/Components/NavStatus";
 import { CloudArrowDown } from "@/Components/Icons";
 import Feedbacks from "@/Components/Application/Feedbacks";
 
-const InitialReview = ({user, application, status, setApplication, setStatuses}: ApplicationFormProps) => {
+const InitialReview = ({user, application, status, setStatuses}: ApplicationFormProps) => {
     const documentHeaders = [
         {key: 1, label: 'FILE'},
         {key: 2, label: 'DATE UPLOADED'},
