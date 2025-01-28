@@ -1,4 +1,4 @@
-import { Application, AppStatus, MessageThread, User } from "@/types";
+import { AppStatus, MessageThread, User } from "@/types";
 import { Button, Card, CardBody, CardFooter, Spacer, Textarea } from "@nextui-org/react";
 import { getLocalTimeZone, parseAbsolute } from "@internationalized/date";
 import React, { useCallback, useMemo } from "react";
@@ -8,12 +8,11 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 
 interface FeedbackProps {
     user: User;
-    application: Application;
     status: AppStatus;
     setStatuses: React.Dispatch<React.SetStateAction<AppStatus[]>>;
 }
 
-const Feedbacks = ({user, application, status, setStatuses}: FeedbackProps) => {
+const Feedbacks = ({user, status, setStatuses}: FeedbackProps) => {
     const [message, setMessage] = React.useState('');
     const { sendMessage } = useMessageHandler(user.name, status, setStatuses);
     const parentRef = React.useRef<HTMLDivElement>(null);
@@ -80,7 +79,7 @@ const Feedbacks = ({user, application, status, setStatuses}: FeedbackProps) => {
         await sendMessage(message);
     };
 
-    const renderItem = useCallback(({ item, index }: { item: any, index: number }) => {
+    const renderItem = useCallback(({ item }: { item: any, index: number }) => {
         if (item.type === 'date') {
             return (
                 <div className="flex flex-row justify-center my-2">
