@@ -15,7 +15,7 @@ class ReviewResult extends Model
 
     protected $table = 'review_results';
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
         static::deleting(function (ReviewResult $reviewResult) {

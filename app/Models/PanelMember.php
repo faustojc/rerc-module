@@ -15,6 +15,11 @@ class PanelMember extends Model
 
     protected $table = 'panel_members';
 
+    protected $fillable = [
+        'firstname',
+        'lastname',
+    ];
+
     public function panel(): BelongsTo
     {
         return $this->belongsTo(PanelMember::class);
