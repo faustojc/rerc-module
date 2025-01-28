@@ -4,8 +4,11 @@ import React, { ChangeEvent, useState } from "react";
 import { toast } from "react-toastify";
 import { MdiDeleteForever } from "@/Components/Icons";
 import InputFile from "@/Components/InputFile";
+import NavStatus from "@/Components/NavStatus";
+import Feedbacks from "@/Components/Application/Feedbacks";
 
 const DecisionLetter = ({user, application, status, setApplication, setStatuses}: ApplicationFormProps) => {
+    const [currTab, setCurrTab] = useState<string>('decision-letter');
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [isError, setIsError] = useState<boolean>(false);
@@ -77,7 +80,10 @@ const DecisionLetter = ({user, application, status, setApplication, setStatuses}
             });
             setStatuses((prev) => {
                 const statuses = [...prev];
-                statuses[4] = response.data.status;
+
+                statuses[4].status = response.data.status.status;
+                statuses[4].end = response.data.status.end;
+                statuses.push(response.data.next_status);
 
                 return statuses;
             })
@@ -134,53 +140,63 @@ const DecisionLetter = ({user, application, status, setApplication, setStatuses}
                     }
                 </p>
             </CardHeader>
-            <CardBody className="p-4">
-                {(application.decision_letter !== null) ? (
-                    <>
-                        <FileLink user={user} decision_letter={application.decision_letter} loading={loading} handleDelete={handleDelete} />
-                        {(user.role === 'chairperson' && status !== null && status.status === "Uploaded") && (
+            <NavStatus currTab={currTab} setCurrTab={setCurrTab} tabs={[
+                {label: "Decision Letter", name: "decision-letter"},
+                {label: "Feedbacks", name: "feedbacks"},
+            ]} />
+            {currTab === 'decision-letter' ? (
+                <>
+                    <CardBody className="p-4">
+                        {(application.decision_letter !== null) ? (
                             <>
-                                <Divider className="my-4" />
-                                <InputFile label="Upload the Signed Decision Letter"
-                                           type="file"
-                                           acceptedTypes=".pdf,.doc,.docx"
-                                           file={file}
-                                           isError={isError}
-                                           handleSelectFile={handleSelectFile}
-                                />
+                                <FileLink user={user} decision_letter={application.decision_letter} loading={loading} handleDelete={handleDelete} />
+                                {(user.role === 'chairperson' && status !== null && status.status === "Uploaded") && (
+                                    <>
+                                        <Divider className="my-4" />
+                                        <InputFile label="Upload the Signed Decision Letter"
+                                                   type="file"
+                                                   acceptedTypes=".pdf,.doc,.docx"
+                                                   file={file}
+                                                   isError={isError}
+                                                   handleSelectFile={handleSelectFile}
+                                        />
+                                    </>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                {user.role !== "staff" ? (
+                                    <div className="text-center italic p-5">
+                                        {status && status?.status === "Pending"
+                                            ? "RERC Staff has not uploaded the decision letter yet."
+                                            : "Waiting for RERC Staff to upload the decision letter."
+                                        }
+                                    </div>
+                                ) : (
+                                    <InputFile label="Upload Decision Letter"
+                                               file={file}
+                                               type="file"
+                                               acceptedTypes=".pdf,.doc,.docx"
+                                               isError={isError}
+                                               handleSelectFile={handleSelectFile}
+                                    />
+                                )}
                             </>
                         )}
-                    </>
-                ) : (
-                    <>
-                        {user.role !== "staff" ? (
-                            <div className="text-center italic p-5">
-                                {status && status?.status === "Pending"
-                                    ? "RERC Staff has not uploaded the decision letter yet."
-                                    : "Waiting for RERC Staff to upload the decision letter."
-                                }
-                            </div>
-                        ) : (
-                            <InputFile label="Upload Decision Letter"
-                                       file={file}
-                                       type="file"
-                                       acceptedTypes=".pdf,.doc,.docx"
-                                       isError={isError}
-                                       handleSelectFile={handleSelectFile}
-                            />
-                        )}
-                    </>
-                )}
-            </CardBody>
-            {(user.role !== "researcher" && status !== null)
-                && <Footer user={user}
-                           status={status}
-                           decision_letter={application.decision_letter}
-                           loading={loading}
-                           handleUpload={handleUpload}
-                           handleUpdate={handleUpdateSigned}
-                    />
-            }
+                    </CardBody>
+                    {(user.role !== "researcher" && status != null)
+                     && <Footer user={user}
+                                status={status}
+                                decision_letter={application.decision_letter}
+                                loading={loading}
+                                handleUpload={handleUpload}
+                                handleUpdate={handleUpdateSigned}
+                     />
+                    }
+                </>
+            ) : (
+                <Feedbacks user={user} status={status} setStatuses={setStatuses} />
+            )}
         </Card>
     );
 }
@@ -218,7 +234,7 @@ const FileLink = ({user, decision_letter, loading, handleDelete}: {
             </div>
             <p className="text-medium">
                 Date Uploaded: {new Date(decision_letter.date_uploaded).toLocaleDateString('en-US', {
-                    month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                    month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
                 })}
             </p>
         </div>
