@@ -2,7 +2,7 @@ import { ApplicationFormProps } from "@/types";
 import { Button, Card, CardBody, CardFooter, CardHeader, Divider, Select, SelectItem } from "@nextui-org/react";
 import { ChangeEvent, useState } from "react";
 
-const ReviewType = ({user, application, status, setApplication, setStatuses}: ApplicationFormProps) => {
+const ReviewType = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
     const [reviewType, setReviewType] = useState<string>(application.review_type ?? 'NOT SET');
     const [loading, setLoading] = useState<boolean>(false);
     const [isError, setIsError] = useState<boolean>(false);
@@ -34,11 +34,12 @@ const ReviewType = ({user, application, status, setApplication, setStatuses}: Ap
             next_status: 'Decision Letter',
             message: `${application.research_title} has been assigned a review type ${reviewType}`
         }).then(response => {
-            setApplication((prev) => ({
-                ...prev,
-                review_type: reviewType
-            }));
-            setStatuses(response.data.application.statuses);
+            handleUpdateApplication({
+                application: {
+                    review_type: response.data.application.review_type,
+                    statuses: response.data.application.statuses
+                }
+            });
         }).finally(() => setLoading(false));
     }
 

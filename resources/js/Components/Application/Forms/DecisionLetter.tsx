@@ -7,7 +7,7 @@ import InputFile from "@/Components/InputFile";
 import NavStatus from "@/Components/NavStatus";
 import Feedbacks from "@/Components/Application/Feedbacks";
 
-const DecisionLetter = ({user, application, status, setApplication, setStatuses}: ApplicationFormProps) => {
+const DecisionLetter = ({user, application, status, handleUpdateApplication, handleMessage}: ApplicationFormProps) => {
     const [currTab, setCurrTab] = useState<string>('decision-letter');
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
@@ -20,6 +20,28 @@ const DecisionLetter = ({user, application, status, setApplication, setStatuses}
             setFile(files[0]);
             setIsError(false);
         }
+    }
+
+    const handleUpdateData = (data: FormData) => {
+        setLoading(true);
+        window.axios.post(route('applications.decision-letter.store', {application: application}), data, {
+            headers: {'Content-Type': 'multipart/form-data'}
+        }).then((response) => {
+            setFile(null);
+
+            handleUpdateApplication({
+                application: {
+                    decision_letter: response.data.decision_letter,
+                    statuses: [
+                        { ...response.data.status },
+                        { ...response.data.next_status }
+                    ]
+                }
+            });
+        }).catch((error) => {
+            toast.error(error.message ?? 'An error occurred. Please try again.');
+            console.error(error);
+        }).finally(() => setLoading(false));
     }
 
     const handleDelete = () => {
@@ -35,19 +57,19 @@ const DecisionLetter = ({user, application, status, setApplication, setStatuses}
         })).then((_) => {
             setFile(null);
 
-            setApplication({
-                ...application,
-                decision_letter: null
-            });
-            setStatuses((prev) => {
-                const statuses = [...prev];
+            const updatedStatus = {
+                ...status,
+                status: "Removed"
+            }
 
-                statuses[4] = {
-                    ...statuses[4],
-                    status: "Removed",
+            handleUpdateApplication({
+                application: {
+                    decision_letter: null,
+                    statuses: [
+                        { ...updatedStatus },
+                        { ...status.next_status }
+                    ]
                 }
-
-                return statuses;
             });
         }).catch((error) => {
             toast.error(error.message ?? 'An error occurred. Please try again.');
@@ -68,29 +90,7 @@ const DecisionLetter = ({user, application, status, setApplication, setStatuses}
         formData.append('message', `${application.research_title}'s decision letter has been uploaded`);
         formData.append('new_status', 'Uploaded');
 
-        setLoading(true);
-        window.axios.post(route('applications.decision-letter.store', {application: application}), formData, {
-            headers: {'Content-Type': 'multipart/form-data'}
-        }).then((response) => {
-            setFile(null);
-
-            setApplication({
-                ...application,
-                decision_letter: response.data.decision_letter
-            });
-            setStatuses((prev) => {
-                const statuses = [...prev];
-
-                statuses[4].status = response.data.status.status;
-                statuses[4].end = response.data.status.end;
-                statuses.push(response.data.next_status);
-
-                return statuses;
-            })
-        }).catch((error) => {
-            toast.error(error.message ?? 'An error occurred. Please try again.');
-            console.error(error);
-        }).finally(() => setLoading(false));
+        handleUpdateData(formData);
     }
 
     const handleUpdateSigned = () => {
@@ -105,28 +105,7 @@ const DecisionLetter = ({user, application, status, setApplication, setStatuses}
         formData.append('is_signed', '1');
         formData.append('message', `${application.research_title}'s decision letter has been signed`);
 
-        setLoading(true);
-        window.axios.post(route('applications.decision-letter.store', {application: application}), formData, {
-            headers: {'Content-Type': 'multipart/form-data'}
-        }).then((response) => {
-            setFile(null);
-
-            setApplication({
-                ...application,
-                decision_letter: response.data.decision_letter
-            });
-            setStatuses((prev) => {
-                const statuses = [...prev];
-
-                statuses[4] = response.data.status;
-                statuses.push(response.data.next_status);
-
-                return statuses;
-            })
-        }).catch((error) => {
-            toast.error(error.message ?? 'An error occurred. Please try again.');
-            console.error(error);
-        }).finally(() => setLoading(false));
+        handleUpdateData(formData);
     }
 
     return (
@@ -155,7 +134,7 @@ const DecisionLetter = ({user, application, status, setApplication, setStatuses}
                                         <Divider className="my-4" />
                                         <InputFile label="Upload the Signed Decision Letter"
                                                    type="file"
-                                                   acceptedTypes=".pdf,.doc,.docx"
+                                                   accept=".pdf,.doc,.docx"
                                                    file={file}
                                                    isError={isError}
                                                    handleSelectFile={handleSelectFile}
@@ -176,7 +155,7 @@ const DecisionLetter = ({user, application, status, setApplication, setStatuses}
                                     <InputFile label="Upload Decision Letter"
                                                file={file}
                                                type="file"
-                                               acceptedTypes=".pdf,.doc,.docx"
+                                               accept=".pdf,.doc,.docx"
                                                isError={isError}
                                                handleSelectFile={handleSelectFile}
                                     />
@@ -195,7 +174,7 @@ const DecisionLetter = ({user, application, status, setApplication, setStatuses}
                     }
                 </>
             ) : (
-                <Feedbacks user={user} status={status} setStatuses={setStatuses} />
+                <Feedbacks user={user} status={status} handleMessage={handleMessage} />
             )}
         </Card>
     );

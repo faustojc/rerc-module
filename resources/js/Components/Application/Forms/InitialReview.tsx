@@ -5,7 +5,7 @@ import NavStatus from "@/Components/NavStatus";
 import { CloudArrowDown } from "@/Components/Icons";
 import Feedbacks from "@/Components/Application/Feedbacks";
 
-const InitialReview = ({user, application, status, setStatuses}: ApplicationFormProps) => {
+const InitialReview = ({user, application, status, handleUpdateApplication, handleMessage}: ApplicationFormProps) => {
     const documentHeaders = [
         {key: 1, label: 'FILE'},
         {key: 2, label: 'DATE UPLOADED'},
@@ -31,13 +31,13 @@ const InitialReview = ({user, application, status, setStatuses}: ApplicationForm
             next_status: 'Review Type',
             message: `${application.research_title} initial review has been approved`
         }).then((response) => {
-            setStatuses((prev) => {
-                const statuses = [...prev];
-
-                statuses[2] = response.data.status;
-                statuses.push(response.data.next_status);
-
-                return statuses;
+            handleUpdateApplication({
+                application: {
+                    statuses: [
+                        { ...response.data.status },
+                        { ...response.data.next_status },
+                    ]
+                }
             });
         }).finally(() => setLoading(false));
     }
@@ -145,7 +145,7 @@ const InitialReview = ({user, application, status, setStatuses}: ApplicationForm
                     )}
                 </>
             ) : (
-                <Feedbacks user={user} status={status} setStatuses={setStatuses} />
+                <Feedbacks user={user} status={status} handleMessage={handleMessage} />
             )}
         </Card>
     )

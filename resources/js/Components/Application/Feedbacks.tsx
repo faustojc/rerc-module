@@ -3,18 +3,18 @@ import { Button, Card, CardBody, CardFooter, Spacer, Textarea } from "@nextui-or
 import { getLocalTimeZone, parseAbsolute } from "@internationalized/date";
 import React, { useCallback, useMemo } from "react";
 import { SendFill } from "@/Components/Icons";
-import { useMessageHandler } from "@/Hooks/useMessageHandler";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 interface FeedbackProps {
     user: User;
     status: AppStatus;
-    setStatuses: React.Dispatch<React.SetStateAction<AppStatus[]>>;
+    setStatuses?: React.Dispatch<React.SetStateAction<AppStatus[]>>;
+    handleMessage: (status: AppStatus, message: string, userName: string) => Promise<void>;
 }
 
-const Feedbacks = ({user, status, setStatuses}: FeedbackProps) => {
+const Feedbacks = ({user, status, setStatuses, handleMessage}: FeedbackProps) => {
     const [message, setMessage] = React.useState('');
-    const { sendMessage } = useMessageHandler(user.name, status, setStatuses);
+    //const { sendMessage } = useMessageHandler(user.name, status, setStatuses);
     const parentRef = React.useRef<HTMLDivElement>(null);
 
     const groupedMessages = useMemo(() => {
@@ -47,7 +47,7 @@ const Feedbacks = ({user, status, setStatuses}: FeedbackProps) => {
 
             return groups;
         }, {} as {[key: string]: MessageThread[]});
-    }, [status]);
+    }, [status?.messages]);
 
     const formatTimestamp = useCallback((timestamp: string) => {
         const dateTime = parseAbsolute(timestamp, getLocalTimeZone()).toDate();
@@ -76,7 +76,7 @@ const Feedbacks = ({user, status, setStatuses}: FeedbackProps) => {
     const handleSendMessage = async () => {
         setMessage('');
 
-        await sendMessage(message);
+        await handleMessage(status, message, user.name);
     };
 
     const renderItem = useCallback(({ item }: { item: any, index: number }) => {

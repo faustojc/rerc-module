@@ -12,7 +12,7 @@ interface AlertType {
     type: "default" | "primary" | "secondary" | "success" | "warning" | "danger";
 }
 
-const ApplicationRequirements = ({user, application, status, setApplication, setStatuses}: ApplicationFormProps) => {
+const ApplicationRequirements = ({user, application, status, handleUpdateApplication, handleMessage}: ApplicationFormProps) => {
     const requirementNames = [
         "Full Research Proposal",
         "Checklist for Proposal",
@@ -89,9 +89,10 @@ const ApplicationRequirements = ({user, application, status, setApplication, set
         window.axios.post(route('applications.requirements.store', {application: application}), formData, {
             headers: {'Content-Type': 'multipart/form-data'}
         }).then((response) => {
-            setApplication({
-                ...application,
-                requirements: [...application.requirements, ...response.data.requirements]
+            handleUpdateApplication({
+                application: {
+                    requirements: [...application.requirements, ...response.data.requirements]
+                }
             });
 
             setAlert({
@@ -99,7 +100,7 @@ const ApplicationRequirements = ({user, application, status, setApplication, set
                 type: 'success'
             });
             setSelectedFiles({});
-        }).catch((e) => {
+        }).catch((_) => {
             setAlert({
                 message: "An error occurred while uploading requirements",
                 type: 'danger'
@@ -119,7 +120,11 @@ const ApplicationRequirements = ({user, application, status, setApplication, set
             new_status: newStatus,
             message: `${application.research_title}'s requirements has been submitted`
         }).then((response) => {
-            setStatuses(response.data.application.statuses);
+            handleUpdateApplication({
+                application: {
+                    statuses: response.data.application.statuses,
+                }
+            })
 
             setAlert({
                 title: "Requirements submitted!",
@@ -140,7 +145,11 @@ const ApplicationRequirements = ({user, application, status, setApplication, set
             is_completed: true,
             message: `${application.research_title} has been approved by ${user.name}`
         }).then((response) => {
-            setStatuses(response.data.application.statuses);
+            handleUpdateApplication({
+                application: {
+                    statuses: response.data.application.statuses
+                }
+            })
 
             setAlert({
                 message: `Requirements has been approved`,
@@ -153,10 +162,11 @@ const ApplicationRequirements = ({user, application, status, setApplication, set
         window.axios.delete(route('requirements.destroy', {requirement: r})).then((_) => {
             toast.success(`${r.file_url.split('\\').pop()?.split('/').pop()} deleted successfully`);
 
-            setApplication({
-                ...application,
-                requirements: application.requirements.filter((req) => req.id !== r.id)
-            });
+            handleUpdateApplication({
+                application: {
+                    requirements: application.requirements.filter((req) => req.id !== r.id)
+                }
+            })
         });
     }
 
@@ -197,7 +207,6 @@ const ApplicationRequirements = ({user, application, status, setApplication, set
                                                             </h2>
                                                             <input type="file"
                                                                    onChange={(e) => handleFileChange(e, requirement)}
-                                                                   multiple
                                                                    hidden
                                                                    accept=".pdf,.doc,.docx"
                                                             />
@@ -228,7 +237,7 @@ const ApplicationRequirements = ({user, application, status, setApplication, set
                                                 </>
                                             )}
                                             {/* List of uploaded requirements */}
-                                            {(uploaded.length > 0) ? uploaded.map((u, index) => {
+                                            {(uploaded.length > 0) ? uploaded.map((u) => {
                                                 return (
                                                     <div key={u.id} className="relative flex mt-1 min-w-0">
                                                         <Link
@@ -274,7 +283,7 @@ const ApplicationRequirements = ({user, application, status, setApplication, set
                     />
                 </div>
             ) : (
-                <Feedbacks key="feedback-requirements" user={user} status={status} setStatuses={setStatuses} />
+                <Feedbacks key="feedback-requirements" user={user} status={status} handleMessage={handleMessage} />
             )}
         </Card>
     )
@@ -289,8 +298,7 @@ const Footer = ({user, status, requirements, alert, loading, handleUpload, handl
     handleUpload: () => void,
     handleSubmit: () => void,
     handleApprove: () => void
-}
-) => {
+}) => {
     const hasSomeSubmitted = requirements.some((req) => req.status.toLowerCase() === 'submitted');
 
     if (user.role === 'researcher' && (status.status !== 'Submitted' || !status.end)) {

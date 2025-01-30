@@ -2,7 +2,7 @@ import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input } 
 import { Application, ApplicationFormProps } from "@/types";
 import { ChangeEvent, useState } from "react";
 
-const ProtocolAssignment = ({user, application, status, setApplication, setStatuses}: ApplicationFormProps) => {
+const ProtocolAssignment = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
     const [protocolCode, setProtocolCode] = useState<string | null>(application.protocol_code);
     const [isError, setIsError] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
@@ -28,12 +28,13 @@ const ProtocolAssignment = ({user, application, status, setApplication, setStatu
             next_status: 'Initial Review',
             message: `${application.research_title} has been assigned a protocol code ${protocolCode}`
         }).then(response => {
-            setApplication({
-                ...application,
-                protocol_code: response.data.application.protocol_code,
-                protocol_date_updated: response.data.application.protocol_date_updated,
+            handleUpdateApplication({
+                application: {
+                    protocol_code: response.data.application.protocol_code,
+                    protocol_date_updated: response.data.application.protocol_date_updated,
+                    statuses: response.data.application.statuses
+                }
             });
-            setStatuses(response.data.application.statuses);
         }).finally(() => setLoading(false));
     }
 

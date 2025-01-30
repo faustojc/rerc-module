@@ -5,7 +5,7 @@ import InputFile from "@/Components/InputFile";
 import { toast } from "react-toastify";
 import { getLocalTimeZone } from "@internationalized/date";
 
-const PaymentMade = ({user, application, status, setApplication, setStatuses}: ApplicationFormProps) => {
+const PaymentMade = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [details, setDetails] = useState("");
     const [isError, setIsError] = useState(false);
@@ -36,13 +36,14 @@ const PaymentMade = ({user, application, status, setApplication, setStatuses}: A
         window.axios.post(route('applications.upload-payment', {application: application}), formData, {
             headers: {'Content-Type': 'multipart/form-data'}
         }).then(response => {
-            setApplication({
-                ...application,
-                proof_of_payment_url: response.data.proof_of_payment_url,
-                payment_date: response.data.payment_date,
-                payment_details: response.data.payment_details
+            handleUpdateApplication({
+                application: {
+                    proof_of_payment_url: response.data.proof_of_payment_url,
+                    payment_date: response.data.payment_date,
+                    payment_details: response.data.payment_details,
+                    statuses: response.data.statuses
+                }
             });
-            setStatuses(response.data.statuses);
         }).catch(error => {
             toast.error("Failed to upload payment receipt. Please try again.");
             console.error(error);
@@ -106,7 +107,7 @@ const PaymentMade = ({user, application, status, setApplication, setStatuses}: A
                                         <InputFile
                                             label="Upload Payment Receipt"
                                             type="file"
-                                            acceptedTypes="image/*"
+                                            accept="image/*"
                                             file={file}
                                             handleSelectFile={handleSelectFile}
                                             isError={isError}

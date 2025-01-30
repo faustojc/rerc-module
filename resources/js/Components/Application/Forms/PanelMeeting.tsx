@@ -5,7 +5,7 @@ import { CalendarDate, getLocalTimeZone, Time } from "@internationalized/date";
 import React, { useEffect, useState } from "react";
 import { MdiAccountAdd, MdiCalendar, MdiDeleteForever, UserAlt } from "@/Components/Icons";
 
-const PanelMeeting = ({user, application, status, setApplication, setStatuses}: ApplicationFormProps) => {
+const PanelMeeting = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
     const [panelMembers, setPanelMembers] = useState<PanelMember[]>(application.panels ?? []);
     const [meeting, setMeeting] = useState<Date | null>(
         application.meeting ? new Date(application.meeting.meeting_date) : null
@@ -31,18 +31,15 @@ const PanelMeeting = ({user, application, status, setApplication, setStatuses}: 
         try {
             const response = await window.axios.post(route('applications.assign-panel-meeting', {application: application}), data);
 
-            setApplication({
-                ...application,
-                panels: panelMembers,
-                meeting: response.data.meeting,
-            })
-            setStatuses(prevState => {
-                const statuses = [...prevState];
-
-                statuses[6] = response.data.updated_status;
-                statuses.push(response.data.new_status);
-
-                return statuses;
+            handleUpdateApplication({
+                application: {
+                    panels: response.data.panels,
+                    meeting: response.data.meeting,
+                    statuses: [
+                        { ...response.data.updated_status },
+                        { ...response.data.new_status }
+                    ]
+                }
             });
 
             localStorage.removeItem("draft");
