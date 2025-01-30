@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ReviewResult extends Model
 {
@@ -14,6 +15,15 @@ class ReviewResult extends Model
     use HasFactory, HasUlids;
 
     protected $table = 'review_results';
+
+    protected $fillable = [
+        'app_profile_id',
+        'name',
+        'file_url',
+        'status',
+        'reviewed_document_ids',
+        'feedback',
+    ];
 
     protected static function boot(): void
     {
@@ -28,8 +38,17 @@ class ReviewResult extends Model
         return $this->belongsTo(AppProfile::class);
     }
 
-    public function document(): BelongsTo
+    public function documents(): HasMany
     {
-        return $this->belongsTo(Document::class);
+        return $this->hasMany(Document::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'date_uploaded' => 'datetime:c',
+            'updated_at' => 'datetime:c',
+            'reviewed_document_ids' => 'array',
+        ];
     }
 }
