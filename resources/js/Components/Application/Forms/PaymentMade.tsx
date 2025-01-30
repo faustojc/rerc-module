@@ -5,7 +5,7 @@ import InputFile from "@/Components/InputFile";
 import { toast } from "react-toastify";
 import { getLocalTimeZone } from "@internationalized/date";
 
-const PaymentMade = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
+const PaymentMade = ({user, application, handleUpdateApplication}: ApplicationFormProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [details, setDetails] = useState("");
     const [isError, setIsError] = useState(false);

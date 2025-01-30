@@ -140,15 +140,6 @@ export const useApplication = (initialApplication: Application) => {
         }));
     }, []);
 
-    const updateStatus = useCallback((updatedStatus: AppStatus) => {
-        setApplication(prev => ({
-            ...prev,
-            statuses: prev.statuses.map(status =>
-                status.id === updatedStatus.id ? updatedStatus : status
-            )
-        }));
-    }, []);
-
     const addMessage = useCallback((statusId: string, messageData: MessageThread) => {
         setApplication(prev => ({
             ...prev,

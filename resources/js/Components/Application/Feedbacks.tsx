@@ -12,9 +12,8 @@ interface FeedbackProps {
     handleMessage: (status: AppStatus, message: string, userName: string) => Promise<void>;
 }
 
-const Feedbacks = ({user, status, setStatuses, handleMessage}: FeedbackProps) => {
+const Feedbacks = ({user, status, handleMessage}: FeedbackProps) => {
     const [message, setMessage] = React.useState('');
-    //const { sendMessage } = useMessageHandler(user.name, status, setStatuses);
     const parentRef = React.useRef<HTMLDivElement>(null);
 
     const groupedMessages = useMemo(() => {
