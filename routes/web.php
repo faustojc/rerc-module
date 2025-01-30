@@ -6,8 +6,10 @@ use App\Http\Controllers\AppStatusController;
 use App\Http\Controllers\DecisionLetterController;
 use App\Http\Controllers\MessageThreadsController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReviewResultController;
 use App\Models\AppProfile;
 use App\Models\Document;
+use App\Models\ReviewResult;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -54,16 +56,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('statuses.message-threads', MessageThreadsController::class)
         ->only(['store', 'update']);
 
+    Route::apiResource('applications.review-results', ReviewResultController::class)
+        ->only(['store'])
+        ->shallow();
+    Route::post('review-results/{review_result}/upload-revision', [ReviewResultController::class, 'uploadRevision'])
+        ->name('review-results.upload-revision');
+
     Route::get('/requirements/{requirement}/download', [ApplicationRequirementController::class, 'download'])
         ->name('applications.requirements.download');
 
+    // Download routes
     Route::get('/documents/{document}/download', function (Document $document) {
         return Storage::disk('public')->download($document->file_url);
     })->name('applications.documents.download');
     Route::get('/applications/{application}/payment-download', function (AppProfile $application) {
         return Storage::disk('public')->download($application->proof_of_payment_url);
     })->name('applications.payment-download');
-
+    Route::get('/review-results/{review_result}/download', function (ReviewResult $review_result) {
+        return Storage::disk('public')->download($review_result->file_url);
+    })->name('review-results.download');
 });
 
 require __DIR__ . '/auth.php';
