@@ -178,7 +178,7 @@ export default function Authenticated({
                     </header>
                 )}
 
-                <main className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <main className="mx-auto max-w-screen-xl sm:px-6 lg:px-8">
                     {children}
                 </main>
             </div>
