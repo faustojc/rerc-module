@@ -176,23 +176,25 @@ class AppProfileController extends Controller
      */
     public function show(AppProfile $application): Response
     {
+        Gate::authorize('view', $application);
+
         // Eager load the relationships
         $application->load([
-            'members:firstname,lastname',
+            'members:id,app_profile_id,firstname,lastname',
             'statuses' => function ($query) {
                 $query->select('id', 'app_profile_id', 'name', 'sequence', 'status', 'start', 'end')
                     ->with('messages', function ($query) {
-                        $oneWeekAgo = Carbon::now()->subWeek();
+                        $monthsAgo = Carbon::now()->subMonths(3);
 
                         $query->select('id', 'app_status_id', 'remarks', 'by', 'created_at', 'read_status')
-                            ->where('created_at', '>=', $oneWeekAgo);
+                            ->where('created_at', '>=', $monthsAgo);
                     });
             },
             'requirements:id,app_profile_id,name,file_url,date_uploaded,status',
             'meeting:id,app_profile_id,meeting_date,status',
-            'documents:id,app_profile_id,review_result_id,file_url,remarks',
+            'documents:id,app_profile_id,review_result_id,file_url,version,original_document_id,status,created_at',
             'decisionLetter:id,app_profile_id,file_name,file_path,date_uploaded,is_signed',
-            'reviewResults:id,app_profile_id,name,file_url,date_uploaded,status',
+            'reviewResults:id,app_profile_id,name,file_url,date_uploaded,status,reviewed_document_ids,feedback,created_at',
             'panels:id,app_profile_id,firstname,lastname'
         ]);
 
@@ -285,7 +287,6 @@ class AppProfileController extends Controller
         $message = $request->message;
 
         $status = $application->statuses()->find($request->status_id);
-        $newStatus = NULL;
 
         if (!empty($protocolCode)) {
             $application->protocol_code = $protocolCode;
@@ -296,7 +297,7 @@ class AppProfileController extends Controller
             $application->review_type = $reviewType;
         }
 
-        DB::transaction(function () use (&$application, &$status, &$newStatus, $request, $message) {
+        DB::transaction(function () use (&$application, &$status, $request, $message) {
             if ($application->isDirty()) {
                 $application->save();
             }
@@ -322,14 +323,12 @@ class AppProfileController extends Controller
             $application->load('statuses')->refresh();
             $status->refresh();
 
-            broadcast(new ApplicationUpdated($application, $status, message: $message))->toOthers();
+            broadcast(new ApplicationUpdated($application, message: $message))->toOthers();
         });
 
         return response()->json([
             'message' => $message ?? "$application->research_title has been updated.",
             'application' => $application,
-            'status' => $status,
-            'new_status' => $newStatus,
         ]);
     }
 
@@ -364,7 +363,7 @@ class AppProfileController extends Controller
         ];
 
         try {
-            DB::transaction(function () use ($application, $latestStatus, $newStatus, $meeting, $validated) {
+            DB::transaction(function () use (&$application, $latestStatus, $newStatus, $meeting, $validated) {
                 $application->statuses()->saveMany([$latestStatus, $newStatus]);
                 $application->meeting()->create($meeting);
 
@@ -386,11 +385,8 @@ class AppProfileController extends Controller
 
             return response()->json([
                 'message' => $message,
-                'meeting' => [
-                    'id' => $application->meeting->id,
-                    'meeting_date' => $application->meeting->meeting_date->toIso8601String(),
-                    'status' => $application->meeting->status,
-                ],
+                'meeting' => $application->meeting,
+                'panels' => $application->panels,
                 'updated_status' => $latestStatus,
                 'new_status' => $newStatus,
             ]);
