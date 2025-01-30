@@ -3,6 +3,7 @@ import { Link, Navbar, NavbarContent, NavbarItem } from "@nextui-org/react";
 interface NavTab {
     name: string;
     label: string;
+    notFor?: () => boolean;
 }
 
 interface NavStatusProps {
@@ -33,16 +34,22 @@ const NavStatus = ({currTab, setCurrTab, tabs}: NavStatusProps) => {
             }}
         >
             <NavbarContent className="flex gap-4" justify="start">
-                {tabs.map((tab) => (
-                    <NavbarItem key={tab.name} isActive={currTab === tab.name}>
-                        <Link color={currTab === tab.name ? 'primary' : 'foreground'} href="#" onClick={(e) => {
-                            e.preventDefault();
-                            setCurrTab(tab.name);
-                        }}>
-                            {tab.label}
-                        </Link>
-                    </NavbarItem>
-                ))}
+                {tabs.map((tab) => {
+                    if (tab.notFor != null && tab.notFor()) {
+                        return null;
+                    }
+
+                    return (
+                        <NavbarItem key={tab.name} isActive={currTab === tab.name}>
+                            <Link color={currTab === tab.name ? 'primary' : 'foreground'} href="#" onClick={(e) => {
+                                e.preventDefault();
+                                setCurrTab(tab.name);
+                            }}>
+                                {tab.label}
+                            </Link>
+                        </NavbarItem>
+                    )
+                })}
             </NavbarContent>
         </Navbar>
     )
