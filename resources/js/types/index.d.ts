@@ -1,5 +1,4 @@
 import { Config } from 'ziggy-js';
-import React from "react";
 
 export interface User {
     id: string;
@@ -25,10 +24,10 @@ export interface Application {
     updated_at?: string,
     members: Member[],
     meeting: Meeting,
-    documents: Document[],
+    documents: AppDocument[],
     statuses: AppStatus[],
     requirements: Requirement[],
-    review_results: ReviewResult[],
+    review_results: AppReviewResult[],
     decision_letter: DecisionLetter | null,
     panels: PanelMember[],
     [key: string]: any;
@@ -80,16 +79,21 @@ export interface MessageThread {
     [key: string]: any;
 }
 
-export interface Document {
+export interface AppDocument {
     id: string;
     app_profile_id: string;
-    review_result_id: string;
+    review_result_id?: string;
     file_url: string;
-    remarks: string;
+    remarks?: string;
     created_at?: string;
     updated_at?: string;
+    review_result?: AppReviewResult;
+    version?: number;
+    original_document_id?: string;
+    status: string;
     [key: string]: any;
 }
+
 
 export interface DecisionLetter {
     id: string,
@@ -115,7 +119,7 @@ export interface Requirement {
     [key: string]: any;
 }
 
-export interface ReviewResult {
+export interface AppReviewResult {
     id: string;
     app_profile_id: string;
     name: string;
@@ -123,6 +127,9 @@ export interface ReviewResult {
     status: string;
     created_at?: string;
     updated_at?: string;
+    documents?: AppDocument[];
+    reviewed_document_ids?: string[];
+    feedback?: string;
     [key: string]: any;
 }
 
@@ -160,8 +167,13 @@ export interface ApplicationFormProps {
     user: User;
     application: Application;
     status: AppStatus;
-    setApplication: React.Dispatch<React.SetStateAction<Application>>;
-    setStatuses: React.Dispatch<React.SetStateAction<AppStatus[]>>;
+    handleUpdateApplication: (data: ApplicationUpdatedEvent) => void;
+    handleMessage: (status: AppStatus, messageContent: string, userName: string) => Promise<void>
+}
+
+export interface ApplicationUpdatedEvent {
+    message?: string;
+    application: Partial<Application>;
 }
 
 export type PageProps<
