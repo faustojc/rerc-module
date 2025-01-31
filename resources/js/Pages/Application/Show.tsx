@@ -6,6 +6,7 @@ import { Application, ApplicationFormProps, ApplicationUpdatedEvent, AppStatus, 
 import { useApplication } from '@/Hooks/useApplication';
 import Statuses from "@/Components/Application/Statuses";
 import { MdiCalendar, MdiCodeTags, MdiPeople } from "@/Components/Icons";
+import { Head } from "@inertiajs/react";
 
 interface ApplicationShowProps extends PageProps {
     application: Application;
@@ -65,6 +66,7 @@ const Show = memo((props: ApplicationShowProps) => {
 
     return (
         <Authenticated header="Research Information">
+            <Head title={application.research_title} />
             <div className="py-3">
                 <ApplicationHeader
                     title={application.research_title}
