@@ -22,6 +22,7 @@ class Requirement extends Model
         'file_url',
         'date_uploaded',
         'status',
+        'is_additional'
     ];
 
     protected static function boot(): void
@@ -42,6 +43,7 @@ class Requirement extends Model
     {
         return [
             'date_uploaded' => 'datetime:c',
+            'is_additional' => 'boolean',
         ];
     }
 }
