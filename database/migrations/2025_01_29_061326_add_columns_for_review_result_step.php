@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('documents', function (Blueprint $table) {
             $table->unsignedInteger('version')->default(1);
             $table->ulid('original_document_id')->nullable();
-            $table->string('status')->default('original');
+            $table->string('status')->default('Original');
         });
 
         Schema::table('review_results', function (Blueprint $table) {
