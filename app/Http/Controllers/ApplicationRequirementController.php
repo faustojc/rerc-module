@@ -19,25 +19,23 @@ class ApplicationRequirementController extends Controller
     /**
      * @throws Throwable
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, AppProfile $application): JsonResponse
     {
         $validated = $request->validate([
-            'app_profile_id' => 'required|string',
-            'status_id' => 'required|string',
             'requirements' => 'required|array',
             'requirements.*.*.file' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'is_additional' => 'nullable|string',
         ]);
 
+        $isAdditional = boolval($validated['is_additional']);
         $requirements = $validated['requirements'];
         $newlyRequirements = [];
 
-        $application = AppProfile::find($validated['app_profile_id']);
-
-        DB::transaction(function () use ($application, $requirements, $validated, &$newlyRequirements) {
+        DB::transaction(function () use ($application, $requirements, $validated, $isAdditional, &$newlyRequirements) {
             foreach ($requirements as $index => $requirement) {
                 $files = array_map(fn($requirement) => $requirement['file'], $requirement);
 
-                $builder = Requirement::where('app_profile_id', $validated['app_profile_id'])
+                $builder = Requirement::where('app_profile_id', $application->id)
                     ->where('name', $index);
 
                 foreach ($files as $file) {
@@ -52,17 +50,18 @@ class ApplicationRequirementController extends Controller
 
                 foreach ($files as $file) {
                     $path = Storage::disk('public')->putFileAs(
-                        'requirements/' . $validated['app_profile_id'],
+                        'requirements/' . $application->id,
                         $file,
                         $file->getClientOriginalName(),
                     );
 
                     $newlyRequirements[] = new Requirement([
-                        'app_profile_id' => $validated['app_profile_id'],
+                        'app_profile_id' => $application->id,
                         'name' => $index,
                         'file_url' => $path,
                         'date_uploaded' => now(),
                         'status' => 'Uploaded',
+                        'is_additional' => $isAdditional,
                     ]);
                 }
             }
@@ -81,29 +80,40 @@ class ApplicationRequirementController extends Controller
 
     public function updateStatus(Request $request, AppProfile $application)
     {
-        $isCompleted = $request->is_completed;
-        $requirementIds = $request->requirement_ids;
-        $message = $request->message;
+        $validated = $request->validate([
+            'status_id' => 'required|string',
+            'new_status' => 'required|string',
+            'is_completed' => 'required|boolean',
+            'next_status_name' => 'nullable|string',
+            'requirement_ids' => 'nullable|array',
+            'requirement_ids.*' => 'required|string',
+            'requirement_status' => 'required|string',
+            'message' => 'nullable|string',
+        ]);
+
+        $isCompleted = boolval($validated['is_completed']);
+        $requirementIds = $validated['requirement_ids'];
+        $message = $validated['message'];
         $requirements = [];
 
         if (!empty($requirementIds)) {
-            $requirements = Requirement::findMany($requirementIds);
+            $requirements = $application->requirements()->findMany($requirementIds);
 
-            $requirements->each(function (Requirement $requirement) use ($request) {
-                $requirement->status = $request->requirement_status;
+            $requirements->each(function (Requirement $requirement) use ($validated) {
+                $requirement->status = $validated['requirement_status'];
             });
         }
 
-        $status = $application->statuses()->find($request->status_id);
-        $status->status = $request->new_status;
+        $status = $application->statuses()->find($validated['status_id']);
+        $status->status = $validated['new_status'];
 
         $newStatus = NULL;
 
-        if ($isCompleted) {
+        if ($isCompleted && !empty($validated['next_status_name'])) {
             $status->end = now();
 
             $newStatus = new AppStatus([
-                'name' => 'Protocol Assignment',
+                'name' => $validated['next_status_name'],
                 'sequence' => $status->sequence + 1,
                 'status' => 'In Progress',
                 'start' => now(),
@@ -115,7 +125,6 @@ class ApplicationRequirementController extends Controller
                 $application->requirements()->saveMany($requirements);
             }
 
-            // if the requirements has been approved, set the current status and move to the next status
             if (!empty($newStatus)) {
                 $application->statuses()->save($newStatus);
             }

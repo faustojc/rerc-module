@@ -114,6 +114,7 @@ export interface Requirement {
     file_url: string;
     date_uploaded: string;
     status: string;
+    is_additional: boolean;
     created_at?: string;
     updated_at?: string;
     [key: string]: any;

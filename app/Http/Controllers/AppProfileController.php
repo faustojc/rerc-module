@@ -190,7 +190,7 @@ class AppProfileController extends Controller
                             ->where('created_at', '>=', $monthsAgo);
                     });
             },
-            'requirements:id,app_profile_id,name,file_url,date_uploaded,status',
+            'requirements:id,app_profile_id,name,file_url,date_uploaded,status,is_additional',
             'meeting:id,app_profile_id,meeting_date,status',
             'documents:id,app_profile_id,review_result_id,file_url,version,original_document_id,status,created_at',
             'decisionLetter:id,app_profile_id,file_name,file_path,date_uploaded,is_signed',

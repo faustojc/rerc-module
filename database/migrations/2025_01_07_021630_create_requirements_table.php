@@ -18,6 +18,7 @@ return new class extends Migration {
 
             $table->string('name');
             $table->text('file_url');
+            $table->boolean('is_additional')->default(false);
 
             $table->dateTime('date_uploaded');
 
