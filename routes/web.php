@@ -9,6 +9,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewResultController;
 use App\Models\AppProfile;
 use App\Models\Document;
+use App\Models\EthicsClearance;
 use App\Models\ReviewResult;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('applications.upload-payment');
     Route::post('/applications/{application}/assign-panel-meeting', [AppProfileController::class, 'assignPanelMeeting'])
         ->name('applications.assign-panel-meeting');
+    Route::post('/applications/{application}/upload-ethics-clearance', [AppProfileController::class, 'uploadEthicsClearance'])
+        ->name('applications.upload-ethics-clearance');
     Route::resource('applications', AppProfileController::class)
         ->except(['edit'])
         ->missing(fn() => route('applications.index'));
@@ -75,6 +78,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/review-results/{review_result}/download', function (ReviewResult $review_result) {
         return Storage::disk('public')->download($review_result->file_url);
     })->name('review-results.download');
+    Route::get('ethics-clearances/{ethics_clearance}/download', function (EthicsClearance $ethics_clearance) {
+        return Storage::disk('public')->download($ethics_clearance->file_url);
+    })->name('ethics-clearances.download');
 });
 
 require __DIR__ . '/auth.php';

@@ -62,6 +62,14 @@ class AppProfile extends Model
             $application->panels()->each(function (PanelMember $panel) {
                 $panel->delete();
             });
+            $application->decisionLetter()->each(function (DecisionLetter $letter) {
+                Storage::disk('public')->delete($letter->file_path);
+                $letter->delete();
+            });
+            $application->ethicsClearance()->each(function (EthicsClearance $clearance) {
+                Storage::disk('public')->delete($clearance->file_url);
+                $clearance->delete();
+            });
         });
     }
 
@@ -100,14 +108,19 @@ class AppProfile extends Model
         return $this->hasMany(PanelMember::class);
     }
 
-    public function meeting(): HasOne
-    {
-        return $this->hasOne(Meeting::class);
-    }
-
     public function decisionLetter(): HasOne
     {
         return $this->hasOne(DecisionLetter::class);
+    }
+
+    public function ethicsClearance(): HasOne
+    {
+        return $this->hasOne(EthicsClearance::class);
+    }
+
+    public function meeting(): HasOne
+    {
+        return $this->hasOne(Meeting::class);
     }
 
     public function user(): BelongsTo

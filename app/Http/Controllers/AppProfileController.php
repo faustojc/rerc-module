@@ -8,6 +8,7 @@ use App\Models\AppMember;
 use App\Models\AppProfile;
 use App\Models\AppStatus;
 use App\Models\Document;
+use App\Models\EthicsClearance;
 use App\Models\PanelMember;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -195,7 +196,8 @@ class AppProfileController extends Controller
             'documents:id,app_profile_id,review_result_id,file_url,version,original_document_id,status,created_at',
             'decisionLetter:id,app_profile_id,file_name,file_path,date_uploaded,is_signed',
             'reviewResults:id,app_profile_id,name,file_url,date_uploaded,status,reviewed_document_ids,feedback,created_at',
-            'panels:id,app_profile_id,firstname,lastname'
+            'panels:id,app_profile_id,firstname,lastname',
+            'ethicsClearance:id,app_profile_id,file_url,date_clearance,date_uploaded',
         ]);
 
         return Inertia::render('Application/Show', [
@@ -400,5 +402,62 @@ class AppProfileController extends Controller
                 'error' => true,
             ], 422);
         }
+    }
+
+    public function uploadEthicsClearance(Request $request, AppProfile $application)
+    {
+        $validated = $request->validate([
+            'file' => 'required|file|mimes:pdf,doc,docx',
+            'date_clearance' => 'required|string',
+            'message' => 'required|string',
+        ]);
+        $validated['date_clearance'] = Carbon::parse($validated['date_clearance']);
+
+        $path = Storage::disk('public')->putFileAs(
+            "ethics-clearance/$application->id",
+            $validated['file'],
+            $validated['file']->getClientOriginalName(),
+        );
+
+        $status = $application->statuses()->latest()->first();
+        $status->status = 'Completed';
+        $status->end = now();
+
+        $ethicsClearance = new EthicsClearance([
+            'file_url' => $path,
+            'date_clearance' => $validated['date_clearance'],
+            'date_uploaded' => now(),
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $application->ethicsClearance()->save($ethicsClearance);
+            $application->statuses()->save($status);
+            DB::commit();
+
+            $application->load([
+                'ethicsClearance',
+                'statuses' => function ($query) {
+                    $query->latest()->first();
+                },
+            ]);
+
+            broadcast(new ApplicationUpdated($application, message: $validated['message']))->toOthers();
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            Storage::disk('public')->delete($path);
+
+            return response()->json([
+                'message' => 'Something went wrong while uploading the ethics clearance document.',
+                'error' => true,
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => $validated['message'],
+            'ethics_clearance' => $application->ethicsClearance,
+        ]);
     }
 }

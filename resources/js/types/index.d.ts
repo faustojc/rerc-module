@@ -30,6 +30,7 @@ export interface Application {
     review_results: AppReviewResult[],
     decision_letter: DecisionLetter | null,
     panels: PanelMember[],
+    ethics_clearance: EthicsClearance | null,
     [key: string]: any;
 }
 
@@ -141,6 +142,17 @@ export interface PanelMember {
     lastname: string,
     created_at?: string,
     updated_at?: string,
+    [key: string]: any;
+}
+
+export interface EthicsClearance {
+    id: string;
+    app_profile_id: string;
+    file_url: string;
+    date_clearance: string;
+    date_uploaded: string;
+    created_at?: string;
+    updated_at?: string;
     [key: string]: any;
 }
 
