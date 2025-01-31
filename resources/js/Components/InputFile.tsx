@@ -25,8 +25,8 @@ const InputFile = ({ label, reverseButton, file, isError, errorText, handleSelec
     }, [file]);
 
     return (
-        <div>
-            <label aria-labelledby={label || 'file-inputs'} className={"cursor-pointer " + inputProps.className}>
+        <div className={inputProps.className}>
+            <label aria-labelledby={label || 'file-inputs'} className={"cursor-pointer "}>
                 {label && (
                     <div className="mb-3">
                         <h3>{label}</h3>
