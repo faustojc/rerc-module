@@ -1,5 +1,5 @@
 import { Button, Card, CardBody, CardFooter, CardHeader, Divider, Link, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
-import React from "react";
+import React, { useMemo } from "react";
 import { ApplicationFormProps } from "@/types";
 import NavStatus from "@/Components/NavStatus";
 import { CloudArrowDown } from "@/Components/Icons";
@@ -21,6 +21,14 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
 
     const [currTab, setCurrTab] = React.useState('files');
     const [loading, setLoading] = React.useState(false);
+
+    const originalDocs = useMemo(() => {
+        return application.documents.filter(doc => doc.status === 'Original');
+    }, [application.documents]);
+
+    const requiredDocs = useMemo(() => {
+        return application.requirements.filter(req => !req.is_additional);
+    }, [application.requirements]);
 
     const handleApprove = () => {
         setLoading(true);
@@ -69,7 +77,7 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
                             <TableHeader columns={documentHeaders}>
                                 {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
                             </TableHeader>
-                            <TableBody items={application.documents}>
+                            <TableBody items={originalDocs}>
                                 {(document) => (
                                     <TableRow key={document.id}>
                                         <TableCell className="text-nowrap">
@@ -105,7 +113,7 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
                             <TableHeader columns={requirementsHeaders}>
                                 {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
                             </TableHeader>
-                            <TableBody items={application.requirements}>
+                            <TableBody items={requiredDocs}>
                                 {(requirement) => (
                                     <TableRow key={requirement.id}>
                                         <TableCell className="text-nowrap">
