@@ -43,9 +43,10 @@ class AppStatusController extends Controller
             'new_status' => 'string',
             'is_completed' => 'boolean|nullable',
             'next_status' => 'string|nullable',
+            'message' => 'string|nullable',
         ]);
-        $message = $request->message;
-
+        
+        $message = $validated['message'];
         $isComplete = $validated['is_completed'] ?? FALSE;
         $newStatus = NULL;
 

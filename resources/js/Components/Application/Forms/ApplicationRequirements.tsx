@@ -76,10 +76,6 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
         })
 
         const formData = new FormData();
-
-        formData.append('app_profile_id', application.id);
-        formData.append('status_id', application.statuses[application.statuses.length! - 1].id);
-
         Object.entries(selectedFiles).forEach(([requirement, files]) => {
             files.forEach((file, index) => {
                 formData.append(`requirements[${requirement}][${index}][file]`, file);
@@ -141,12 +137,14 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
             requirement_ids: uploadedRequirements.map((req) => req.id),
             requirement_status: 'Approved',
             status_id: status.id,
+            next_status_name: 'Protocol Assignment',
             new_status: 'Approved',
             is_completed: true,
             message: `${application.research_title} has been approved by ${user.name}`
         }).then((response) => {
             handleUpdateApplication({
                 application: {
+                    requirements: response.data.application.requirements,
                     statuses: response.data.application.statuses
                 }
             })
