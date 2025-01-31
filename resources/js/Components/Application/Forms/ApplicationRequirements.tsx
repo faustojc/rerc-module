@@ -299,7 +299,7 @@ const Footer = ({user, status, requirements, alert, loading, handleUpload, handl
 }) => {
     const hasSomeSubmitted = requirements.some((req) => req.status.toLowerCase() === 'submitted');
 
-    if (user.role === 'researcher' && (status.status !== 'Submitted' || !status.end)) {
+    if (user.role === 'researcher' && status.end == null) {
         const hasSomeUploaded = requirements.some((req) => req.status.toLowerCase() === 'uploaded');
 
         return (
