@@ -1,12 +1,12 @@
 import React, { lazy, memo, Suspense, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Authenticated from '@/Layouts/AuthenticatedLayout';
-import { Card, CardBody, Chip, Spinner } from '@nextui-org/react';
+import { Card, CardBody, Spinner } from '@nextui-org/react';
 import { Application, ApplicationFormProps, ApplicationUpdatedEvent, AppStatus, PageProps, User } from "@/types";
 import { useApplication } from '@/Hooks/useApplication';
 import Statuses from "@/Components/Application/Statuses";
-import { MdiCalendar, MdiCodeTags, MdiPeople } from "@/Components/Icons";
 import { Head } from "@inertiajs/react";
+import ApplicationHeader from "@/Components/ApplicationHeader";
 
 interface ApplicationShowProps extends PageProps {
     application: Application;
@@ -50,30 +50,11 @@ const Show = memo((props: ApplicationShowProps) => {
         [componentForms, selectedStatus.sequence]
     );
 
-    const formattedDate = useMemo(() =>
-            new Date(application.date_applied).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-            }),
-        [application.date_applied]
-    );
-
-    const membersString = useMemo(() =>
-            application.members.map(member => `${member.firstname} ${member.lastname}`).join(', '),
-        [application.members]
-    );
-
     return (
         <Authenticated header="Research Information">
             <Head title={application.research_title} />
             <div className="py-3">
-                <ApplicationHeader
-                    title={application.research_title}
-                    protocolCode={application.protocol_code}
-                    members={membersString}
-                    date={formattedDate}
-                />
+                <ApplicationHeader application={application} />
 
                 <div className="lg:grid grid-cols-3 gap-4 mt-4">
                     <Statuses
@@ -96,44 +77,6 @@ const Show = memo((props: ApplicationShowProps) => {
         </Authenticated>
     );
 });
-
-const ApplicationHeader = memo(({
-    title,
-    protocolCode,
-    members,
-    date
-}: {
-    title: string;
-    protocolCode: string | null;
-    members: string;
-    date: string;
-}) => (
-    <Card>
-        <CardBody className="flex-col items-start sm:px-7 p-4">
-            <h3 className="text-xl font-semibold text-start">{title}</h3>
-            <div className="flex items-center mt-3">
-                <MdiCodeTags className="mr-2" />
-                <p className="text-sm">Protocol Code:</p>
-                <Chip
-                    className="ml-1 border-none"
-                    size="sm"
-                    variant={protocolCode ? 'shadow' : 'dot'}
-                    color={protocolCode ? 'primary' : 'default'}
-                >
-                    {protocolCode ?? "N/A"}
-                </Chip>
-            </div>
-            <div className="flex items-center mt-1">
-                <MdiPeople className="mr-2" />
-                <p className="text-sm">Members: {members}</p>
-            </div>
-            <div className="flex items-center mt-1">
-                <MdiCalendar className="mr-2" />
-                <p className="text-sm">{date}</p>
-            </div>
-        </CardBody>
-    </Card>
-));
 
 const StatusSection = memo(({
     StatusComponent,
