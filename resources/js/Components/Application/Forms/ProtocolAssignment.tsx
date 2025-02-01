@@ -98,8 +98,8 @@ const ProtocolCodeDisplay: React.FC<{
     if (application.protocol_code == null) {
         return (
             <div className="text-center py-8">
-                <ClipboardError className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500">
+                <ClipboardError className="w-12 h-12 text-default-400 mx-auto mb-3" />
+                <p className="text-default-500">
                     {status == null
                         ? 'Application requirements must be completed before assigning a protocol code'
                         : 'Protocol code has not been assigned yet.'
@@ -110,7 +110,7 @@ const ProtocolCodeDisplay: React.FC<{
     }
 
     return (
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-default-100 p-4 rounded-lg">
             <div className="space-y-3">
                 <div>
                     <label className="text-sm font-medium text-default-700">
