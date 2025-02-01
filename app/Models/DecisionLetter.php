@@ -24,4 +24,12 @@ class DecisionLetter extends Model
     {
         return $this->belongsTo(AppProfile::class);
     }
+
+    protected function casts(): array
+    {
+        return [
+            'date_uploaded' => 'datetime:c',
+            'is_signed' => 'boolean',
+        ];
+    }
 }

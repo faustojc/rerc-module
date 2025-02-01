@@ -102,7 +102,7 @@ export interface DecisionLetter {
     app_profile_id: string,
     file_name: string,
     file_url: string,
-    is_signed: number,
+    is_signed: boolean,
     date_uploaded: string,
     created_at?: string,
     updated_at?: string,
