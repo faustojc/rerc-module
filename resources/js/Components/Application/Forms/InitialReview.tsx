@@ -1,4 +1,4 @@
-import { Button, Card, CardBody, CardFooter, CardHeader, Divider, Link, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
+import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Divider, Link, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
 import React, { useMemo } from "react";
 import { ApplicationFormProps } from "@/types";
 import NavStatus from "@/Components/NavStatus";
@@ -23,12 +23,24 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
     const [loading, setLoading] = React.useState(false);
 
     const originalDocs = useMemo(() => {
-        return application.documents.filter(doc => doc.status === 'Original');
+        return application.documents.filter(doc => doc.status.toLowerCase() === 'original');
     }, [application.documents]);
 
     const requiredDocs = useMemo(() => {
         return application.requirements.filter(req => !req.is_additional);
     }, [application.requirements]);
+
+    const alertMessage = useMemo(() => {
+        if (status && status.end != null) {
+            return 'Initial review has been approved';
+        }
+
+        if (user.role === 'chairperson' && !status.end) {
+            return 'Double check the uploaded documents and requirements before approving the initial review.';
+        }
+
+        return 'Waiting for approval from the chairperson';
+    }, [user.role, status]);
 
     const handleApprove = () => {
         setLoading(true);
@@ -60,12 +72,12 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
             </CardHeader>
             <NavStatus currTab={currTab} setCurrTab={setCurrTab} tabs={[
                 {name: 'files', label: 'Files'},
-                {name: 'feedbacks', label: 'Feedbacks'}
+                {name: 'feedbacks', label: 'Feedbacks', notFor: () => status == null}
             ]} />
             {currTab === 'files' ? (
                 <>
                     <CardBody className="w-full">
-                        <h3 className="mb-4">Research Documents</h3>
+                        <h3 className="mb-4">Research Document</h3>
                         <Table
                             removeWrapper
                             fullWidth
@@ -141,16 +153,20 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
                             </TableBody>
                         </Table>
                     </CardBody>
-                    {(user.role === 'chairperson' && !status.end) && (
-                        <>
-                            <Divider />
-                            <CardFooter className="justify-end">
-                                <Button color="secondary" variant="shadow" isLoading={loading} onPress={() => handleApprove()}>
-                                    Approve
-                                </Button>
-                            </CardFooter>
-                        </>
-                    )}
+                    <Divider />
+                    <CardFooter className="flex-col gap-3 items-end">
+                        {/* Display an alert message based on the user role */}
+                        <Alert color={status && status.end != null ? 'success' : 'warning'}
+                               className="mb-4"
+                               variant="flat"
+                               description={alertMessage}
+                        />
+                        {(user.role === 'chairperson' && !status.end) && (
+                            <Button color="secondary" variant="shadow" isLoading={loading} onPress={() => handleApprove()}>
+                                Approve
+                            </Button>
+                        )}
+                    </CardFooter>
                 </>
             ) : (
                 <Feedbacks user={user} status={status} handleMessage={handleMessage} />

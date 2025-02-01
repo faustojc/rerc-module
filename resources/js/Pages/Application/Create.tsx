@@ -270,18 +270,17 @@ export default function Create() {
                                     )}
                                 </div>
                                 <div className="sm:mt-0 mt-5">
-                                    <h3 className="text-lg text-default-800 mt-4">DOCUMENTS</h3>
+                                    <h3 className="text-lg text-default-800 mt-4">RESEARCH DOCUMENT</h3>
                                     <p className="text-gray-500 text-sm">
-                                        Please upload the required documents for your research proposal.
+                                        Please upload the research document for your research proposal.
                                     </p>
                                 </div>
                                 <div>
                                     <div>
                                         <label className="block my-4">
-                                            <span className="sr-only">Choose Files</span>
+                                            <span className="sr-only">Choose File</span>
                                             <input
                                                 type="file"
-                                                multiple
                                                 onChange={handleFileChange}
                                                 accept={".pdf,.doc,.docx"}
                                                 className="cursor-pointer block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
@@ -289,7 +288,7 @@ export default function Create() {
                                         </label>
                                         {errors.documents && (
                                             <div className="col-span-3">
-                                                <p className="text-red-500 text-sm">Please upload your documents</p>
+                                                <p className="text-red-500 text-sm">Please upload your document</p>
                                             </div>
                                         )}
 

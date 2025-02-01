@@ -15,7 +15,7 @@ interface AlertType {
 const AdditionalRequirements = ({user, application, status, handleUpdateApplication, handleMessage}: ApplicationFormProps) => {
     const [currTab, setCurrTab] = useState<string>('requirements');
     const [loading, setLoading] = useState<boolean>(false);
-    const [hasApproved, setHasApproved] = useState<boolean>(status.end != null);
+    const [hasApproved, setHasApproved] = useState<boolean>(status != null && status.end != null);
 
     const alert: AlertType = useMemo(() => {
         if (hasApproved) {
@@ -112,7 +112,7 @@ const AdditionalRequirements = ({user, application, status, handleUpdateApplicat
             <NavStatus currTab={currTab} setCurrTab={setCurrTab} tabs={[
                 {label: 'Requirements', name: 'requirements'},
                 {label: 'Upload Requirement', name: 'upload', notFor: () => user.role !== 'researcher' || hasApproved},
-                {label: 'Feedbacks', name: 'feedbacks'},
+                {label: 'Feedbacks', name: 'feedbacks', notFor: () => status == null},
             ]} />
             {currTab === 'requirements' && (
                 <>

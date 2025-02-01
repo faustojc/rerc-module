@@ -1,29 +1,25 @@
-import { ApplicationFormProps } from "@/types";
-import { Button, Card, CardBody, CardFooter, CardHeader, Divider, Select, SelectItem } from "@nextui-org/react";
-import { ChangeEvent, useState } from "react";
+import { ApplicationFormProps, ReviewTypeInfo } from "@/types";
+import { Button, Card, CardBody, CardHeader, Tooltip } from "@nextui-org/react";
+import React, { useState } from "react";
+import { REVIEW_TYPES } from "@/types/constants";
+
+interface ReviewTypeCardProps {
+    info: ReviewTypeInfo;
+    isSelected: boolean;
+    onSelect: (value: string) => void;
+    isDisabled?: boolean;
+}
 
 const ReviewType = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
-    const [reviewType, setReviewType] = useState<string>(application.review_type ?? 'NOT SET');
+    const [reviewType, setReviewType] = useState<string>(application.review_type || '');
     const [loading, setLoading] = useState<boolean>(false);
-    const [isError, setIsError] = useState<boolean>(false);
 
-    const handleSelectionChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        setReviewType(e.target.value);
+    const canAssign = ['staff', 'chairperson'].includes(user.role);
 
-        if (reviewType.length > 0) {
-            setIsError(false);
-        }
-        else {
-            setIsError(true);
-        }
-    }
+    const getReviewTypeInfo = (value: string): ReviewTypeInfo =>
+        REVIEW_TYPES.find(type => type.value === value) || REVIEW_TYPES[0];
 
     const handleUpdateReview = () => {
-        if (reviewType === 'NOT SET') {
-            setIsError(true);
-            return;
-        }
-
         setLoading(true);
 
         window.axios.patch(route('applications.update', {application: application}), {
@@ -52,53 +48,114 @@ const ReviewType = ({user, application, status, handleUpdateApplication}: Applic
                 </p>
             </CardHeader>
             <CardBody>
-                <div className="grid grid-cols-3 items-center w-full">
-                    <h3>Review Type:</h3>
-                    {(user.role !== 'researcher') ? (
-                        <>
-                            {(status && !status?.end) ? (
-                                <Select
-                                    className="col-span-2 max-w-xs"
-                                    placeholder="Select review type"
-                                    selectedKeys={[reviewType]}
-                                    variant="bordered"
-                                    onChange={handleSelectionChange}
-                                    isInvalid={isError}
-                                    isRequired
-                                >
-                                    <SelectItem key="exempted">EXEMPTED</SelectItem>
-                                    <SelectItem key="expedited">EXPEDITED</SelectItem>
-                                    <SelectItem key="full board">FULL BOARD</SelectItem>
-                                </Select>
-                            ) : (
-                                <p className="font-bold">
-                                    {application.review_type?.toUpperCase() ?? 'NOT SET'}
-                                </p>
-                            )}
-                        </>
-                    ) : (
-                        <p className="font-bold">
-                            {application.review_type?.toUpperCase() ?? 'NOT SET'}
+                <div className="grid md:grid-cols-3 gap-4 mb-3">
+                    {REVIEW_TYPES.map((type) => (
+                        <ReviewTypeCard
+                            key={type.value}
+                            info={type}
+                            isSelected={reviewType == type.value}
+                            onSelect={(value) => setReviewType(value.toLowerCase())}
+                            isDisabled={!canAssign || !!application.review_type}
+                        />
+                    ))}
+                </div>
+
+                {reviewType && (
+                    <ReviewTypeDetails info={getReviewTypeInfo(reviewType)} />
+                )}
+
+                {canAssign && !application.review_type && (
+                    <div className="flex justify-end mt-4">
+                        <Button
+                            color="primary"
+                            isLoading={loading}
+                            isDisabled={!reviewType || reviewType.length === 0 || status == null}
+                            onPress={handleUpdateReview}
+                        >
+                            Assign Review Type
+                        </Button>
+                    </div>
+                )}
+
+                <div className="mt-4 bg-default-50 p-4 rounded-lg">
+                    <h3 className="font-medium mb-2">About Review Types</h3>
+                    <div className="space-y-2 text-sm text-default-600">
+                        <p>
+                            • The review type determines the evaluation process and timeline
+                            for your research application.
                         </p>
-                    )}
+                        <p>
+                            • Selection is based on research complexity, risk level, and
+                            participant involvement.
+                        </p>
+                        <p>
+                            • Processing times are estimates and may vary based on
+                            application completeness and complexity.
+                        </p>
+                    </div>
                 </div>
             </CardBody>
-            {(user.role !== 'researcher' && status && !status?.end) && (
-                <>
-                    <Divider />
-                    <CardFooter className="justify-end">
-                        <Button color="secondary"
-                                variant="shadow"
-                                isLoading={loading}
-                                onPress={() => handleUpdateReview()}
-                        >
-                            Update Review
-                        </Button>
-                    </CardFooter>
-                </>
-            )}
         </Card>
     );
 }
+
+const ReviewTypeCard: React.FC<ReviewTypeCardProps> = ({
+    info,
+    isSelected,
+    onSelect,
+    isDisabled = false,
+}) => (
+    <Card
+        className={`w-full transition-all
+        ${isSelected
+            ? 'border-2 border-primary-500 bg-primary-50'
+            : 'border border-default-200'}
+        ${isDisabled ? 'cursor-default' : 'cursor-pointer'}
+        ${(isSelected && !isDisabled && !info) && 'hover:border-primary-200'}
+        `}
+        isPressable={!isDisabled}
+        isDisabled={isDisabled}
+        onPress={() => !isDisabled && onSelect(info.value)}
+    >
+        <CardBody className="p-4">
+            <div className="flex items-start gap-4">
+                <div className={`p-2 rounded-lg ${
+                    isSelected ? 'bg-primary-100' : 'bg-default-100'
+                }`}>
+                    {info.icon}
+                </div>
+                <div className="flex-1">
+                    <h3 className="text-lg font-semibold">{info.label}</h3>
+                    <p className="text-sm text-default-600 mt-1">
+                        {info.description}
+                    </p>
+                    <div className="mt-2">
+                        <Tooltip content="Estimated processing time">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-default-100 text-default-800">
+                                {info.processingTime}
+                            </span>
+                        </Tooltip>
+                    </div>
+                </div>
+            </div>
+        </CardBody>
+    </Card>
+);
+
+export const ReviewTypeDetails: React.FC<{info: ReviewTypeInfo}> = ({ info }) => (
+    <Card className="w-full bg-default-50">
+        <CardBody className="p-4">
+            <h4 className="font-medium mb-3">Criteria for {info.label}</h4>
+            <ul className="space-y-2">
+                {info.criteria.map((criterion, index) => (
+                    <li key={index} className="flex items-start">
+                        <span className="inline-block w-2 h-2 rounded-full bg-primary-500 mt-2 mr-2" />
+                        <span className="text-sm text-gray-600">{criterion}</span>
+                    </li>
+                ))}
+            </ul>
+        </CardBody>
+    </Card>
+);
 
 export default ReviewType;

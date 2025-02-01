@@ -30,7 +30,7 @@ const ManuscriptList: React.FC<ManuscriptListProps> = ({reviewResults, documents
             </CardHeader>
             <CardBody>
                 {(reviewResults && reviewResults.length === 0) ? (
-                    <p className="text-center text-default-500">No review results found.</p>
+                    <p className="text-center text-default-500">No revisions uploaded yet.</p>
                 ) : (
                     <div>
                         {/* Documents Table Section */}

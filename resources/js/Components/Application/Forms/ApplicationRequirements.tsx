@@ -1,5 +1,5 @@
 import React, { ChangeEvent, Fragment, useMemo, useState } from "react";
-import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Divider, Link, LinkIcon } from "@nextui-org/react";
+import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Link, LinkIcon } from "@nextui-org/react";
 import { ApplicationFormProps, AppStatus, Requirement, User } from "@/types";
 import { toast } from "react-toastify";
 import { MdiDeleteForever } from "@/Components/Icons";
@@ -119,12 +119,13 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
             handleUpdateApplication({
                 application: {
                     statuses: response.data.application.statuses,
+                    requirements: response.data.application.requirements
                 }
             })
 
             setAlert({
                 title: "Requirements submitted!",
-                message: "Waiting for the RERC Staff's approval of the requirements",
+                message: "Waiting for the RERC Staff's approval of all the requirements",
                 type: 'primary'
             });
         }).finally(() => setLoading(false));
@@ -147,7 +148,7 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
                     requirements: response.data.application.requirements,
                     statuses: response.data.application.statuses
                 }
-            })
+            });
 
             setAlert({
                 message: `Requirements has been approved`,
@@ -237,7 +238,7 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
                                             {/* List of uploaded requirements */}
                                             {(uploaded.length > 0) ? uploaded.map((u) => {
                                                 return (
-                                                    <div key={u.id} className="relative flex mt-1 min-w-0">
+                                                    <div key={u.id} className="relative flex items-center mt-1 min-w-0">
                                                         <Link
                                                             className="inline-flex justify-between w-full cursor-pointer p-1"
                                                             href={route('applications.requirements.download', {application: application, requirement: u})}
@@ -245,11 +246,14 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
                                                             underline="hover"
                                                             isExternal
                                                         >
-                                                            <p className="text-sm truncate">
+                                                            <p className="text-sm line-clamp-1">
                                                                 {u.file_url.split('\\').pop()?.split('/').pop()}
                                                             </p>
                                                             <LinkIcon />
                                                         </Link>
+                                                        <Chip size="sm" variant="flat" className="mr-2" color={u.status.toLowerCase() === 'uploaded' ? 'primary' : 'success'}>
+                                                            {u.status}
+                                                        </Chip>
                                                         {(user.role === 'researcher' && u.status.toLowerCase() !== 'approved') && (
                                                             <Button isIconOnly variant="light" color="danger" onPress={() => handleDeleteRequirement(u)}>
                                                                 <MdiDeleteForever />

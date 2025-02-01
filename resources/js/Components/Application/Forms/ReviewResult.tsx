@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 const ReviewResult = ({user, application, status, handleUpdateApplication, handleMessage}: ApplicationFormProps) => {
     const [currTab, setCurrTab] = useState<string>('manuscripts');
     const [loading, setLoading] = useState<boolean>(false);
-    const [hasApproved, setHasApproved] = useState<boolean>(status.end != null);
+    const [hasApproved, setHasApproved] = useState<boolean>(status != null && status.end != null);
 
     const hasRevisions = useMemo(() => {
         return application.review_results.length > 0
@@ -134,8 +134,8 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
             <NavStatus currTab={currTab} setCurrTab={setCurrTab} tabs={[
                 {label: 'Manuscripts', name: 'manuscripts'},
                 {label: 'Review Result', name: 'review-result'},
-                {label: 'Upload Review', name: 'upload-review', notFor: () => user.role !== 'staff' || hasApproved},
-                {label: 'Feedbacks', name: 'feedbacks'},
+                {label: 'Upload Review', name: 'upload-review', notFor: () => user.role !== 'staff' || hasApproved || status == null},
+                {label: 'Feedbacks', name: 'feedbacks', notFor: () => status == null},
             ]} />
             {currTab === 'manuscripts' && (
                 <>
@@ -159,7 +159,7 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
             {(currTab === 'review-result') && (
                 <ReviewResultDetails user={user} reviewResults={application.review_results} onUploadRevision={handleUploadRevision} />
             )}
-            {currTab === 'upload-review' && (
+            {(currTab === 'upload-review') && (
                 <CreateReviewResult reviewResults={application.review_results} documents={application.documents} onSubmit={handleSubmit} />
             )}
             {currTab === 'feedbacks' && (

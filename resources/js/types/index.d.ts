@@ -1,4 +1,5 @@
 import { Config } from 'ziggy-js';
+import { ReactNode } from "react";
 
 export interface User {
     id: string;
@@ -174,6 +175,15 @@ interface PaginationProps<T> {
     prev_page_url: null | string;
     to: number;
     total: number;
+}
+
+export interface ReviewTypeInfo {
+    value: 'exempt' | 'expedited' | 'full board';
+    label: string;
+    description: string;
+    processingTime: string;
+    criteria: string[];
+    icon: ReactNode;
 }
 
 export interface ApplicationFormProps {

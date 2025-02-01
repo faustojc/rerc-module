@@ -121,7 +121,7 @@ const DecisionLetter = ({user, application, status, handleUpdateApplication, han
             </CardHeader>
             <NavStatus currTab={currTab} setCurrTab={setCurrTab} tabs={[
                 {label: "Decision Letter", name: "decision-letter"},
-                {label: "Feedbacks", name: "feedbacks"},
+                {label: "Feedbacks", name: "feedbacks", notFor: () => status == null},
             ]} />
             {currTab === 'decision-letter' ? (
                 <>
