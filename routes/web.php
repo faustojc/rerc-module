@@ -51,8 +51,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('applications.statuses', AppStatusController::class)
         ->only(['store', 'update']);
 
-    Route::get('/decision-letter/{decision_letter}/download', [DecisionLetterController::class, 'download'])
-        ->name('decision-letter.download');
     Route::apiResource('applications.decision-letter', DecisionLetterController::class)
         ->only(['store', 'update', 'destroy']);
 
@@ -65,16 +63,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('review-results/{review_result}/upload-revision', [ReviewResultController::class, 'uploadRevision'])
         ->name('review-results.upload-revision');
 
-    Route::get('/requirements/{requirement}/download', [ApplicationRequirementController::class, 'download'])
-        ->name('applications.requirements.download');
-
     // Download routes
     Route::get('/documents/{document}/download', function (Document $document) {
         return Storage::disk('public')->download($document->file_url);
     })->name('applications.documents.download');
+    Route::get('/requirements/{requirement}/download', [ApplicationRequirementController::class, 'download'])
+        ->name('applications.requirements.download');
     Route::get('/applications/{application}/payment-download', function (AppProfile $application) {
         return Storage::disk('public')->download($application->proof_of_payment_url);
     })->name('applications.payment-download');
+    Route::get('/decision-letter/{decision_letter}/download', [DecisionLetterController::class, 'download'])
+        ->name('decision-letter.download');
     Route::get('/review-results/{review_result}/download', function (ReviewResult $review_result) {
         return Storage::disk('public')->download($review_result->file_url);
     })->name('review-results.download');
