@@ -27,7 +27,7 @@ class ApplicationRequirementController extends Controller
             'is_additional' => 'nullable|string',
         ]);
 
-        $isAdditional = boolval($validated['is_additional']);
+        $isAdditional = boolval($validated['is_additional'] ?? FALSE);
         $requirements = $validated['requirements'];
         $newlyRequirements = [];
 
@@ -83,7 +83,7 @@ class ApplicationRequirementController extends Controller
         $validated = $request->validate([
             'status_id' => 'required|string',
             'new_status' => 'required|string',
-            'is_completed' => 'required|boolean',
+            'is_completed' => 'nullable|boolean',
             'next_status_name' => 'nullable|string',
             'requirement_ids' => 'nullable|array',
             'requirement_ids.*' => 'required|string',
@@ -91,7 +91,7 @@ class ApplicationRequirementController extends Controller
             'message' => 'nullable|string',
         ]);
 
-        $isCompleted = boolval($validated['is_completed']);
+        $isCompleted = boolval($validated['is_completed'] ?? false);
         $requirementIds = $validated['requirement_ids'];
         $message = $validated['message'];
         $requirements = [];
