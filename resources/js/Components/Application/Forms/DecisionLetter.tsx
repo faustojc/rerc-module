@@ -1,33 +1,25 @@
-import { ApplicationFormProps, AppStatus, DecisionLetter as AppDecisionLetter, User } from "@/types";
-import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Link } from "@nextui-org/react";
-import React, { ChangeEvent, useState } from "react";
+import { ApplicationFormProps } from "@/types";
+import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { MdiDeleteForever } from "@/Components/Icons";
-import InputFile from "@/Components/InputFile";
 import NavStatus from "@/Components/NavStatus";
 import Feedbacks from "@/Components/Application/Feedbacks";
+import { DecisionLetterDisplay } from "@/Components/Application/Forms/DecisionLetter/DecisionLetterDisplay";
+import { DecisionLetterUpload } from "@/Components/Application/Forms/DecisionLetter/DecisionLetterUpload";
+import { ClipboardError } from "@/Components/Icons";
 
 const DecisionLetter = ({user, application, status, handleUpdateApplication, handleMessage}: ApplicationFormProps) => {
     const [currTab, setCurrTab] = useState<string>('decision-letter');
-    const [file, setFile] = useState<File | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [isError, setIsError] = useState<boolean>(false);
 
-    const handleSelectFile = (e: ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
+    const canUpload = user.role === 'staff' && (!application.decision_letter || !application.decision_letter.is_signed);
+    const canUploadSigned = user.role === 'chairperson' && application.decision_letter != null  && application.decision_letter.is_signed;
+    const canDelete = user.role === 'staff' && application.decision_letter != null && !application.decision_letter.is_signed;
 
-        if (files && files.length > 0) {
-            setFile(files[0]);
-            setIsError(false);
-        }
-    }
-
-    const handleUpdateData = (data: FormData) => {
-        setLoading(true);
-        window.axios.post(route('applications.decision-letter.store', {application: application}), data, {
-            headers: {'Content-Type': 'multipart/form-data'}
-        }).then((response) => {
-            setFile(null);
+    const handleUpdateData = async (data: FormData) => {
+        try {
+            const response = await window.axios.post(route('applications.decision-letter.store', {application: application}), data, {
+                headers: {'Content-Type': 'multipart/form-data'}
+            });
 
             handleUpdateApplication({
                 application: {
@@ -38,24 +30,23 @@ const DecisionLetter = ({user, application, status, handleUpdateApplication, han
                     ]
                 }
             });
-        }).catch((error) => {
+        } catch (error: any) {
             toast.error(error.message ?? 'An error occurred. Please try again.');
             console.error(error);
-        }).finally(() => setLoading(false));
+        }
     }
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!application.decision_letter) {
             return;
         }
 
-        setLoading(true);
-        window.axios.delete(route('applications.decision-letter.destroy', {
-            application: application,
-            decision_letter: application.decision_letter,
-            status_id: status.id
-        })).then((_) => {
-            setFile(null);
+        try {
+            await window.axios.delete(route('applications.decision-letter.destroy', {
+                application: application,
+                decision_letter: application.decision_letter,
+                status_id: status.id
+            }));
 
             const updatedStatus = {
                 ...status,
@@ -71,18 +62,13 @@ const DecisionLetter = ({user, application, status, handleUpdateApplication, han
                     ]
                 }
             });
-        }).catch((error) => {
-            toast.error(error.message ?? 'An error occurred. Please try again.');
-            console.error(error);
-        }).finally(() => setLoading(false));
+        } catch (e: any) {
+            toast.error(e.message ?? 'An error occurred. Please try again.');
+            console.error(e);
+        }
     }
 
-    const handleUpload = () => {
-        if (file === null) {
-            setIsError(true);
-            return;
-        }
-
+    const handleUpload = async (file: File) => {
         const formData = new FormData();
 
         formData.append('file', file!);
@@ -90,170 +76,117 @@ const DecisionLetter = ({user, application, status, handleUpdateApplication, han
         formData.append('message', `${application.research_title}'s decision letter has been uploaded`);
         formData.append('new_status', 'Uploaded');
 
-        handleUpdateData(formData);
+        await handleUpdateData(formData);
     }
 
-    const handleUpdateSigned = () => {
-        if (file === null) {
-            setIsError(true);
-            return;
-        }
-
+    const handleUpdateSigned = async (file: File) => {
         const formData = new FormData();
         formData.append('file', file!);
         formData.append('status_id', status.id);
-        formData.append('is_signed', '1');
+        formData.append('is_signed', 'true');
         formData.append('message', `${application.research_title}'s decision letter has been signed`);
 
-        handleUpdateData(formData);
+        await handleUpdateData(formData);
     }
 
     return (
         <Card className="sticky self-start top-0">
             <CardHeader className="flex-col items-start bg-success-300">
-                <h3 className="text-xl font-semibold text-start">Decision Letter</h3>
-                <p className="text-sm">
-                    {user.role !== "staff"
-                        ? "Decision letter from the RERC Staff."
-                        : "Upload the final decision letter for the application."
-                    }
+                <h3 className="text-xl font-bold">Decision Letter</h3>
+                <p className="text-sm mt-2">
+                    {user.role === 'staff'
+                        ? "Upload and manage the decision letter for this application."
+                        : user.role === 'chairperson'
+                            ? "Review and sign the decision letter."
+                            : "View the decision letter for your application."}
                 </p>
             </CardHeader>
-            <NavStatus currTab={currTab} setCurrTab={setCurrTab} tabs={[
-                {label: "Decision Letter", name: "decision-letter"},
-                {label: "Feedbacks", name: "feedbacks", notFor: () => status == null},
-            ]} />
-            {currTab === 'decision-letter' ? (
-                <>
-                    <CardBody className="p-4">
-                        {(application.decision_letter !== null) ? (
-                            <>
-                                <FileLink user={user} decision_letter={application.decision_letter} loading={loading} handleDelete={handleDelete} />
-                                {(user.role === 'chairperson' && status !== null && status.status === "Uploaded") && (
-                                    <>
-                                        <Divider className="my-4" />
-                                        <InputFile label="Upload the Signed Decision Letter"
-                                                   type="file"
-                                                   accept=".pdf,.doc,.docx"
-                                                   file={file}
-                                                   isError={isError}
-                                                   handleSelectFile={handleSelectFile}
-                                        />
-                                    </>
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                {user.role !== "staff" ? (
-                                    <div className="text-center italic p-5">
-                                        {status && status?.status === "Pending"
-                                            ? "RERC Staff has not uploaded the decision letter yet."
-                                            : "Waiting for RERC Staff to upload the decision letter."
-                                        }
-                                    </div>
-                                ) : (
-                                    <InputFile label="Upload Decision Letter"
-                                               file={file}
-                                               type="file"
-                                               accept=".pdf,.doc,.docx"
-                                               isError={isError}
-                                               handleSelectFile={handleSelectFile}
-                                    />
-                                )}
-                            </>
-                        )}
-                    </CardBody>
-                    {(user.role !== "researcher" && status != null)
-                     && <Footer user={user}
-                                status={status}
-                                decision_letter={application.decision_letter}
-                                loading={loading}
-                                handleUpload={handleUpload}
-                                handleUpdate={handleUpdateSigned}
-                     />
-                    }
-                </>
+            {status == null ? (
+                <div className="text-center py-8">
+                    <ClipboardError className="w-12 h-12 text-default-400 mx-auto mb-3" />
+                    <p className="text-default-500">
+                        Review type must be assigned before moving to this section.
+                    </p>
+                </div>
             ) : (
-                <Feedbacks user={user} status={status} handleMessage={handleMessage} />
+                <>
+                    <NavStatus currTab={currTab} setCurrTab={setCurrTab} tabs={[
+                        {label: "Decision Letter", name: "decision-letter"},
+                        {label: "Feedbacks", name: "feedbacks", notFor: () => status == null},
+                    ]} />
+                    {currTab === 'decision-letter' ? (
+                        <CardBody className="p-4">
+                            {application.decision_letter && (
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-medium mb-3">
+                                        Current Decision Letter
+                                    </h3>
+                                    <DecisionLetterDisplay
+                                        decisionLetter={application.decision_letter}
+                                        onDelete={handleDelete}
+                                        canDelete={canDelete}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Upload Section for Staff */}
+                            {canUpload && !canDelete && (
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-medium mb-3">
+                                        Upload Decision Letter
+                                    </h3>
+                                    <DecisionLetterUpload
+                                        onUpload={handleUpload}
+                                        buttonText="Upload Decision Letter"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Upload Signed Version for Chairperson */}
+                            {canUploadSigned && (
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-medium mb-3">
+                                        Upload Signed Version
+                                    </h3>
+                                    <DecisionLetterUpload
+                                        onUpload={handleUpdateSigned}
+                                        buttonText="Upload Signed Version"
+                                    />
+                                </div>
+                            )}
+
+                            <div className="mt-3 bg-default-100 p-4 rounded-lg">
+                                <h3 className="font-medium mb-2">Notice:</h3>
+                                <div className="space-y-2 text-sm text-default-600">
+                                    {user.role === 'staff' ? (
+                                        <>
+                                            <p>• Upload the initial decision letter for review.</p>
+                                            <p>• You can delete and re-upload until it's signed.</p>
+                                            <p>• Once signed by the Chairperson, it cannot be modified.</p>
+                                        </>
+                                    ) : user.role === 'chairperson' ? (
+                                        <>
+                                            <p>• Review the decision letter carefully before signing.</p>
+                                            <p>• Upload the signed version when ready.</p>
+                                            <p>• Signed letters are final and cannot be modified.</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p>• The decision letter contains the final decision on your application.</p>
+                                            <p>• You will be notified when the signed version is available.</p>
+                                            <p>• Keep this document for your records.</p>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </CardBody>
+                    ) : (
+                        <Feedbacks user={user} status={status} handleMessage={handleMessage} />
+                    )}
+                </>
             )}
         </Card>
     );
-}
-
-const FileLink = ({user, decision_letter, loading, handleDelete}: {
-    user: User,
-    decision_letter: AppDecisionLetter,
-    loading: boolean,
-    handleDelete: () => void,
-}) => {
-    const displayDeleteBtn = user.role === "staff" && !decision_letter.is_signed;
-    const isSigned = decision_letter.is_signed === 1;
-
-    return (
-        <div className="flex flex-col">
-            <div className="flex flex-nowrap items-center">
-                <Link showAnchorIcon
-                      underline="hover"
-                      color="primary"
-                      href={route('decision-letter.download', {decision_letter: decision_letter})}
-                      className="text-ellipsis px-0 py-2"
-                >
-                    {decision_letter.file_name}
-                </Link>
-                {displayDeleteBtn && (
-                    <Button isIconOnly isLoading={loading} variant="light" color="danger" onPress={handleDelete}>
-                        <MdiDeleteForever />
-                    </Button>
-                )}
-                {isSigned && (
-                    <Chip className="ml-2 border-none" variant="shadow" color="success">
-                        Signed
-                    </Chip>
-                )}
-            </div>
-            <p className="text-medium">
-                Date Uploaded: {new Date(decision_letter.date_uploaded).toLocaleDateString('en-US', {
-                    month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
-                })}
-            </p>
-        </div>
-    );
-}
-
-const Footer = ({user, status, decision_letter, loading, handleUpload, handleUpdate}: {
-    user: User,
-    status: AppStatus,
-    decision_letter: AppDecisionLetter | null,
-    loading: boolean,
-    handleUpload: () => void,
-    handleUpdate: () => void,
-}) => {
-    if (user.role === "staff" && status.status !== "Uploaded" && decision_letter === null) {
-        return (
-            <>
-                <Divider />
-                <CardFooter className="justify-end">
-                    <Button color="secondary" variant="shadow" isLoading={loading} onPress={handleUpload}>
-                        Upload
-                    </Button>
-                </CardFooter>
-            </>
-        )
-    }
-    else if (user.role === 'chairperson' && decision_letter !== null && status.status !== "Signed") {
-        return (
-            <>
-                <Divider />
-                <CardFooter className="justify-end">
-                    <Button color="secondary" variant="shadow" isLoading={loading} onPress={handleUpdate}>
-                        Upload Signed
-                    </Button>
-                </CardFooter>
-            </>
-        )
-    }
-
-    return null;
 }
 
 export default DecisionLetter;

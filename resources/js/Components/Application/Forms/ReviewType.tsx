@@ -1,11 +1,12 @@
 import { ApplicationFormProps, ReviewTypeInfo } from "@/types";
-import { Button, Card, CardBody, CardHeader, Tooltip } from "@nextui-org/react";
+import { Button, Card, CardBody, CardHeader, Chip, Divider, Tooltip } from "@nextui-org/react";
 import React, { useState } from "react";
 import { REVIEW_TYPES } from "@/types/constants";
 
 interface ReviewTypeCardProps {
     info: ReviewTypeInfo;
     isSelected: boolean;
+    isPressable: boolean;
     onSelect: (value: string) => void;
     isDisabled?: boolean;
 }
@@ -41,12 +42,20 @@ const ReviewType = ({user, application, status, handleUpdateApplication}: Applic
 
     return (
         <Card className="sticky self-start top-0">
-            <CardHeader className="flex-col items-start bg-success-300">
-                <h3 className="text-xl font-semibold text-start">Review Type</h3>
+            <CardHeader className="flex-col items-start">
+                <div className="flex items-center justify-between w-full">
+                    <h2 className="text-xl font-bold">Review Type Assignment</h2>
+                    {application.review_type && (
+                        <Chip color="primary" variant="flat">
+                            {getReviewTypeInfo(application.review_type).label}
+                        </Chip>
+                    )}
+                </div>
                 <p className="text-sm">
                     Type of review based on vulnerability of the participants and level of risks.
                 </p>
             </CardHeader>
+            <Divider />
             <CardBody>
                 <div className="grid md:grid-cols-3 gap-4 mb-3">
                     {REVIEW_TYPES.map((type) => (
@@ -55,7 +64,8 @@ const ReviewType = ({user, application, status, handleUpdateApplication}: Applic
                             info={type}
                             isSelected={reviewType == type.value}
                             onSelect={(value) => setReviewType(value.toLowerCase())}
-                            isDisabled={!canAssign || !!application.review_type}
+                            isPressable={application.review_type == null}
+                            isDisabled={!canAssign || application.review_type != type.value}
                         />
                     ))}
                 </div>
@@ -77,7 +87,7 @@ const ReviewType = ({user, application, status, handleUpdateApplication}: Applic
                     </div>
                 )}
 
-                <div className="mt-4 bg-default-50 p-4 rounded-lg">
+                <div className="mt-4 bg-default-100 p-4 rounded-lg">
                     <h3 className="font-medium mb-2">About Review Types</h3>
                     <div className="space-y-2 text-sm text-default-600">
                         <p>
@@ -102,6 +112,7 @@ const ReviewType = ({user, application, status, handleUpdateApplication}: Applic
 const ReviewTypeCard: React.FC<ReviewTypeCardProps> = ({
     info,
     isSelected,
+    isPressable,
     onSelect,
     isDisabled = false,
 }) => (
@@ -110,10 +121,10 @@ const ReviewTypeCard: React.FC<ReviewTypeCardProps> = ({
         ${isSelected
             ? 'border-2 border-primary-500 bg-primary-50'
             : 'border border-default-200'}
-        ${isDisabled ? 'cursor-default' : 'cursor-pointer'}
+        ${!isPressable ? 'cursor-default' : 'cursor-pointer'}
         ${(isSelected && !isDisabled && !info) && 'hover:border-primary-200'}
         `}
-        isPressable={!isDisabled}
+        isPressable={isPressable}
         isDisabled={isDisabled}
         onPress={() => !isDisabled && onSelect(info.value)}
     >
@@ -143,14 +154,14 @@ const ReviewTypeCard: React.FC<ReviewTypeCardProps> = ({
 );
 
 export const ReviewTypeDetails: React.FC<{info: ReviewTypeInfo}> = ({ info }) => (
-    <Card className="w-full bg-default-50">
+    <Card className="w-full bg-default-100">
         <CardBody className="p-4">
             <h4 className="font-medium mb-3">Criteria for {info.label}</h4>
             <ul className="space-y-2">
                 {info.criteria.map((criterion, index) => (
                     <li key={index} className="flex items-start">
                         <span className="inline-block w-2 h-2 rounded-full bg-primary-500 mt-2 mr-2" />
-                        <span className="text-sm text-gray-600">{criterion}</span>
+                        <span className="text-sm text-default-600">{criterion}</span>
                     </li>
                 ))}
             </ul>
