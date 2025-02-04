@@ -3,6 +3,7 @@
 use App\Http\Controllers\ApplicationRequirementController;
 use App\Http\Controllers\AppProfileController;
 use App\Http\Controllers\AppStatusController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DecisionLetterController;
 use App\Http\Controllers\MessageThreadsController;
 use App\Http\Controllers\ProfileController;
@@ -26,7 +27,7 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', fn() => Inertia::render('Dashboard'))->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
