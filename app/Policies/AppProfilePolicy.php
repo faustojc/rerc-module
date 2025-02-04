@@ -62,6 +62,6 @@ class AppProfilePolicy
      */
     public function forceDelete(User $user, AppProfile $appProfile): bool
     {
-        return $user->role == "researcher";
+        return $user->role == "researcher" && $user->id == $appProfile->user_id;
     }
 }
