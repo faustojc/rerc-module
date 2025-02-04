@@ -3,17 +3,18 @@ import { Card, CardBody, CardHeader, Chip, Divider } from "@nextui-org/react";
 import React, { Fragment, useMemo } from "react";
 import { ArrowsSwitch, Check, ClockRotateRight } from "@/Components/Icons";
 import { getLocalTimeZone } from "@internationalized/date";
+import { STEPS } from "@/types/constants";
+import { statusColor } from "@/types/helpers";
 
 interface StatusesProps {
-    statusList: string[];
     appStatuses: AppStatus[];
     selectedStatus: AppStatus;
     setSelectedStatus: (status: AppStatus) => void;
 }
 
-const Statuses = ({statusList, appStatuses, selectedStatus, setSelectedStatus }: StatusesProps) => {
+const Statuses = ({appStatuses, selectedStatus, setSelectedStatus }: StatusesProps) => {
     const steps: AppStatus[] = useMemo(() => {
-        return statusList.map((name, index) => {
+        return STEPS.map((name, index) => {
             const dateTime = Intl.DateTimeFormat('en-US', {
                 month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: getLocalTimeZone()
             });
@@ -29,7 +30,7 @@ const Statuses = ({statusList, appStatuses, selectedStatus, setSelectedStatus }:
             return {
                 id: appStatuses[index]?.id ?? '',
                 app_profile_id: appStatuses[index]?.app_profile_id ?? appStatuses[0].app_profile_id,
-                name: name,
+                name: name.name,
                 status: appStatuses[index]?.status ?? "Pending",
                 sequence: appStatuses[index]?.sequence ?? index + 1,
                 start: startDate,
@@ -38,20 +39,6 @@ const Statuses = ({statusList, appStatuses, selectedStatus, setSelectedStatus }:
             }
         });
     }, [appStatuses]);
-
-    const statusColor = (status: string) => {
-        if ('pending'.includes(status.toLowerCase())) {
-            return "warning";
-        } else if ('approved,completed,submitted,done,assigned,signed'.includes(status.toLowerCase())) {
-            return "success";
-        } else if ('sent,received,reviewed,reviewing,uploaded'.includes(status.toLowerCase())) {
-            return "secondary";
-        } else if ('rejected,removed'.includes(status.toLowerCase())) {
-            return "danger";
-        } else {
-            return "primary";
-        }
-    };
 
     const stepsColor = (status: AppStatus) => {
         if (selectedStatus.sequence === status.sequence) {
