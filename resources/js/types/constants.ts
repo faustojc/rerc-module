@@ -42,3 +42,16 @@ export const REVIEW_TYPES: ReviewTypeInfo[] = [
         ],
     },
 ];
+
+export const STEPS = [
+    { sequence: 1, name: 'Application Submission' },
+    { sequence: 2, name: 'Protocol Assignment' },
+    { sequence: 3, name: 'Initial Review' },
+    { sequence: 4, name: 'Review Type' },
+    { sequence: 5, name: 'Decision Letter' },
+    { sequence: 6, name: 'Payment Made' },
+    { sequence: 7, name: 'Assignment of Panel & Meeting Schedule' },
+    { sequence: 8, name: 'Review Results' },
+    { sequence: 9, name: 'Additional Requirements' },
+    { sequence: 10, name: 'Ethics Clearance' },
+];
