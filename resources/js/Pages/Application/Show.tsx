@@ -13,19 +13,6 @@ interface ApplicationShowProps extends PageProps {
 }
 
 const Show = memo((props: ApplicationShowProps) => {
-    const statusList = useMemo(() => [
-        "Application Submission",
-        "Protocol Assignment",
-        "Initial Review",
-        "Review Type",
-        "Decision Letter",
-        "Payment Made",
-        "Assignment of Panel & Meeting Schedule",
-        "Review Result",
-        "Additional Requirements",
-        "Ethics Clearance"
-    ], []);
-
     const { application, handleUpdateApplication, handleMessage } = useApplication(props.application);
 
     const [selectedStatus, setSelectedStatus] = useState<AppStatus>(() =>
@@ -58,7 +45,6 @@ const Show = memo((props: ApplicationShowProps) => {
 
                 <div className="lg:grid grid-cols-3 gap-4 mt-4">
                     <Statuses
-                        statusList={statusList}
                         appStatuses={application.statuses}
                         selectedStatus={selectedStatus}
                         setSelectedStatus={setSelectedStatus}
@@ -99,8 +85,8 @@ const StatusSection = memo(({
         <motion.div
             key={selectedStatus.sequence}
             className="col-span-2"
-            initial={{ opacity: 0, scale: 0.99 }}
-            animate={{ opacity: 1, scale: 1.0 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
         >
             {StatusComponent && (
                 <>
@@ -125,9 +111,5 @@ const StatusSection = memo(({
         </motion.div>
     </AnimatePresence>
 ));
-
-ApplicationHeader.displayName = 'ApplicationHeader';
-StatusSection.displayName = 'StatusSection';
-Show.displayName = 'Show';
 
 export default Show;

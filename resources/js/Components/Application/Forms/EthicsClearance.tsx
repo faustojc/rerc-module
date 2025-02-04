@@ -4,7 +4,7 @@ import { Button, Card, CardBody, CardHeader, Chip, DatePicker, Input, Link } fro
 import { CloudArrowDown, DocumentCheckOutline, LightUploadRounded } from "@/Components/Icons";
 import { DateValue, getLocalTimeZone } from "@internationalized/date";
 
-const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, handleUpdateApplication}) => {
+const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, status, handleUpdateApplication}) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [clearanceDate, setClearanceDate] = useState<DateValue | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -63,7 +63,7 @@ const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, han
     };
 
     return (
-        <Card className="w-full">
+        <Card className="sticky self-start top-0">
             <CardHeader className="flex flex-col items-start px-6 pt-6 pb-0">
                 <div className="flex items-center justify-between w-full">
                     <h2 className="text-xl font-bold">Ethics Clearance</h2>
@@ -146,17 +146,19 @@ const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, han
                                         onChange={(date) => handleSetClearanceDate(date)}
                                         description={clearanceDate ? formatDate(clearanceDateFormat()) : 'Select date'}
                                     />
-                                    <div className="flex justify-end">
-                                        <Button
-                                            color="primary"
-                                            isLoading={isUploading}
-                                            isDisabled={selectedFile == null || clearanceDate == null}
-                                            onPress={handleUpload}
-                                            startContent={<LightUploadRounded className="w-4 h-4" />}
-                                        >
-                                            Upload Ethics Clearance
-                                        </Button>
-                                    </div>
+                                    {status != null && (
+                                        <div className="flex justify-end">
+                                            <Button
+                                                color="primary"
+                                                isLoading={isUploading}
+                                                isDisabled={selectedFile == null || clearanceDate == null}
+                                                onPress={handleUpload}
+                                                startContent={<LightUploadRounded className="w-4 h-4" />}
+                                            >
+                                                Upload Ethics Clearance
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
