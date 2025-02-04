@@ -1,5 +1,7 @@
 import { Config } from 'ziggy-js';
 import { ReactNode } from "react";
+import type { RangeValue } from "@react-types/shared";
+import type { DateValue } from "@react-types/datepicker";
 
 export interface User {
     id: string;
@@ -184,6 +186,34 @@ export interface ReviewTypeInfo {
     processingTime: string;
     criteria: string[];
     icon: ReactNode;
+}
+
+export interface ApplicationFilters {
+    query?: string;
+    reviewType?: string;
+    step?: number;
+    dateRange?: RangeValue<DateValue> | null;
+    status?: string; //latest step
+}
+
+export interface DashboardPageProps extends PageProps{
+    stats: {
+        totalApplications: number;
+        applicationsByStatus: {
+            pending: number;
+            inProgress: number;
+            completed: number;
+        };
+        applicationsByReviewType: {
+            exempted: number;
+            expedited: number;
+            fullBoard: number;
+        };
+        recentApplications: Application[];
+        upcomingMeetings: Meeting[];
+        pendingReviews: AppReviewResult[];
+        pendingDecisionLetters: Application[];
+    };
 }
 
 export interface ApplicationFormProps {

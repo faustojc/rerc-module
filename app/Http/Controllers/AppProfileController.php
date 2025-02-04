@@ -12,6 +12,8 @@ use App\Models\EthicsClearance;
 use App\Models\PanelMember;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,34 +35,62 @@ class AppProfileController extends Controller
     public function index(Request $request): Response|JsonResponse
     {
         $user = auth()->user();
-        $page = $request->query('page') ?? 1;
-        $query = $request->query('query');
-        $applications = AppProfile::query();
+        $page = $request->input('page', 1);
 
-        if ($query) {
-            $applications = $applications->whereLike('research_title', $query);
+        $filters = $request->only(['query', 'reviewType', 'step', 'dateRange', 'status']);
+
+        $countApplications = AppProfile::count();
+        if ($countApplications === 0) {
+            return Inertia::render('Application/Index', [
+                'canCreate' => auth()->user()->can('create', AppProfile::class),
+                'canDelete' => FALSE,
+                'applications' => [],
+            ]);
         }
 
-        if ($user->role == 'researcher') {
-            $applications = $applications->where('user_id', $user->id);
-        }
+        $applications = AppProfile::query()
+            ->select(['id', 'user_id', 'firstname', 'lastname', 'research_title', 'date_applied', 'protocol_code', 'review_type'])
+            ->with(['statuses' => function ($query) {
+                $query->select('id', 'app_profile_id', 'name', 'sequence', 'status')
+                    ->orderBy('sequence', 'desc')
+                    ->take(1);
+            }])->when($filters['query'] ?? null, function (Builder $query, $search) {
+                return $query->whereRaw('LOWER(research_title) LIKE ?', [strtolower("%$search%")])
+                    ->orWhereRaw('LOWER(firstname) LIKE ?', [strtolower("%$search%")])
+                    ->orWhereRaw('LOWER(lastname) LIKE ?', [strtolower("%$search%")]);
+            })->when($filters['reviewType'] ?? null, function (Builder $query, $reviewType) {
+                return $query->where('review_type', $reviewType);
+            })->when($filters['step'] ?? null, function ($query, $step) {
+                return $query->whereHas('statuses', function ($q) use ($step) {
+                    $q->where('sequence', '<=', $step);
+                });
+            })->when($filters['dateRange'] ?? null, function (Builder $query) use ($filters) {
+                $start = Carbon::parse($filters['dateRange']['start'])->startOfDay();
+                $end = Carbon::parse($filters['dateRange']['end'])->endOfDay();
 
-        $applications = $applications
-            ->orderByDesc('updated_at')
-            ->paginate(10, columns: ['id', 'user_id', 'research_title', 'date_applied', 'protocol_code'], page: $page);
+                return $query->whereBetween('date_applied', [$start, $end]);
+            })->when($filters['status'] ?? null, function ($query, $status) {
+                return $query->whereHas('statuses', function (Builder $q) use ($status) {
+                    $commonStatus = ['Approved', 'Assigned', 'Done', 'Signed', 'Completed', 'In Progress'];
 
+                    if (!in_array($status, $commonStatus)) {
+                        $q->whereNotIn('status', $commonStatus);
+                    }
+                    else {
+                        $q->where('status', $status);
+                    }
+
+                    return $q->orderBy('sequence', 'desc')->limit(1);
+                });
+            })->when($user->role === 'researcher', function (Builder $query) use ($user) {
+                return $query->where('user_id', $user->id);
+            })->orderByDesc('updated_at')
+            ->paginate(10, page: $page);
 
         $canCreate = auth()->user()->can('create', AppProfile::class);
-        $canDelete = FALSE;
-
-        foreach ($applications->items() as $application) {
-            $checkDelete = Gate::inspect('delete', $application);
-
-            if ($checkDelete->allowed()) {
-                $canDelete = TRUE;
-                break;
-            }
-        }
+        $canDelete = $applications->contains(function ($application) {
+            return Gate::inspect('delete', $application)->allowed();
+        });
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -85,7 +115,11 @@ class AppProfileController extends Controller
      */
     public function store(Request $request): RedirectResponse|JsonResponse
     {
-        Gate::authorize('create', AppProfile::class);
+        try {
+            Gate::authorize('create', AppProfile::class);
+        } catch (AuthorizationException) {
+            return to_route('applications.index');
+        }
 
         // decode the members array
         $request->merge([
@@ -167,24 +201,39 @@ class AppProfileController extends Controller
         return to_route('applications.show', ['application' => $appProfile]);
     }
 
-    public function create(): Response
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return Response|RedirectResponse
+     */
+    public function create(): Response|RedirectResponse
     {
+        try{
+            Gate::authorize('create', AppProfile::class);
+        } catch (AuthorizationException) {
+            return to_route('applications.index');
+        }
+
         return Inertia::render('Application/Create');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(AppProfile $application): Response
+    public function show(AppProfile $application): Response|RedirectResponse
     {
-        Gate::authorize('view', $application);
+        try {
+            Gate::authorize('view', $application);
+        } catch (AuthorizationException) {
+            return to_route('applications.index');
+        }
 
         // Eager load the relationships
         $application->load([
             'members:id,app_profile_id,firstname,lastname',
-            'statuses' => function ($query) {
+            'statuses' => function (HasMany $query) {
                 $query->select('id', 'app_profile_id', 'name', 'sequence', 'status', 'start', 'end')
-                    ->with('messages', function ($query) {
+                    ->with('messages', function (HasMany $query) {
                         $monthsAgo = Carbon::now()->subMonths(3);
 
                         $query->select('id', 'app_status_id', 'remarks', 'by', 'created_at', 'read_status')
