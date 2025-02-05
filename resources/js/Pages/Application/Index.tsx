@@ -17,6 +17,7 @@ import {
     Pagination,
     Select,
     SelectItem,
+    SelectSection,
     Spinner,
     Table,
     TableBody,
@@ -29,7 +30,6 @@ import { ArrowsSwitch, MdiDeleteForever, MdiDotsVertical, MdiFileDocumentArrowRi
 import React, { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { Head, Link } from "@inertiajs/react";
-import { useDateFormatter } from "@react-aria/i18n";
 import { toast } from "react-toastify";
 import { getLocalTimeZone, parseDate } from "@internationalized/date";
 import { statusColor } from "@/types/helpers";
@@ -42,11 +42,10 @@ export interface ApplicationIndexProps extends PageProps {
 }
 
 const Index = (props: ApplicationIndexProps) => {
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(props.applications.current_page);
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState<PaginationProps<Application>>(props.applications);
 
-    const formatter = useDateFormatter({dateStyle: "long"});
     const pages = Math.ceil(pagination.total / pagination.per_page);
 
     const items = useMemo(() => {
@@ -69,12 +68,13 @@ const Index = (props: ApplicationIndexProps) => {
         console.log(pagination);
 
         const searchParams = new URLSearchParams(window.location.search);
+        let pageParam = searchParams.get('page');
 
-        let page = searchParams.get('page');
-        if (page != null && (props.applications.data.length <= 10 && parseInt(page) > 1)) {
-            page = '1';
+        if (pageParam != null && parseInt(pageParam) > pagination.last_page) {
+            pageParam = '1';
 
-            searchParams.set('page', page);
+            setPage(1);
+            searchParams.set('page', pageParam);
             window.history.pushState({}, '', `${window.location.pathname}?${searchParams.toString()}`);
         }
 
@@ -130,6 +130,12 @@ const Index = (props: ApplicationIndexProps) => {
         ).then(response => {
             setPage(response.data.applications.current_page);
             setPagination(response.data.applications);
+
+            if (pageNumber > response.data.applications.last_page) {
+                const params = new URLSearchParams(window.location.search);
+                params.set('page', response.data.applications.current_page.toString());
+                window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
+            }
         }).catch((error) => {
             console.error(error.message ?? 'An error occurred while searching applications.');
         }).finally(() => setLoading(false));
@@ -176,16 +182,6 @@ const Index = (props: ApplicationIndexProps) => {
         setPage(page);
         handleSearchApplications(filters, page);
     }
-
-    const handleResetFilters = () => {
-        setFilters({
-            query: '',
-            reviewType: '',
-            step: undefined,
-            dateRange: undefined,
-            status: '',
-        });
-    };
 
     const handleDelete = (application: Application) => {
         setLoading(true);
@@ -281,6 +277,7 @@ const Index = (props: ApplicationIndexProps) => {
                                 className="w-full sm:w-48"
                                 placeholder="Review Type"
                                 value={filters.reviewType}
+                                selectedKeys={filters.reviewType ? [filters.reviewType] : []}
                                 onChange={(e) => {
                                     const value = e.target.value;
 
@@ -301,24 +298,32 @@ const Index = (props: ApplicationIndexProps) => {
                                 placeholder="Up to Step"
                                 size="sm"
                                 value={filters.step?.toString() || ''}
+                                selectedKeys={filters.step ? [filters.step.toString()] : []}
                                 onChange={(e) => {
                                     const value = e.target.value;
 
                                     setFilters(prev => ({ ...prev, step: value ? parseInt(value) : undefined }));
                                     handleSearchApplications({ ...filters, step: value ? parseInt(value) : undefined }, 1);
                                 }}
+                                scrollShadowProps={{ isEnabled: false }}
                             >
-                                {STEPS.map((step) => (
-                                    <SelectItem key={step.sequence} value={step.sequence.toString()}>
-                                        {step.name}
-                                    </SelectItem>
-                                ))}
+                                <SelectSection
+                                    classNames={{ heading: "flex w-full sticky top-1 z-20 py-1.5 px-2 bg-default-100 shadow-small rounded-small" }}
+                                    title="Steps"
+                                >
+                                    {STEPS.map((step) => (
+                                        <SelectItem key={step.sequence} value={step.sequence.toString()}>
+                                            {step.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectSection>
                             </Select>
 
                             <Select
                                 className="w-full sm:w-40"
                                 placeholder="Status"
                                 value={filters.status}
+                                selectedKeys={filters.status ? [filters.status] : []}
                                 onChange={(e) => {
                                     const value = e.target.value;
 
@@ -328,9 +333,9 @@ const Index = (props: ApplicationIndexProps) => {
                                 size="sm"
                             >
                                 <SelectItem key="" value="">All Status</SelectItem>
-                                <SelectItem key="pending" value="Pending">Pending</SelectItem>
-                                <SelectItem key="in_progress" value="In Progress">In Progress</SelectItem>
-                                <SelectItem key="completed" value="Completed">Completed</SelectItem>
+                                <SelectItem key="Pending" value="Pending">Pending</SelectItem>
+                                <SelectItem key="In Progress" value="In Progress">In Progress</SelectItem>
+                                <SelectItem key="Completed" value="Completed">Completed</SelectItem>
                             </Select>
 
                             <DateRangePicker
@@ -384,7 +389,12 @@ const Index = (props: ApplicationIndexProps) => {
                                 {(application) => (
                                     <TableRow key={application.id}>
                                         <TableCell>{application.research_title}</TableCell>
-                                        <TableCell>{`${application.firstname} ${application.lastname}`}</TableCell>
+                                        <TableCell>
+                                            {`${application.firstname} ${application.lastname}`}
+                                            <p className="text-sm text-default-500">
+                                                {application.members_count} member{application.members_count > 1 ? 's' : ''}
+                                            </p>
+                                        </TableCell>
                                         <TableCell className="flex flex-col">
                                             <p className="font-semibold">
                                                 Step {application.statuses[0].sequence}: {application.statuses[0].name}

@@ -96,7 +96,7 @@ const Feedbacks = ({user, status, handleMessage}: FeedbackProps) => {
         return (
             <div className={`flex gap-3 ${isSender ? 'justify-end' : 'justify-start'}`}>
                 <div>
-                    <Card className={`max-w-xs shadow-md ${
+                    <Card className={`sm:max-w-sm max-w-xs shadow-md ${
                         isSender ? 'bg-primary-100 rounded-br-none' : 'bg-default-100/60 rounded-bl-none'
                     }`}>
                         <CardBody>

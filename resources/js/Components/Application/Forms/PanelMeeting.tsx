@@ -6,9 +6,11 @@ import React, { useEffect, useState } from "react";
 import { MdiAccountAdd, MdiCalendar, MdiDeleteForever, UserAlt } from "@/Components/Icons";
 
 const PanelMeeting = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
-    const [panelMembers, setPanelMembers] = useState<PanelMember[]>(application.panels ?? []);
+    const [panelMembers, setPanelMembers] = useState<PanelMember[]>(
+        application.panels != null && application.panels.length !== 0 ? application.panels : []
+    );
     const [meeting, setMeeting] = useState<Date | null>(
-        application.meeting ? new Date(application.meeting.meeting_date) : null
+        application.meeting != null ? new Date(application.meeting.meeting_date) : null
     );
     const [isDraft, setIsDraft] = useState(false);
 
@@ -316,7 +318,7 @@ const PanelScheduleForm = ({
                     )}
                 </CardBody>
                 <Divider/>
-                <CardFooter className="flex-col gap-3">
+                <CardFooter className="flex-col items-center gap-3">
                     {displayAlert && (<Alert color="success" title="Draft Saved"/>)}
                     <div className="flex justify-end gap-3 w-full">
                         <Button color="secondary" variant="flat" onPress={() => handleSaveDraft()}>

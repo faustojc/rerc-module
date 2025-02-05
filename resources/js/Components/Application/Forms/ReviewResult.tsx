@@ -52,6 +52,8 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
                 {headers: { 'Content-Type': 'multipart/form-data' }}
             );
 
+            toast.success('Review result uploaded successfully.');
+
             handleUpdateApplication({
                 application: {
                     review_results: [response.data.review_result],
@@ -157,7 +159,7 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
                 </>
             )}
             {(currTab === 'review-result') && (
-                <ReviewResultDetails user={user} reviewResults={application.review_results} onUploadRevision={handleUploadRevision} />
+                <ReviewResultDetails user={user} isApproved={status.end != null} reviewResults={application.review_results} onUploadRevision={handleUploadRevision} />
             )}
             {(currTab === 'upload-review') && (
                 <CreateReviewResult reviewResults={application.review_results} documents={application.documents} onSubmit={handleSubmit} />

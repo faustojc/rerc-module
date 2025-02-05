@@ -48,8 +48,13 @@ class AppProfileController extends Controller
             ]);
         }
 
+        if (isset($page) && $countApplications <= 10 && intval($page) > 1) {
+            $page = 1;
+        }
+
         $applications = AppProfile::query()
             ->select(['id', 'user_id', 'firstname', 'lastname', 'research_title', 'date_applied', 'protocol_code', 'review_type'])
+            ->withCount('members')
             ->with(['statuses' => function ($query) {
                 $query->select('id', 'app_profile_id', 'name', 'sequence', 'status')
                     ->orderBy('sequence', 'desc')
@@ -62,7 +67,7 @@ class AppProfileController extends Controller
                 return $query->where('review_type', $reviewType);
             })->when($filters['step'] ?? null, function ($query, $step) {
                 return $query->whereHas('statuses', function ($q) use ($step) {
-                    $q->where('sequence', '<=', $step);
+                    $q->where('sequence', '>=', intval($step));
                 });
             })->when($filters['dateRange'] ?? null, function (Builder $query) use ($filters) {
                 $start = Carbon::parse($filters['dateRange']['start'])->startOfDay();

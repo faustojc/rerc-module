@@ -51,6 +51,7 @@ class ReviewResultController extends Controller
             'name' => $validated['name'],
             'file_url' => $path,
             'feedback' => $validated['feedback'],
+            'date_uploaded' => now(),
             'reviewed_document_ids' => $documentIds,
         ]);
 
@@ -58,10 +59,11 @@ class ReviewResultController extends Controller
 
         try {
             $application->reviewResults()->save($reviewResult);
-            foreach ($documents as $document) {
-                $document->update(['review_result_id' => $reviewResult->id]);
-            }
+            $documents->each(function (Document $document) use ($reviewResult) {
+                return $document->review_result_id = $reviewResult->id;
+            });
 
+            $application->documents()->saveMany($documents);
             $application->load('reviewResults', 'documents')->refresh();
 
             DB::commit();
@@ -116,9 +118,8 @@ class ReviewResultController extends Controller
 
         try {
             $review_result->documents()->save($revisedDocument);
-            $review_result->update([
-                'reviewed_document_ids' => array_merge($review_result->reviewed_document_ids, [$revisedDocument->id]),
-            ]);
+            $review_result->reviewed_document_ids = array_merge($review_result->reviewed_document_ids, [$revisedDocument->id]);
+            $review_result->save();
 
             $application = $review_result->appProfile->load('documents')->refresh();
             $revisedDocument->refresh();

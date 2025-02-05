@@ -17,7 +17,7 @@ class DashboardController extends Controller
 
         $applicationsByStatus = [
             'pending' => AppProfile::whereHas('statuses', function(Builder $query) {
-                $query->where('sequence', '!=', 10)->where('status', '=', 'In Progress');
+                $query->whereNotIn('status', ['Approved', 'Assigned', 'Done', 'Signed', 'Completed', 'In Progress']);
             })->count(),
             'inProgress' => AppProfile::whereHas('statuses', function(Builder $query) {
                 $query->where('status', '=', 'In Progress');

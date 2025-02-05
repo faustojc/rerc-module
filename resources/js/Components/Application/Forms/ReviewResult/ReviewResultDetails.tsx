@@ -6,10 +6,11 @@ import { FeDocument, LightUploadRounded } from "@/Components/Icons";
 interface ReviewResultDetailsProps {
     user: User;
     reviewResults: AppReviewResult[];
+    isApproved: boolean;
     onUploadRevision: (reviewResult: AppReviewResult, file: File) => Promise<void>;
 }
 
-const ReviewResultDetails = ({user, reviewResults, onUploadRevision}: ReviewResultDetailsProps) => {
+const ReviewResultDetails = ({user, reviewResults, isApproved, onUploadRevision}: ReviewResultDetailsProps) => {
     const [selectedFiles, setSelectedFiles] = useState<Record<string, File | null>>({});
     const [uploadingStates, setUploadingStates] = useState<Record<string, boolean>>({});
 
@@ -98,7 +99,7 @@ const ReviewResultDetails = ({user, reviewResults, onUploadRevision}: ReviewResu
                                         </Link>
                                     </div>
 
-                                    {user.role === 'researcher' && (
+                                    {(user.role === 'researcher' && !isApproved) && (
                                         <>
                                             <Divider />
                                             <div className="flex items-center mt-3 p-2 gap-4">

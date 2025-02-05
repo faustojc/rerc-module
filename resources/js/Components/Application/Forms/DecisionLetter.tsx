@@ -6,13 +6,13 @@ import NavStatus from "@/Components/NavStatus";
 import Feedbacks from "@/Components/Application/Feedbacks";
 import { DecisionLetterDisplay } from "@/Components/Application/Forms/DecisionLetter/DecisionLetterDisplay";
 import { DecisionLetterUpload } from "@/Components/Application/Forms/DecisionLetter/DecisionLetterUpload";
-import { ClipboardError } from "@/Components/Icons";
+import { ClipboardError, FeDocument } from "@/Components/Icons";
 
 const DecisionLetter = ({user, application, status, handleUpdateApplication, handleMessage}: ApplicationFormProps) => {
     const [currTab, setCurrTab] = useState<string>('decision-letter');
 
     const canUpload = user.role === 'staff' && (!application.decision_letter || !application.decision_letter.is_signed);
-    const canUploadSigned = user.role === 'chairperson' && application.decision_letter != null  && application.decision_letter.is_signed;
+    const canUploadSigned = user.role === 'chairperson' && application.decision_letter != null  && !application.decision_letter.is_signed;
     const canDelete = user.role === 'staff' && application.decision_letter != null && !application.decision_letter.is_signed;
 
     const handleUpdateData = async (data: FormData) => {
@@ -21,13 +21,18 @@ const DecisionLetter = ({user, application, status, handleUpdateApplication, han
                 headers: {'Content-Type': 'multipart/form-data'}
             });
 
+            const statuses = [
+                response.data.status,
+            ]
+
+            if (response.data.new_status) {
+                statuses.push(response.data.new_status);
+            }
+
             handleUpdateApplication({
                 application: {
                     decision_letter: response.data.decision_letter,
-                    statuses: [
-                        { ...response.data.status },
-                        { ...response.data.next_status }
-                    ]
+                    statuses: statuses
                 }
             });
         } catch (error: any) {
@@ -126,6 +131,20 @@ const DecisionLetter = ({user, application, status, handleUpdateApplication, han
                                         onDelete={handleDelete}
                                         canDelete={canDelete}
                                     />
+                                </div>
+                            )}
+
+                            {(application.decision_letter == null && user.role !== 'staff') && (
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-medium mb-3">
+                                        Decision Letter
+                                    </h3>
+                                    <div className="bg-default-100 p-4 rounded-lg">
+                                        <p className="flex flex-row gap-3 items-center text-default-600">
+                                            <FeDocument />
+                                            Waiting for the staff to upload the decision letter.
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 

@@ -33,7 +33,14 @@ class DecisionLetterController extends Controller
 
         $decisionLetter = $application->decisionLetter;
 
-        $fileName = $isSigned ? "signed-{$file->getClientOriginalName()}" : $file->getClientOriginalName();
+        $fileExist = Storage::disk('public')->exists("decision_letters/$application->id/{$file->getClientOriginalName()}");
+        $fileName = $file->getClientOriginalName();
+
+        if ($fileExist) {
+            $fileName = now()->format('Y-m-d h:i:s') . "-{$file->getClientOriginalName()}";
+        }
+
+        $fileName = $isSigned ? "signed-$fileName" : $fileName;
         $path = Storage::disk('public')->putFileAs("decision_letters/$application->id", $file, $fileName);
 
         if (!empty($decisionLetter)) {
@@ -88,12 +95,17 @@ class DecisionLetterController extends Controller
             ], 500);
         }
 
-        return response()->json([
+        $responseData = [
             'message' => $message,
             'decision_letter' => $decisionLetter,
             'status' => $status,
-            'new_status' => $newStatus,
-        ]);
+        ];
+
+        if (!empty($newStatus)) {
+            $responseData['new_status'] = $newStatus;
+        }
+
+        return response()->json($responseData);
     }
 
     /**
