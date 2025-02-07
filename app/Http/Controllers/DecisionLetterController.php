@@ -20,12 +20,17 @@ class DecisionLetterController extends Controller
      */
     public function store(Request $request, AppProfile $application): JsonResponse
     {
-        $file = $request->file('file');
-        $message = $request->message;
-        $isSigned = boolval($request->is_signed);
+        $data = $request->validate([
+            'file' => 'required|file|mimes:pdf,doc,docx',
+            'message' => 'nullable|string',
+            'is_signed' => 'nullable|boolean',
+            'status_id' => 'required|string',
+            'new_status' => 'nullable|string',
+        ]);
+        $isSigned = boolval($data['is_signed']);
 
-        $status = $application->statuses()->find($request->status_id);
-        $status->status = $isSigned ? 'Signed' : $request->new_status;
+        $status = $application->statuses()->find($data['status_id']);
+        $status->status = $isSigned ? 'Signed' : $data['new_status'];
         $status->end = $isSigned ? now() : NULL;
 
         $newStatus = NULL;
@@ -33,15 +38,15 @@ class DecisionLetterController extends Controller
 
         $decisionLetter = $application->decisionLetter;
 
-        $fileExist = Storage::disk('public')->exists("decision_letters/$application->id/{$file->getClientOriginalName()}");
-        $fileName = $file->getClientOriginalName();
+        $fileExist = Storage::disk('public')->exists("decision_letters/$application->id/{$data['file']->getClientOriginalName()}");
+        $fileName = $data['file']->getClientOriginalName();
 
         if ($fileExist) {
-            $fileName = now()->format('Y-m-d h:i:s') . "-{$file->getClientOriginalName()}";
+            $fileName = now()->format('Y-m-d h:i:s') . "-{$data['file']->getClientOriginalName()}";
         }
 
         $fileName = $isSigned ? "signed-$fileName" : $fileName;
-        $path = Storage::disk('public')->putFileAs("decision_letters/$application->id", $file, $fileName);
+        $path = Storage::disk('public')->putFileAs("decision_letters/$application->id", $data['file'], $fileName);
 
         if (!empty($decisionLetter)) {
             $oldPath = $decisionLetter->file_path;
@@ -85,7 +90,7 @@ class DecisionLetterController extends Controller
             $application->load('decisionLetter', 'statuses')->refresh();
             $decisionLetter->refresh();
 
-            broadcast(new ApplicationUpdated($application, $status, message: $message))->toOthers();
+            broadcast(new ApplicationUpdated($application, $status, message: $data['message']))->toOthers();
         } catch (Exception $e) {
             DB::rollBack();
             Storage::disk('public')->delete($path);
@@ -96,7 +101,7 @@ class DecisionLetterController extends Controller
         }
 
         $responseData = [
-            'message' => $message,
+            'message' => $data['message'],
             'decision_letter' => $decisionLetter,
             'status' => $status,
         ];
@@ -113,10 +118,13 @@ class DecisionLetterController extends Controller
      */
     public function update(Request $request, AppProfile $application, DecisionLetter $decision_letter)
     {
-        $file = $request->file('file');
-        $message = $request->message;
+        $data = $request->validate([
+            'file' => 'required|file|mimes:pdf,doc,docx',
+            'message' => 'nullable|string',
+            'status_id' => 'required|string',
+        ]);
 
-        $status = $application->statuses()->find($request->status_id);
+        $status = $application->statuses()->find($data['status_id']);
         $status->status = "Signed";
         $status->end = now();
 
@@ -130,14 +138,14 @@ class DecisionLetterController extends Controller
         $oldPath = $decision_letter->file_path;
         $path = Storage::disk('public')->putFileAs(
             "decision_letters/$application->id",
-            $file,
-            "signed-{$file->getClientOriginalName()}",
+            $data['file'],
+            "signed-{$data['file']->getClientOriginalName()}",
         );
 
         DB::beginTransaction();
 
         try {
-            $decision_letter->file_name = "signed-{$file->getClientOriginalName()}";
+            $decision_letter->file_name = "signed-{$data['file']->getClientOriginalName()}";
             $decision_letter->file_path = $path;
             $decision_letter->is_signed = TRUE;
             $decision_letter->date_uploaded = now();
@@ -151,7 +159,7 @@ class DecisionLetterController extends Controller
 
             $application->load('decisionLetter', 'statuses')->refresh();
 
-            broadcast(new ApplicationUpdated($application, message: $message))->toOthers();
+            broadcast(new ApplicationUpdated($application, message: $data['message']))->toOthers();
         } catch (Exception $e) {
             DB::rollBack();
             Storage::disk('public')->delete($path);
@@ -173,7 +181,11 @@ class DecisionLetterController extends Controller
      */
     public function destroy(Request $request, AppProfile $application, DecisionLetter $decision_letter)
     {
-        $status = $application->statuses()->find($request->status_id);
+        $data = $request->validate([
+            'status_id' => 'required|string',
+        ]);
+
+        $status = $application->statuses()->find($data['status_id']);
         $status->status = "Removed";
         $status->end = NULL;
 

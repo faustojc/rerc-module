@@ -35,9 +35,16 @@ class AppProfileController extends Controller
     public function index(Request $request): Response|JsonResponse
     {
         $user = auth()->user();
-        $page = $request->input('page', 1);
+        $data = $request->validate([
+            'page' => 'nullable|numeric',
+            'query' => 'nullable|string',
+            'reviewType' => 'nullable|string',
+            'step' => 'nullable|numeric',
+            'dateRange' => 'nullable|array',
+            'status' => 'nullable|string',
+        ]);
 
-        $filters = $request->only(['query', 'reviewType', 'step', 'dateRange', 'status']);
+        $page = $data['page'] ?? 1;
 
         $countApplications = AppProfile::count();
         if ($countApplications === 0) {
@@ -59,22 +66,22 @@ class AppProfileController extends Controller
                 $query->select('id', 'app_profile_id', 'name', 'sequence', 'status')
                     ->orderBy('sequence', 'desc')
                     ->take(1);
-            }])->when($filters['query'] ?? null, function (Builder $query, $search) {
+            }])->when($data['query'] ?? null, function (Builder $query, $search) {
                 return $query->whereRaw('LOWER(research_title) LIKE ?', [strtolower("%$search%")])
                     ->orWhereRaw('LOWER(firstname) LIKE ?', [strtolower("%$search%")])
                     ->orWhereRaw('LOWER(lastname) LIKE ?', [strtolower("%$search%")]);
-            })->when($filters['reviewType'] ?? null, function (Builder $query, $reviewType) {
+            })->when($data['reviewType'] ?? null, function (Builder $query, $reviewType) {
                 return $query->where('review_type', $reviewType);
-            })->when($filters['step'] ?? null, function ($query, $step) {
+            })->when($data['step'] ?? null, function ($query, $step) {
                 return $query->whereHas('statuses', function ($q) use ($step) {
                     $q->where('sequence', '>=', intval($step));
                 });
-            })->when($filters['dateRange'] ?? null, function (Builder $query) use ($filters) {
-                $start = Carbon::parse($filters['dateRange']['start'])->startOfDay();
-                $end = Carbon::parse($filters['dateRange']['end'])->endOfDay();
+            })->when($data['dateRange'] ?? null, function (Builder $query) use ($data) {
+                $start = Carbon::parse($data['dateRange']['start'])->startOfDay();
+                $end = Carbon::parse($data['dateRange']['end'])->endOfDay();
 
                 return $query->whereBetween('date_applied', [$start, $end]);
-            })->when($filters['status'] ?? null, function ($query, $status) {
+            })->when($data['status'] ?? null, function ($query, $status) {
                 return $query->whereHas('statuses', function (Builder $q) use ($status) {
                     $commonStatus = ['Approved', 'Assigned', 'Done', 'Signed', 'Completed', 'In Progress'];
 
@@ -92,7 +99,7 @@ class AppProfileController extends Controller
             })->orderByDesc('updated_at')
             ->paginate(10, page: $page);
 
-        $canCreate = auth()->user()->can('create', AppProfile::class);
+        $canCreate = $user->can('create', AppProfile::class);
         $canDelete = $applications->contains(function ($application) {
             return Gate::inspect('delete', $application)->allowed();
         });
@@ -278,9 +285,11 @@ class AppProfileController extends Controller
 
     public function uploadPayment(Request $request, AppProfile $application)
     {
-        $paymentFile = $request->file('file');
-        $paymentDetails = $request->payment_details;
-        $message = $request->message;
+        $data = $request->validate([
+            'file' => 'required|file|mimes:pdf,doc,docx',
+            'payment_details' => 'required|string',
+            'message' => 'nullable|string',
+        ]);
         $currentDateTime = Carbon::now();
 
         $application->load('statuses');
@@ -296,13 +305,13 @@ class AppProfileController extends Controller
             'start' => $currentDateTime,
         ]);
 
-        $path = Storage::disk('public')->putFile("payments/$application->id", $paymentFile);
+        $path = Storage::disk('public')->putFile("payments/$application->id", $data['file']);
 
         DB::beginTransaction();
 
         try {
             $application->update([
-                'payment_details' => $paymentDetails,
+                'payment_details' => $data['payment_details'],
                 'payment_date' => $currentDateTime,
                 'proof_of_payment_url' => $path,
             ]);
@@ -312,7 +321,7 @@ class AppProfileController extends Controller
 
             $application->load('statuses')->refresh();
 
-            broadcast(new ApplicationUpdated($application, message: $message))->toOthers();
+            broadcast(new ApplicationUpdated($application, message: $data['message']))->toOthers();
         } catch (Exception) {
             DB::rollBack();
             Storage::disk('public')->delete($path);
@@ -326,7 +335,7 @@ class AppProfileController extends Controller
         return response()->json([
             'message' => $message ?? 'Payment receipt has been uploaded.',
             'proof_of_payment_url' => $path,
-            'payment_details' => $paymentDetails,
+            'payment_details' => $data['payment_details'],
             'payment_date' => $application->payment_date,
             'statuses' => $application->statuses,
         ]);
@@ -337,12 +346,16 @@ class AppProfileController extends Controller
      */
     public function update(Request $request, AppProfile $application)
     {
-        $protocolCode = $request->protocol_code;
-        $reviewType = $request->review_type;
+        $data = $request->validate([
+            'protocol_code' => 'nullable|string',
+            'review_type' => 'nullable|string',
+            'message' => 'nullable|string',
+            'status_id' => 'required|string',
+            'new_status' => 'nullable|string',
+            'is_completed' => 'nullable|boolean'
+        ]);
 
-        $message = $request->message;
-
-        $status = $application->statuses()->find($request->status_id);
+        $status = $application->statuses()->find($data['status_id']);
 
         if (!empty($protocolCode)) {
             $application->protocol_code = $protocolCode;
@@ -353,21 +366,21 @@ class AppProfileController extends Controller
             $application->review_type = $reviewType;
         }
 
-        DB::transaction(function () use (&$application, &$status, $request, $message) {
+        DB::transaction(function () use (&$application, &$status, $data) {
             if ($application->isDirty()) {
                 $application->save();
             }
 
             if (!empty($status)) {
-                $status->status = $request->new_status;
-                $status->end = $request->is_completed ? now() : NULL;
+                $status->status = $data['new_status'];
+                $status->end = $data['is_completed'] ? now() : NULL;
 
                 $application->statuses()->save($status);
             }
 
-            if (!empty($request->is_completed) && !empty($request->next_status)) {
+            if (!empty($data['is_completed']) && !empty($data['next_status'])) {
                 $newStatus = new AppStatus([
-                    'name' => $request->next_status,
+                    'name' => $data['next_status'],
                     'sequence' => $status->sequence == 10 ? 10 : $status->sequence + 1,
                     'status' => 'In Progress',
                     'start' => now(),
@@ -379,11 +392,11 @@ class AppProfileController extends Controller
             $application->load('statuses')->refresh();
             $status->refresh();
 
-            broadcast(new ApplicationUpdated($application, message: $message))->toOthers();
+            broadcast(new ApplicationUpdated($application, message: $data['message']))->toOthers();
         });
 
         return response()->json([
-            'message' => $message ?? "$application->research_title has been updated.",
+            'message' => $data['message'] ?? "$application->research_title has been updated.",
             'application' => $application,
         ]);
     }
