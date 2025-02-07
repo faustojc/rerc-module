@@ -275,7 +275,8 @@ const Index = (props: ApplicationIndexProps) => {
                         <div className="flex flex-wrap gap-4 w-full">
                             <Select
                                 className="w-full sm:w-48"
-                                placeholder="Review Type"
+                                label="Review Type"
+                                labelPlacement="outside"
                                 value={filters.reviewType}
                                 selectedKeys={filters.reviewType ? [filters.reviewType] : []}
                                 onChange={(e) => {
@@ -295,7 +296,8 @@ const Index = (props: ApplicationIndexProps) => {
 
                             <Select
                                 className="w-full sm:w-48"
-                                placeholder="Up to Step"
+                                label="Up to Step"
+                                labelPlacement="outside"
                                 size="sm"
                                 value={filters.step?.toString() || ''}
                                 selectedKeys={filters.step ? [filters.step.toString()] : []}
@@ -321,7 +323,8 @@ const Index = (props: ApplicationIndexProps) => {
 
                             <Select
                                 className="w-full sm:w-40"
-                                placeholder="Status"
+                                label="Status"
+                                labelPlacement="outside"
                                 value={filters.status}
                                 selectedKeys={filters.status ? [filters.status] : []}
                                 onChange={(e) => {
@@ -332,7 +335,6 @@ const Index = (props: ApplicationIndexProps) => {
                                 }}
                                 size="sm"
                             >
-                                <SelectItem key="" value="">All Status</SelectItem>
                                 <SelectItem key="Pending" value="Pending">Pending</SelectItem>
                                 <SelectItem key="In Progress" value="In Progress">In Progress</SelectItem>
                                 <SelectItem key="Completed" value="Completed">Completed</SelectItem>
@@ -341,6 +343,8 @@ const Index = (props: ApplicationIndexProps) => {
                             <DateRangePicker
                                 showMonthAndYearPickers
                                 className="w-auto"
+                                label="Date Range (From - To)"
+                                labelPlacement="outside"
                                 size="sm"
                                 variant="flat"
                                 visibleMonths={2}

@@ -61,8 +61,8 @@ class AppProfileController extends Controller
 
         $applications = AppProfile::query()
             ->select(['id', 'user_id', 'firstname', 'lastname', 'research_title', 'date_applied', 'protocol_code', 'review_type'])
-            ->withCount('members')
-            ->with(['statuses' => function ($query) {
+            ->withCount('members', 'statuses')
+            ->with(['statuses' => function (HasMany $query) {
                 $query->select('id', 'app_profile_id', 'name', 'sequence', 'status')
                     ->orderBy('sequence', 'desc')
                     ->take(1);
@@ -72,10 +72,8 @@ class AppProfileController extends Controller
                     ->orWhereRaw('LOWER(lastname) LIKE ?', [strtolower("%$search%")]);
             })->when($data['reviewType'] ?? null, function (Builder $query, $reviewType) {
                 return $query->where('review_type', $reviewType);
-            })->when($data['step'] ?? null, function ($query, $step) {
-                return $query->whereHas('statuses', function ($q) use ($step) {
-                    $q->where('sequence', '>=', intval($step));
-                });
+            })->when($data['step'] ?? null, function (Builder $query, $step) {
+                return $query->has('statuses', '<=', intval($step));
             })->when($data['dateRange'] ?? null, function (Builder $query) use ($data) {
                 $start = Carbon::parse($data['dateRange']['start'])->startOfDay();
                 $end = Carbon::parse($data['dateRange']['end'])->endOfDay();
