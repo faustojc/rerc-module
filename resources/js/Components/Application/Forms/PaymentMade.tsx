@@ -4,8 +4,9 @@ import React, { ChangeEvent, useState } from "react";
 import InputFile from "@/Components/InputFile";
 import { toast } from "react-toastify";
 import { getLocalTimeZone } from "@internationalized/date";
+import { ClipboardError } from "@/Components/Icons";
 
-const PaymentMade = ({user, application, handleUpdateApplication}: ApplicationFormProps) => {
+const PaymentMade = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [details, setDetails] = useState("");
     const [isError, setIsError] = useState(false);
@@ -50,7 +51,7 @@ const PaymentMade = ({user, application, handleUpdateApplication}: ApplicationFo
         }).finally(() => setLoading(false));
     }
 
-    const isDecisionLetterSigned = application.decision_letter != null && application.decision_letter.is_signed == 1;
+    const isDecisionLetterSigned = application.decision_letter != null && application.decision_letter.is_signed;
     const hasPayment = application.proof_of_payment_url != null;
 
     return (
@@ -127,23 +128,29 @@ const PaymentMade = ({user, application, handleUpdateApplication}: ApplicationFo
                                         />
                                     </>
                                 ) : (
-                                    <p className="text-center text-medium p-5">
-                                        Please wait for the researcher to upload their proof of payment receipt.
-                                    </p>
+                                    <div className="text-center py-8">
+                                        <ClipboardError className="w-12 h-12 text-default-400 mx-auto mb-3" />
+                                        <p className="text-default-500">
+                                            Please wait for the researcher to upload their proof of payment receipt.
+                                        </p>
+                                    </div>
                                 )}
                             </>
                         )}
                     </>
                 ) : (
                     <p className="text-center text-medium p-5">
-                        {user.role === "researcher"
-                            ? "Please wait for the decision letter to be signed before uploading the payment receipt."
-                            : "Decision letter must be signed before the researcher can upload the payment receipt."
-                        }
+                        <ClipboardError className="w-12 h-12 text-default-400 mx-auto mb-3" />
+                        <p className="text-default-500">
+                            {user.role === "researcher"
+                                ? "Please wait for the decision letter to be signed before uploading the payment receipt."
+                                : "Decision letter must be signed before the researcher can upload the payment receipt."
+                            }
+                        </p>
                     </p>
                 )}
             </CardBody>
-            {(user.role === "researcher" && !hasPayment) && (
+            {(user.role === "researcher" && !hasPayment && status != null) && (
                 <>
                     <Divider />
                     <CardFooter className="justify-end">

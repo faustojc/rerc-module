@@ -1,39 +1,12 @@
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import { Application, ApplicationFilters, PageProps, PaginationProps } from "@/types";
-import {
-    Button,
-    Card,
-    CardBody,
-    CardFooter,
-    CardHeader,
-    Chip,
-    cn,
-    DateRangePicker,
-    Dropdown,
-    DropdownItem,
-    DropdownMenu,
-    DropdownTrigger,
-    Input,
-    Pagination,
-    Select,
-    SelectItem,
-    SelectSection,
-    Spinner,
-    Table,
-    TableBody,
-    TableCell,
-    TableColumn,
-    TableHeader,
-    TableRow,
-} from "@nextui-org/react";
-import { ArrowsSwitch, MdiDeleteForever, MdiDotsVertical, MdiFileDocumentArrowRight, MdiSearch } from "@/Components/Icons";
-import React, { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import { Application, PageProps, PaginationProps } from "@/types";
+import { Button, Card, CardBody, CardHeader, DateRangePicker, Input, Select, SelectItem } from "@nextui-org/react";
+import { ClearRound, MdiSearch } from "@/Components/Icons";
+import React, { useCallback, useState } from "react";
 import { Head, Link } from "@inertiajs/react";
-import { toast } from "react-toastify";
-import { getLocalTimeZone, parseDate } from "@internationalized/date";
-import { statusColor } from "@/types/helpers";
 import { REVIEW_TYPES, STEPS } from "@/types/constants";
+import ResearchList from "@/Components/Application/ResearchList";
+import { useApplicationFilters } from "@/Hooks/useApplicationFilters";
 
 export interface ApplicationIndexProps extends PageProps {
     applications: PaginationProps<Application>,
@@ -42,200 +15,51 @@ export interface ApplicationIndexProps extends PageProps {
 }
 
 const Index = (props: ApplicationIndexProps) => {
-    const [page, setPage] = useState(props.applications.current_page);
-    const [loading, setLoading] = useState(false);
-    const [pagination, setPagination] = useState<PaginationProps<Application>>(props.applications);
+    const {
+        filters,
+        pagination,
+        loading,
+        updateFilters,
+        handleSetPage,
+        handleDelete,
+    } = useApplicationFilters(props.applications);
 
-    const pages = Math.ceil(pagination.total / pagination.per_page);
+    const [search, setSearch] = useState<string>('');
 
-    const items = useMemo(() => {
-        return pagination.data.map((application) => {
-            application.date_applied = new Date(application.date_applied!).toLocaleDateString('en-US', {
-                month: 'short', day: 'numeric', year: 'numeric'
-            });
+    const DateRangePickerDisplay = useCallback(
+        React.forwardRef<HTMLElement, any>((_, ref) => (
+            <DateRangePicker
+                ref={ref}
+                showMonthAndYearPickers
+                className="w-auto"
+                label="Date Range (From - To)"
+                labelPlacement="outside"
+                size="sm"
+                variant="flat"
+                visibleMonths={2}
+                value={filters.dateRange}
+                onChange={(value) => {
+                    updateFilters({ ...filters, dateRange: value }, pagination.current_page);
+                }}
+                startContent={(
+                    <Button
+                        isIconOnly
+                        variant="light"
+                        color="primary"
+                        size="sm"
+                        onPress={() => {
+                            if (!filters.dateRange) return;
 
-            return application;
-        });
-    }, [pages, pagination]);
-
-    const changeDateStringFormat = (date: string) => {
-        const dates = date.split('/');
-
-        return `${dates[2]}-${dates[0]}-${dates[1]}`;
-    }
-
-    const initialFilters: ApplicationFilters = useMemo(() => {
-        console.log(pagination);
-
-        const searchParams = new URLSearchParams(window.location.search);
-        let pageParam = searchParams.get('page');
-
-        if (pageParam != null && parseInt(pageParam) > pagination.last_page) {
-            pageParam = '1';
-
-            setPage(1);
-            searchParams.set('page', pageParam);
-            window.history.pushState({}, '', `${window.location.pathname}?${searchParams.toString()}`);
-        }
-
-        const startDate = searchParams.get('dateRange[start]');
-        const endDate = searchParams.get('dateRange[end]');
-
-        const dateRange = startDate && endDate ? {
-            start: parseDate(changeDateStringFormat(startDate)),
-            end: parseDate(changeDateStringFormat(endDate)),
-        } : undefined;
-
-        return {
-            query: searchParams.get('query') || '',
-            reviewType: searchParams.get('reviewType') || '',
-            step: searchParams.get('step') ? parseInt(searchParams.get('step')!) : undefined,
-            dateRange: dateRange,
-            status: searchParams.get('status') || '',
-        };
-    }, []);
-
-    const [filters, setFilters] = useState<ApplicationFilters>(initialFilters);
-
-    const handleSearchApplications = (filters: ApplicationFilters, pageNumber: number) => {
-        setLoading(true);
-
-        const params = new URLSearchParams();
-        const page = (pagination.data.length <= 10 && pageNumber > 1) ? 1 : pageNumber;
-
-        params.set('page', page.toString());
-        if (filters.query) params.set('query', filters.query.trim());
-        if (filters.reviewType) params.set('reviewType', filters.reviewType);
-        if (filters.step) params.set('step', filters.step.toString());
-        if (filters.status) params.set('status', filters.status);
-        if (filters.dateRange) {
-            params.set('dateRange[start]', filters.dateRange.start.toDate(getLocalTimeZone()).toLocaleDateString("default", {year: 'numeric', month: '2-digit', day: '2-digit'}));
-            params.set('dateRange[end]', filters.dateRange.end.toDate(getLocalTimeZone()).toLocaleDateString("default", {year: 'numeric', month: '2-digit', day: '2-digit'}));
-        }
-
-        window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
-
-        const data = {
-            ...filters,
-            page: pageNumber,
-            dateRange: filters.dateRange ? {
-                start: filters.dateRange.start.toDate(getLocalTimeZone()).toISOString(),
-                end: filters.dateRange.end.toDate(getLocalTimeZone()).toISOString(),
-            } : undefined,
-        };
-
-        window.axios.get(
-            route('applications.index', data),
-            {headers: {'X-Requested-With': 'XMLHttpRequest'}}
-        ).then(response => {
-            setPage(response.data.applications.current_page);
-            setPagination(response.data.applications);
-
-            if (pageNumber > response.data.applications.last_page) {
-                const params = new URLSearchParams(window.location.search);
-                params.set('page', response.data.applications.current_page.toString());
-                window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
-            }
-        }).catch((error) => {
-            console.error(error.message ?? 'An error occurred while searching applications.');
-        }).finally(() => setLoading(false));
-    }
-
-    const dropdownItems: (application: Application) => {
-        key: string;
-        label: string;
-        className: string;
-        content?: ReactNode;
-        icon?: ReactNode;
-        onPress?: () => void;
-    }[] = useCallback((application: Application) => {
-        const items = [];
-
-        items.push({
-            key: 'view',
-            label: 'View',
-            className: 'p-0',
-            content: (
-                <Link href={route('applications.show', {application: application})}
-                      className="w-full flex items-center gap-2 px-2 py-1.5 text-default-900"
-                >
-                    <MdiFileDocumentArrowRight />
-                    View
-                </Link>
-            ),
-        });
-
-        if (props.canDelete) {
-            items.push({
-                key: 'delete',
-                label: 'Delete',
-                className: 'text-danger',
-                icon: <MdiDeleteForever className={cn("text-danger")} />,
-                onPress: () => handleDelete(application),
-            });
-        }
-
-        return items;
-    }, [props.canDelete]);
-
-    const handleSetPage = (page: number) => {
-        setPage(page);
-        handleSearchApplications(filters, page);
-    }
-
-    const handleDelete = (application: Application) => {
-        setLoading(true);
-
-        // Perform delete operation
-        axios.delete(route('applications.destroy', {application: application, page: page}))
-              .then((response) => {
-                  setPagination(response.data.applications);
-                  toast.success(response.data.message ?? 'Application deleted.');
-        }).finally(() => setLoading(false));
-    }
-
-    useEffect(() => {
-        window.Echo.channel('application-list').listen('.ApplicationCreated', (event: any) => {
-            setPagination((prev) => {
-                const updatedData = [event.application, ...prev.data];
-
-                if (prev.last_page === 1 && (updatedData.length > prev.per_page)) {
-                    return {
-                        ...prev,
-                        data: updatedData.slice(0, prev.per_page),
-                        total: prev.total + 1,
-                        last_page: prev.last_page + 1,
-                        next_page_url: `${prev.path}?page=2`,
-                    };
-                }
-
-                if (updatedData.length > prev.per_page) {
-                    updatedData.pop();
-                }
-
-                // check if the total number of items is divisible by the per_page value
-                // if not, increment the total value by 1 and add items to links
-                if (prev.total % prev.per_page !== 0) {
-                    prev.links.push({
-                        url: `${prev.path}?page=${prev.last_page + 1}`,
-                        label: `${prev.last_page + 1}`,
-                        active: false,
-                    });
-                }
-
-                return {
-                    ...prev,
-                    data: updatedData,
-                    total: prev.total + 1,
-                };
-            });
-            toast.info(`${event.application.research_title} has been created`);
-        });
-
-        return () => {
-            window.Echo.leaveChannel('applications');
-        }
-    }, []);
+                            updateFilters({ ...filters, dateRange: undefined }, pagination.current_page);
+                        }}
+                    >
+                        <ClearRound />
+                    </Button>
+                )}
+            />
+        )),
+        [filters.dateRange]
+    );
 
     return (
         <Authenticated header={"List of Applications"}>
@@ -254,7 +78,7 @@ const Index = (props: ApplicationIndexProps) => {
                         </div>
                         <Input placeholder="Search by research title or researcher..."
                                endContent={(
-                                   <Button onPress={() => handleSearchApplications(filters, 1)}
+                                   <Button onPress={() => updateFilters(filters, 1)}
                                            variant="light"
                                            color="primary"
                                            isIconOnly
@@ -265,27 +89,47 @@ const Index = (props: ApplicationIndexProps) => {
                                className="max-w-md disabled:pointer-events-auto"
                                variant="flat"
                                value={filters.query}
-                               onChange={(e) => setFilters(prev => ({...prev, query: e.target.value}))}
+                               onChange={(e) => setSearch(e.target.value)}
                                onKeyDown={(e) =>
                                    e.key === 'Enter'
-                                   && filters.query
-                                   && handleSearchApplications(filters, 1)
+                                   && search.trim().length > 0
+                                   && updateFilters({...filters, query: search}, pagination.current_page)
                                }
                         />
                         <div className="flex flex-wrap gap-4 w-full">
+                            {/* Up to Step */}
                             <Select
-                                className="w-full sm:w-48"
+                                className="w-full sm:w-52"
+                                label="Up to Step"
+                                labelPlacement="outside"
+                                size="sm"
+                                items={STEPS}
+                                value={filters.step}
+                                selectedKeys={filters.step ? [filters.step] : []}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    updateFilters({ ...filters, step: value }, pagination.current_page);
+                                }}
+                            >
+                                {(step) => (
+                                    <SelectItem key={step.sequence} value={step.sequence} startContent={`${step.sequence}: `}>
+                                        {step.name}
+                                    </SelectItem>
+                                )}
+                            </Select>
+
+                            {/* Review Type */}
+                            <Select
+                                className="w-full sm:w-52"
                                 label="Review Type"
                                 labelPlacement="outside"
+                                size="sm"
                                 value={filters.reviewType}
                                 selectedKeys={filters.reviewType ? [filters.reviewType] : []}
                                 onChange={(e) => {
                                     const value = e.target.value;
-
-                                    setFilters(prev => ({ ...prev, reviewType: value }));
-                                    handleSearchApplications({ ...filters, reviewType: value }, page);
+                                    updateFilters({ ...filters, reviewType: value }, pagination.current_page);
                                 }}
-                                size="sm"
                             >
                                 {REVIEW_TYPES.map((type) => (
                                     <SelectItem key={type.value} value={type.value}>
@@ -294,172 +138,37 @@ const Index = (props: ApplicationIndexProps) => {
                                 ))}
                             </Select>
 
+                            {/* Status */}
                             <Select
-                                className="w-full sm:w-48"
-                                label="Up to Step"
-                                labelPlacement="outside"
-                                size="sm"
-                                value={filters.step?.toString() || ''}
-                                selectedKeys={filters.step ? [filters.step.toString()] : []}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-
-                                    setFilters(prev => ({ ...prev, step: value ? parseInt(value) : undefined }));
-                                    handleSearchApplications({ ...filters, step: value ? parseInt(value) : undefined }, 1);
-                                }}
-                                scrollShadowProps={{ isEnabled: false }}
-                            >
-                                <SelectSection
-                                    classNames={{ heading: "flex w-full sticky top-1 z-20 py-1.5 px-2 bg-default-100 shadow-small rounded-small" }}
-                                    title="Steps"
-                                >
-                                    {STEPS.map((step) => (
-                                        <SelectItem key={step.sequence} value={step.sequence.toString()}>
-                                            {step.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectSection>
-                            </Select>
-
-                            <Select
-                                className="w-full sm:w-40"
+                                className="w-full sm:w-52"
                                 label="Status"
                                 labelPlacement="outside"
+                                size="sm"
+                                selectionMode="single"
                                 value={filters.status}
                                 selectedKeys={filters.status ? [filters.status] : []}
                                 onChange={(e) => {
                                     const value = e.target.value;
-
-                                    setFilters(prev => ({ ...prev, status: value }));
-                                    handleSearchApplications({ ...filters, status: value }, page);
+                                    updateFilters({ ...filters, status: value }, pagination.current_page);
                                 }}
-                                size="sm"
                             >
                                 <SelectItem key="Pending" value="Pending">Pending</SelectItem>
                                 <SelectItem key="In Progress" value="In Progress">In Progress</SelectItem>
                                 <SelectItem key="Completed" value="Completed">Completed</SelectItem>
                             </Select>
 
-                            <DateRangePicker
-                                showMonthAndYearPickers
-                                className="w-auto"
-                                label="Date Range (From - To)"
-                                labelPlacement="outside"
-                                size="sm"
-                                variant="flat"
-                                visibleMonths={2}
-                                value={filters.dateRange}
-                                onChange={(value) => {
-                                    setFilters(prev => ({ ...prev, dateRange: value }));
-                                    handleSearchApplications({ ...filters, dateRange: value }, page);
-                                }}
-                                startContent={(
-                                    <Button
-                                        isIconOnly
-                                        variant="light"
-                                        color="primary"
-                                        size="sm"
-                                        onPress={() => {
-                                            if (!filters.dateRange) return;
-
-                                            setFilters(prev => ({ ...prev, dateRange: undefined }));
-                                            handleSearchApplications({ ...filters, dateRange: undefined }, page);
-                                        }}
-                                    >
-                                        <ArrowsSwitch />
-                                    </Button>
-                                )}
-                            />
+                            <DateRangePickerDisplay />
                         </div>
 
                     </CardHeader>
                     <CardBody>
-                        <Table removeWrapper aria-label="Example static collection table">
-                            <TableHeader columns={[
-                                { key: 'research_title', label: 'RESEARCH TITLE' },
-                                { key: 'main_researcher', label: 'RESEARCHER' },
-                                { key: 'current_status', label: 'STATUS' },
-                                { key: 'date_applied', label: 'DATE APPLIED' },
-                                { key: 'protocol_code', label: 'PROTOCOL CODE' },
-                                { key: 'actions', label: 'ACTIONS' },
-                            ]}>
-                                {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
-                            </TableHeader>
-                            <TableBody items={items}
-                                       loadingContent={<Spinner />}
-                                       loadingState={loading ? 'loading' : 'idle'}
-                                       emptyContent={"No applications found."}
-                            >
-                                {(application) => (
-                                    <TableRow key={application.id}>
-                                        <TableCell>{application.research_title}</TableCell>
-                                        <TableCell>
-                                            {`${application.firstname} ${application.lastname}`}
-                                            <p className="text-sm text-default-500">
-                                                {application.members_count} member{application.members_count > 1 ? 's' : ''}
-                                            </p>
-                                        </TableCell>
-                                        <TableCell className="flex flex-col">
-                                            <p className="font-semibold">
-                                                Step {application.statuses[0].sequence}: {application.statuses[0].name}
-                                            </p>
-                                            <Chip variant="dot" size="sm" color={statusColor(application.statuses[0].status)} className="border-none">
-                                                {application.statuses[0].status}
-                                            </Chip>
-                                        </TableCell>
-                                        <TableCell>{application.date_applied}</TableCell>
-                                        <TableCell>
-                                            <Chip variant="flat" color={application.protocol_code ? 'primary' : 'default'}>
-                                                {application.protocol_code ?? "N/A"}
-                                            </Chip>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="relative flex justify-end items-center gap-2">
-                                                <Dropdown className="bg-background border-1 border-default-200">
-                                                    <DropdownTrigger>
-                                                        <Button isIconOnly radius="full" size="sm" variant="light">
-                                                            <MdiDotsVertical className="text-default-400" />
-                                                        </Button>
-                                                    </DropdownTrigger>
-                                                    <DropdownMenu items={dropdownItems(application)}>
-                                                        {item => (
-                                                            <DropdownItem key={item.key}
-                                                                          className={cn(item.className)}
-                                                                          startContent={item.icon}
-                                                                          onPress={item.onPress}
-                                                                          isDisabled={loading}
-                                                            >
-                                                                {item.content ?? item.label}
-                                                            </DropdownItem>
-                                                        )}
-                                                    </DropdownMenu>
-                                                </Dropdown>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                        <ResearchList pagination={pagination} handleDelete={handleDelete} handleSetPage={handleSetPage} loading={loading} canDelete={props.canDelete} />
                     </CardBody>
-                    {items.length > 0 && (
-                        <CardFooter className="flex justify-between items-center">
-                            <div className="flex justify-end">
-                                <span className="text-sm text-gray-500">Showing {pagination.data.length} of {pagination.total} entries</span>
-                            </div>
-                            <Pagination total={pages}
-                                        initialPage={pagination.current_page}
-                                        page={page}
-                                        onChange={handleSetPage}
-                                        isDisabled={loading}
-                                        showControls
-                                        isCompact
-                            />
-                        </CardFooter>
-                    )}
                 </Card>
             </div>
         </Authenticated>
     );
 }
+
 
 export default Index;

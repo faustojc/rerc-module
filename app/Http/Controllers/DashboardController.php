@@ -38,7 +38,7 @@ class DashboardController extends Controller
         // Get recent applications (last 5)
         $recentApplications = AppProfile::with(['members'])
             ->latest('date_applied')
-            ->take(5)
+            ->take(4)
             ->get();
 
         // Get upcoming meetings
@@ -51,6 +51,9 @@ class DashboardController extends Controller
 
         // Get applications pending decision letters
         $pendingDecisionLetters = AppProfile::whereDoesntHave('decisionLetter')
+            ->whereHas('statuses', function(Builder $query) {
+                $query->where('sequence', '=', 5);
+            })
             ->orWhereHas('decisionLetter', function(Builder $query) {
                 $query->where('is_signed', false);
             })->get();

@@ -107,7 +107,7 @@ export const useApplication = (initialApplication: Application) => {
                         }
                     });
 
-                    merged[field] = updatedArray as T[keyof T];
+                    merged[field] = updatedArray.filter((v) => v != null) as T[keyof T];
                 } else {
                     merged[field] = nextValue as T[keyof T];
                 }

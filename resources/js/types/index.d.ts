@@ -191,7 +191,7 @@ export interface ReviewTypeInfo {
 export interface ApplicationFilters {
     query?: string;
     reviewType?: string;
-    step?: number;
+    step?: string;
     dateRange?: RangeValue<DateValue> | null;
     status?: string; //latest step
 }

@@ -26,7 +26,7 @@ const RecentApplicationsList: React.FC<RecentApplicationsListProps> = ({
                 <div className="divide-y">
                     {applications.map((app) => (
                         <div key={app.id} className="py-3">
-                            <div className="flex justify-between items-start">
+                            <div className="flex justify-between items-start gap-3">
                                 <div>
                                     <Link href={`/applications/${app.id}`} className="font-medium">
                                         {app.research_title}

@@ -14,7 +14,7 @@ interface StatusesProps {
 
 const Statuses = ({appStatuses, selectedStatus, setSelectedStatus }: StatusesProps) => {
     const steps: AppStatus[] = useMemo(() => {
-        return STEPS.map((name, index) => {
+        return STEPS.map((step, index) => {
             const dateTime = Intl.DateTimeFormat('en-US', {
                 month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: getLocalTimeZone()
             });
@@ -30,7 +30,7 @@ const Statuses = ({appStatuses, selectedStatus, setSelectedStatus }: StatusesPro
             return {
                 id: appStatuses[index]?.id ?? '',
                 app_profile_id: appStatuses[index]?.app_profile_id ?? appStatuses[0].app_profile_id,
-                name: name.name,
+                name: step.name,
                 status: appStatuses[index]?.status ?? "Pending",
                 sequence: appStatuses[index]?.sequence ?? index + 1,
                 start: startDate,

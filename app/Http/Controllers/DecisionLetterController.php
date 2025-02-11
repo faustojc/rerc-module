@@ -23,11 +23,11 @@ class DecisionLetterController extends Controller
         $data = $request->validate([
             'file' => 'required|file|mimes:pdf,doc,docx',
             'message' => 'nullable|string',
-            'is_signed' => 'nullable|boolean',
+            'is_signed' => 'nullable|string',
             'status_id' => 'required|string',
             'new_status' => 'nullable|string',
         ]);
-        $isSigned = boolval($data['is_signed']);
+        $isSigned = boolval($data['is_signed'] ?? FALSE);
 
         $status = $application->statuses()->find($data['status_id']);
         $status->status = $isSigned ? 'Signed' : $data['new_status'];
@@ -90,7 +90,7 @@ class DecisionLetterController extends Controller
             $application->load('decisionLetter', 'statuses')->refresh();
             $decisionLetter->refresh();
 
-            broadcast(new ApplicationUpdated($application, $status, message: $data['message']))->toOthers();
+            broadcast(new ApplicationUpdated($application, message: $data['message']))->toOthers();
         } catch (Exception $e) {
             DB::rollBack();
             Storage::disk('public')->delete($path);
@@ -202,7 +202,7 @@ class DecisionLetterController extends Controller
             Storage::disk('public')->delete($decision_letter->file_path);
             $application->load('decisionLetter', 'statuses')->refresh();
 
-            broadcast(new ApplicationUpdated($application, $status, message: $message))->toOthers();
+            broadcast(new ApplicationUpdated($application, message: $message))->toOthers();
         } catch (Exception $e) {
             DB::rollBack();
 

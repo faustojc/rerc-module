@@ -39,7 +39,7 @@ class AppProfileController extends Controller
             'page' => 'nullable|numeric',
             'query' => 'nullable|string',
             'reviewType' => 'nullable|string',
-            'step' => 'nullable|numeric',
+            'step' => 'nullable|string',
             'dateRange' => 'nullable|array',
             'status' => 'nullable|string',
         ]);
@@ -284,7 +284,7 @@ class AppProfileController extends Controller
     public function uploadPayment(Request $request, AppProfile $application)
     {
         $data = $request->validate([
-            'file' => 'required|file|mimes:pdf,doc,docx',
+            'file' => 'required|file', // images
             'payment_details' => 'required|string',
             'message' => 'nullable|string',
         ]);
@@ -350,18 +350,19 @@ class AppProfileController extends Controller
             'message' => 'nullable|string',
             'status_id' => 'required|string',
             'new_status' => 'nullable|string',
+            'next_status' => 'nullable|string',
             'is_completed' => 'nullable|boolean'
         ]);
 
         $status = $application->statuses()->find($data['status_id']);
 
-        if (!empty($protocolCode)) {
-            $application->protocol_code = $protocolCode;
+        if (!empty($data['protocol_code'])) {
+            $application->protocol_code = $data['protocol_code'];
             $application->protocol_date_updated = now();
         }
 
-        if (!empty($reviewType)) {
-            $application->review_type = $reviewType;
+        if (!empty($data['review_type'])) {
+            $application->review_type = $data['review_type'];
         }
 
         DB::transaction(function () use (&$application, &$status, $data) {
@@ -376,7 +377,7 @@ class AppProfileController extends Controller
                 $application->statuses()->save($status);
             }
 
-            if (!empty($data['is_completed']) && !empty($data['next_status'])) {
+            if ($data['is_completed']) {
                 $newStatus = new AppStatus([
                     'name' => $data['next_status'],
                     'sequence' => $status->sequence == 10 ? 10 : $status->sequence + 1,

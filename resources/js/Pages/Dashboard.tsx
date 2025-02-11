@@ -61,7 +61,7 @@ const Dashboard: React.FC<DashboardPageProps> = ({ stats, auth }) => {
                                 </h3>
                             </CardHeader>
                             <CardBody className="px-4">
-                                <div className="divide-y gap-3">
+                                <div className="divide-y space-y-3">
                                     {stats.pendingDecisionLetters.map((app) => (
                                         <div key={app.id} >
                                             <Link
@@ -71,12 +71,17 @@ const Dashboard: React.FC<DashboardPageProps> = ({ stats, auth }) => {
                                                 {app.research_title}
                                             </Link>
                                             <p className="text-sm text-default-500">
-                                                Awaiting {auth.user.role === 'staff'
-                                                ? 'upload'
-                                                : 'signature'}
+                                                Awaiting {app?.decision_letter?.is_signed
+                                                ? 'signature'
+                                                : 'upload'}
                                             </p>
                                         </div>
                                     ))}
+                                    {stats.pendingDecisionLetters.length === 0 && (
+                                        <p className="text-center text-default-500">
+                                            No pending decision letters.
+                                        </p>
+                                    )}
                                 </div>
                             </CardBody>
                         </Card>

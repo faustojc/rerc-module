@@ -64,8 +64,8 @@ const ReviewType = ({user, application, status, handleUpdateApplication}: Applic
                             info={type}
                             isSelected={reviewType == type.value}
                             onSelect={(value) => setReviewType(value.toLowerCase())}
-                            isPressable={application.review_type == null}
-                            isDisabled={!canAssign || application.review_type != type.value}
+                            isPressable={canAssign && application.review_type == null}
+                            isDisabled={application.review_type != null && application.review_type != type.value}
                         />
                     ))}
                 </div>

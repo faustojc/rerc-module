@@ -3,11 +3,11 @@ import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Chip, DatePicker
 import { DateValue, TimeValue } from "@react-types/datepicker";
 import { CalendarDate, getLocalTimeZone, Time } from "@internationalized/date";
 import React, { useEffect, useState } from "react";
-import { MdiAccountAdd, MdiCalendar, MdiDeleteForever, UserAlt } from "@/Components/Icons";
+import { ClipboardError, MdiAccountAdd, MdiCalendar, MdiDeleteForever, UserAlt } from "@/Components/Icons";
 
 const PanelMeeting = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
     const [panelMembers, setPanelMembers] = useState<PanelMember[]>(
-        application.panels != null && application.panels.length !== 0 ? application.panels : []
+        application.panels != null ? application.panels : []
     );
     const [meeting, setMeeting] = useState<Date | null>(
         application.meeting != null ? new Date(application.meeting.meeting_date) : null
@@ -120,10 +120,13 @@ const PanelMeeting = ({user, application, status, handleUpdateApplication}: Appl
                     </>
                 ) : (
                     <p className="text-center text-medium p-5">
-                        {user.role == 'researcher'
-                            ? "Please upload the proof of payment first."
-                            : "Please wait for the researchers to upload their proof of payment receipt before assigning panel members and scheduling the meeting."
-                        }
+                        <ClipboardError className="w-12 h-12 text-default-400 mx-auto mb-3" />
+                        <p className="text-default-500">
+                            {user.role == 'researcher'
+                                ? "Please upload the proof of payment first."
+                                : "Please wait for the researchers to upload their proof of payment receipt before assigning panel members and scheduling the meeting."
+                            }
+                        </p>
                     </p>
                 )}
             </CardBody>
@@ -300,7 +303,6 @@ const PanelScheduleForm = ({
                                 <div key={index} className="flex items-center justify-between gap-2">
                                     <User name={`${panelMember.firstname} ${panelMember.lastname}`}
                                           avatarProps={{icon: <UserAlt/>}}
-
                                     />
                                     <Button color="danger"
                                             variant="light"
