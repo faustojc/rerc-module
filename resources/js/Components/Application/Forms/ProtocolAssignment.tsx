@@ -3,6 +3,7 @@ import { Application, ApplicationFormProps, AppStatus } from "@/types";
 import React, { ChangeEvent, useState } from "react";
 import { ClipboardError, MdiCalendar } from "@/Components/Icons";
 import { parseAbsolute } from "@internationalized/date";
+import { toast } from "react-toastify";
 
 const ProtocolAssignment = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
     const [protocolCode, setProtocolCode] = useState<string | null>(application.protocol_code);
@@ -37,6 +38,8 @@ const ProtocolAssignment = ({user, application, status, handleUpdateApplication}
                     statuses: response.data.application.statuses
                 }
             });
+        }).catch((error) => {
+            toast.error(error.response.data.message ?? 'Ops! Something went wrong. Please try again.');
         }).finally(() => setLoading(false));
     }
 

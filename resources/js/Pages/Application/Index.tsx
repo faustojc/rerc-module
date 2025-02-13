@@ -78,7 +78,11 @@ const Index = (props: ApplicationIndexProps) => {
                         </div>
                         <Input placeholder="Search by research title or researcher..."
                                endContent={(
-                                   <Button onPress={() => updateFilters(filters, 1)}
+                                   <Button onPress={() => {
+                                        if (search !== filters.query) {
+                                             updateFilters({...filters, query: search}, pagination.current_page);
+                                        }
+                                   }}
                                            variant="light"
                                            color="primary"
                                            isIconOnly
@@ -88,11 +92,11 @@ const Index = (props: ApplicationIndexProps) => {
                                )}
                                className="max-w-md disabled:pointer-events-auto"
                                variant="flat"
-                               value={filters.query}
+                               value={search}
                                onChange={(e) => setSearch(e.target.value)}
                                onKeyDown={(e) =>
                                    e.key === 'Enter'
-                                   && search.trim().length > 0
+                                   && search !== filters.query
                                    && updateFilters({...filters, query: search}, pagination.current_page)
                                }
                         />

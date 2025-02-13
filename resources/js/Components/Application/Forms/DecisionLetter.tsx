@@ -11,9 +11,7 @@ import { ClipboardError, FeDocument } from "@/Components/Icons";
 const DecisionLetter = ({user, application, status, handleUpdateApplication, handleMessage}: ApplicationFormProps) => {
     const [currTab, setCurrTab] = useState<string>('decision-letter');
 
-    const canUpload = user.role === 'staff' && (!application.decision_letter || !application.decision_letter.is_signed);
-    const canUploadSigned = user.role === 'chairperson' && application.decision_letter != null  && !application.decision_letter.is_signed;
-    const canDelete = user.role === 'staff' && application.decision_letter != null && !application.decision_letter.is_signed;
+    const canUpload = user.role !== 'researcher' && (!application.decision_letter || !application.decision_letter.is_signed);
 
     const handleUpdateData = async (data: FormData) => {
         try {
@@ -41,49 +39,6 @@ const DecisionLetter = ({user, application, status, handleUpdateApplication, han
         }
     }
 
-    const handleDelete = async () => {
-        if (!application.decision_letter) {
-            return;
-        }
-
-        try {
-            await window.axios.delete(route('applications.decision-letter.destroy', {
-                application: application,
-                decision_letter: application.decision_letter,
-                status_id: status.id
-            }));
-
-            const updatedStatus = {
-                ...status,
-                status: "Removed"
-            }
-
-            handleUpdateApplication({
-                application: {
-                    decision_letter: null,
-                    statuses: [
-                        { ...updatedStatus },
-                        { ...status.next_status }
-                    ]
-                }
-            });
-        } catch (e: any) {
-            toast.error(e.message ?? 'An error occurred. Please try again.');
-            console.error(e);
-        }
-    }
-
-    const handleUpload = async (file: File) => {
-        const formData = new FormData();
-
-        formData.append('file', file!);
-        formData.append('status_id', status.id);
-        formData.append('message', `${application.research_title}'s decision letter has been uploaded`);
-        formData.append('new_status', 'Uploaded');
-
-        await handleUpdateData(formData);
-    }
-
     const handleUpdateSigned = async (file: File) => {
         const formData = new FormData();
         formData.append('file', file!);
@@ -99,11 +54,10 @@ const DecisionLetter = ({user, application, status, handleUpdateApplication, han
             <CardHeader className="flex-col items-start bg-success-300">
                 <h3 className="text-xl font-bold">Decision Letter</h3>
                 <p className="text-sm mt-2">
-                    {user.role === 'staff'
-                        ? "Upload and manage the decision letter for this application."
-                        : user.role === 'chairperson'
-                            ? "Review and sign the decision letter."
-                            : "View the decision letter for your application."}
+                    {user.role !== 'researcher'
+                        ? "Upload the signed decision letter for this application."
+                        : "View the decision letter for your application."
+                    }
                 </p>
             </CardHeader>
             {status == null ? (
@@ -124,17 +78,13 @@ const DecisionLetter = ({user, application, status, handleUpdateApplication, han
                             {application.decision_letter && (
                                 <div className="mb-6">
                                     <h3 className="text-lg font-medium mb-3">
-                                        Current Decision Letter
+                                        Signed Decision Letter
                                     </h3>
-                                    <DecisionLetterDisplay
-                                        decisionLetter={application.decision_letter}
-                                        onDelete={handleDelete}
-                                        canDelete={canDelete}
-                                    />
+                                    <DecisionLetterDisplay decisionLetter={application.decision_letter} />
                                 </div>
                             )}
 
-                            {(application.decision_letter == null && user.role !== 'staff') && (
+                            {(application.decision_letter == null && user.role === 'researcher') && (
                                 <div className="mb-6">
                                     <h3 className="text-lg font-medium mb-3">
                                         Decision Letter
@@ -142,34 +92,21 @@ const DecisionLetter = ({user, application, status, handleUpdateApplication, han
                                     <div className="bg-default-100 p-4 rounded-lg">
                                         <p className="flex flex-row gap-3 items-center text-default-600">
                                             <FeDocument />
-                                            Waiting for the staff to upload the decision letter.
+                                            Waiting for the staff or chairperson to upload the signed decision letter.
                                         </p>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Upload Section for Staff */}
-                            {canUpload && !canDelete && (
+                            {/* Upload Signed Decision Letter */}
+                            {canUpload && (
                                 <div className="mb-6">
                                     <h3 className="text-lg font-medium mb-3">
-                                        Upload Decision Letter
-                                    </h3>
-                                    <DecisionLetterUpload
-                                        onUpload={handleUpload}
-                                        buttonText="Upload Decision Letter"
-                                    />
-                                </div>
-                            )}
-
-                            {/* Upload Signed Version for Chairperson */}
-                            {canUploadSigned && (
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-medium mb-3">
-                                        Upload Signed Version
+                                        Upload the Signed Decision Letter
                                     </h3>
                                     <DecisionLetterUpload
                                         onUpload={handleUpdateSigned}
-                                        buttonText="Upload Signed Version"
+                                        buttonText="Upload Signed Letter"
                                     />
                                 </div>
                             )}
@@ -177,16 +114,10 @@ const DecisionLetter = ({user, application, status, handleUpdateApplication, han
                             <div className="mt-3 bg-default-100 p-4 rounded-lg">
                                 <h3 className="font-medium mb-2">Notice:</h3>
                                 <div className="space-y-2 text-sm text-default-600">
-                                    {user.role === 'staff' ? (
+                                    {user.role !== 'researcher' ? (
                                         <>
-                                            <p>• Upload the initial decision letter for review.</p>
-                                            <p>• You can delete and re-upload until it's signed.</p>
-                                            <p>• Once signed by the Chairperson, it cannot be modified.</p>
-                                        </>
-                                    ) : user.role === 'chairperson' ? (
-                                        <>
-                                            <p>• Review the decision letter carefully before signing.</p>
-                                            <p>• Upload the signed version when ready.</p>
+                                            <p>• Review the decision letter carefully before uploading.</p>
+                                            <p>• Upload the <strong>signed</strong> decision letter when ready.</p>
                                             <p>• Signed letters are final and cannot be modified.</p>
                                         </>
                                     ) : (

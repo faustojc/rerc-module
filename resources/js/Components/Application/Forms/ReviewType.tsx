@@ -1,5 +1,5 @@
 import { ApplicationFormProps, ReviewTypeInfo } from "@/types";
-import { Button, Card, CardBody, CardHeader, Chip, Divider, Tooltip } from "@nextui-org/react";
+import { Button, Card, CardBody, CardHeader, Chip, Divider, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Tooltip, useDisclosure } from "@nextui-org/react";
 import React, { useState } from "react";
 import { REVIEW_TYPES } from "@/types/constants";
 
@@ -14,6 +14,8 @@ interface ReviewTypeCardProps {
 const ReviewType = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
     const [reviewType, setReviewType] = useState<string>(application.review_type || '');
     const [loading, setLoading] = useState<boolean>(false);
+
+    const {isOpen, onOpen, onOpenChange, onClose} = useDisclosure();
 
     const canAssign = ['staff', 'chairperson'].includes(user.role);
 
@@ -37,75 +39,104 @@ const ReviewType = ({user, application, status, handleUpdateApplication}: Applic
                     statuses: response.data.application.statuses
                 }
             });
-        }).finally(() => setLoading(false));
+        }).finally(() => {
+            setLoading(false);
+            onClose();
+        });
     }
 
     return (
-        <Card className="sticky self-start top-0">
-            <CardHeader className="flex-col items-start">
-                <div className="flex items-center justify-between w-full">
-                    <h2 className="text-xl font-bold">Review Type Assignment</h2>
-                    {application.review_type && (
-                        <Chip color="primary" variant="flat">
-                            {getReviewTypeInfo(application.review_type).label}
-                        </Chip>
+        <>
+            <Card className="sticky self-start top-0">
+                <CardHeader className="flex-col items-start">
+                    <div className="flex items-center justify-between w-full">
+                        <h2 className="text-xl font-bold">Review Type Assignment</h2>
+                        {application.review_type && (
+                            <Chip color="primary" variant="flat">
+                                {getReviewTypeInfo(application.review_type).label}
+                            </Chip>
+                        )}
+                    </div>
+                    <p className="text-sm">
+                        Type of review based on vulnerability of the participants and level of risks.
+                    </p>
+                </CardHeader>
+                <Divider />
+                <CardBody>
+                    <div className="grid md:grid-cols-3 gap-4 mb-3">
+                        {REVIEW_TYPES.map((type) => (
+                            <ReviewTypeCard
+                                key={type.value}
+                                info={type}
+                                isSelected={reviewType == type.value}
+                                onSelect={(value) => setReviewType(value.toLowerCase())}
+                                isPressable={canAssign && application.review_type == null}
+                                isDisabled={application.review_type != null && application.review_type != type.value}
+                            />
+                        ))}
+                    </div>
+
+                    {reviewType && (
+                        <ReviewTypeDetails info={getReviewTypeInfo(reviewType)} />
                     )}
-                </div>
-                <p className="text-sm">
-                    Type of review based on vulnerability of the participants and level of risks.
-                </p>
-            </CardHeader>
-            <Divider />
-            <CardBody>
-                <div className="grid md:grid-cols-3 gap-4 mb-3">
-                    {REVIEW_TYPES.map((type) => (
-                        <ReviewTypeCard
-                            key={type.value}
-                            info={type}
-                            isSelected={reviewType == type.value}
-                            onSelect={(value) => setReviewType(value.toLowerCase())}
-                            isPressable={canAssign && application.review_type == null}
-                            isDisabled={application.review_type != null && application.review_type != type.value}
-                        />
-                    ))}
-                </div>
 
-                {reviewType && (
-                    <ReviewTypeDetails info={getReviewTypeInfo(reviewType)} />
-                )}
+                    {canAssign && !application.review_type && (
+                        <div className="flex justify-end mt-4">
+                            <Button
+                                color="primary"
+                                isDisabled={!reviewType || reviewType.length === 0 || status == null}
+                                onPress={onOpen}
+                            >
+                                Assign Review Type
+                            </Button>
+                        </div>
+                    )}
 
-                {canAssign && !application.review_type && (
-                    <div className="flex justify-end mt-4">
-                        <Button
-                            color="primary"
-                            isLoading={loading}
-                            isDisabled={!reviewType || reviewType.length === 0 || status == null}
-                            onPress={handleUpdateReview}
-                        >
-                            Assign Review Type
-                        </Button>
+                    <div className="mt-4 bg-default-100 p-4 rounded-lg">
+                        <h3 className="font-medium mb-2">About Review Types</h3>
+                        <div className="space-y-2 text-sm text-default-600">
+                            <p>
+                                • The review type determines the evaluation process and timeline
+                                for your research application.
+                            </p>
+                            <p>
+                                • Selection is based on research complexity, risk level, and
+                                participant involvement.
+                            </p>
+                            <p>
+                                • Processing times are estimates and may vary based on
+                                application completeness and complexity.
+                            </p>
+                        </div>
                     </div>
-                )}
+                </CardBody>
+            </Card>
 
-                <div className="mt-4 bg-default-100 p-4 rounded-lg">
-                    <h3 className="font-medium mb-2">About Review Types</h3>
-                    <div className="space-y-2 text-sm text-default-600">
-                        <p>
-                            • The review type determines the evaluation process and timeline
-                            for your research application.
-                        </p>
-                        <p>
-                            • Selection is based on research complexity, risk level, and
-                            participant involvement.
-                        </p>
-                        <p>
-                            • Processing times are estimates and may vary based on
-                            application completeness and complexity.
-                        </p>
-                    </div>
-                </div>
-            </CardBody>
-        </Card>
+            {/* Confirm Assign Modal */}
+            <Modal backdrop="blur" isOpen={isOpen} onOpenChange={onOpenChange} isDismissable={!loading}>
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">Confirm Assign Review Type</ModalHeader>
+                            <ModalBody>
+                                <p className="text-default-600">
+                                    Are you sure you want to assign the review type of
+                                    <strong className="ml-1">{getReviewTypeInfo(reviewType).label}</strong> to this application?
+                                </p>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button color="danger" variant="light" onPress={onClose} isDisabled={loading}>
+                                    Close
+                                </Button>
+                                <Button color="secondary" variant="shadow" isLoading={loading} onPress={handleUpdateReview}>
+                                    Confirm Assign
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
+        </>
     );
 }
 
@@ -121,8 +152,7 @@ const ReviewTypeCard: React.FC<ReviewTypeCardProps> = ({
         ${isSelected
             ? 'border-2 border-primary-500 bg-primary-50'
             : 'border border-default-200'}
-        ${!isPressable ? 'cursor-default' : 'cursor-pointer'}
-        ${(isSelected && !isDisabled && !info) && 'hover:border-primary-200'}
+        ${!isPressable ? 'cursor-default' : 'cursor-pointer hover:border-primary-500'}
         `}
         isPressable={isPressable}
         isDisabled={isDisabled}

@@ -3,6 +3,7 @@ import React, { useCallback, useState } from "react";
 import { Button, Card, CardBody, CardHeader, Chip, DatePicker, Input, Link } from "@nextui-org/react";
 import { CloudArrowDown, DocumentCheckOutline, LightUploadRounded } from "@/Components/Icons";
 import { DateValue, getLocalTimeZone } from "@internationalized/date";
+import { toast } from "react-toastify";
 
 const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, status, handleUpdateApplication}) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -50,13 +51,15 @@ const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, sta
 
             handleUpdateApplication({
                 application: {
-                    ethics_clearance: response.data.ethics_clearance
+                    ethics_clearance: response.data.ethics_clearance,
+                    statuses: [response.data.status]
                 }
             });
             setSelectedFile(null);
             setClearanceDate(null);
         } catch (error: any) {
             console.error('Upload failed:', error.message);
+            toast.error('Failed to upload Ethics Clearance. Please try again.');
         } finally {
             setIsUploading(false);
         }

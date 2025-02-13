@@ -13,13 +13,11 @@ return new class extends Migration
     {
         Schema::table('documents', function (Blueprint $table) {
             $table->unsignedInteger('version')->default(1);
-            $table->ulid('original_document_id')->nullable();
             $table->string('status')->default('Original');
         });
 
         Schema::table('review_results', function (Blueprint $table) {
-            $table->json('reviewed_document_ids')->nullable();
-            $table->text('feedback')->nullable();
+            $table->unsignedInteger('version')->default(1);
         });
     }
 
@@ -30,13 +28,11 @@ return new class extends Migration
     {
         Schema::table('documents', function (Blueprint $table) {
             $table->dropColumn('version');
-            $table->dropColumn('original_document_id');
             $table->dropColumn('status');
         });
 
         Schema::table('review_results', function (Blueprint $table) {
-            $table->dropColumn('reviewed_document_ids');
-            $table->dropColumn('feedback');
+            $table->dropColumn('version');
         });
     }
 };

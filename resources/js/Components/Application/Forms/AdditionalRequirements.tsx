@@ -148,7 +148,7 @@ const AdditionalRequirements = ({user, application, status, handleUpdateApplicat
                                 {(alert.message && !loading) && <Alert variant="flat" color={alert.type} title={alert.message}  />}
                                 {(user.role === 'staff' && !hasApproved) && (
                                     <Button color="primary" variant="shadow" isLoading={loading} onPress={handleApproveRequirement}>
-                                        Approve Requirement
+                                        Approve All the Requirements
                                     </Button>
                                 )}
                             </CardFooter>

@@ -7,6 +7,7 @@ use App\Models\AppProfile;
 use App\Models\AppStatus;
 use App\Models\DecisionLetter;
 use Exception;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,69 +26,42 @@ class DecisionLetterController extends Controller
             'message' => 'nullable|string',
             'is_signed' => 'nullable|string',
             'status_id' => 'required|string',
-            'new_status' => 'nullable|string',
         ]);
         $isSigned = boolval($data['is_signed'] ?? FALSE);
 
-        $status = $application->statuses()->find($data['status_id']);
-        $status->status = $isSigned ? 'Signed' : $data['new_status'];
-        $status->end = $isSigned ? now() : NULL;
-
-        $newStatus = NULL;
-        $oldPath = NULL;
-
-        $decisionLetter = $application->decisionLetter;
-
-        $fileExist = Storage::disk('public')->exists("decision_letters/$application->id/{$data['file']->getClientOriginalName()}");
-        $fileName = $data['file']->getClientOriginalName();
-
-        if ($fileExist) {
-            $fileName = now()->format('Y-m-d h:i:s') . "-{$data['file']->getClientOriginalName()}";
-        }
-
-        $fileName = $isSigned ? "signed-$fileName" : $fileName;
+        $fileName = "signed-{$data['file']->getClientOriginalName()}";
         $path = Storage::disk('public')->putFileAs("decision_letters/$application->id", $data['file'], $fileName);
 
-        if (!empty($decisionLetter)) {
-            $oldPath = $decisionLetter->file_path;
+        $status = $application->statuses()->find($data['status_id']);
+        $status->status = 'Signed';
+        $status->end = $isSigned ? now() : NULL;
 
-            $newStatus = new AppStatus([
-                'name' => 'Payment Made',
-                'sequence' => $status->sequence + 1,
-                'status' => 'In Progress',
-                'start' => now(),
-            ]);
+        $newStatus = new AppStatus([
+            'name' => 'Payment Made',
+            'sequence' => $status->sequence + 1,
+            'status' => 'In Progress',
+            'start' => now(),
+        ]);
 
-            $decisionLetter->file_name = $fileName;
-            $decisionLetter->file_path = $path;
-            $decisionLetter->is_signed = TRUE;
-            $decisionLetter->date_uploaded = now();
-        } else {
-            $decisionLetter = new DecisionLetter([
-                'app_profile_id' => $application->id,
-                'file_name' => $fileName,
-                'file_path' => $path,
-                'date_uploaded' => now(),
-            ]);
-        }
+        $decisionLetter = new DecisionLetter([
+            'app_profile_id' => $application->id,
+            'file_name' => $fileName,
+            'file_path' => $path,
+            'is_signed' => true,
+            'date_uploaded' => now(),
+        ]);
 
         DB::beginTransaction();
 
         try {
-            if (!empty($newStatus)) {
-                $application->statuses()->save($newStatus);
-            }
-
-            $application->statuses()->save($status);
+            $application->statuses()->saveMany([$status, $newStatus]);
             $application->decisionLetter()->save($decisionLetter);
 
             DB::commit();
 
-            if (!empty($oldPath)) {
-                Storage::disk('public')->delete($oldPath);
-            }
-
-            $application->load('decisionLetter', 'statuses')->refresh();
+            $application->load(['statuses' => function (HasMany $query) {
+                $query->latest()->take(2);
+            }, 'decisionLetter'])->refresh();
             $decisionLetter->refresh();
 
             broadcast(new ApplicationUpdated($application, message: $data['message']))->toOthers();
@@ -100,17 +74,12 @@ class DecisionLetterController extends Controller
             ], 500);
         }
 
-        $responseData = [
+        return response()->json([
             'message' => $data['message'],
             'decision_letter' => $decisionLetter,
             'status' => $status,
-        ];
-
-        if (!empty($newStatus)) {
-            $responseData['new_status'] = $newStatus;
-        }
-
-        return response()->json($responseData);
+            'new_status' => $newStatus,
+        ]);
     }
 
     /**

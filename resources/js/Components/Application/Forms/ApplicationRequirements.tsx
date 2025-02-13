@@ -301,7 +301,7 @@ const Footer = ({user, status, requirements, alert, loading, handleUpload, handl
     handleSubmit: () => void,
     handleApprove: () => void
 }) => {
-    const hasSomeSubmitted = requirements.some((req) => req.status.toLowerCase() === 'submitted');
+    const hasEverySubmitted = requirements.every((req) => req.status.toLowerCase() === 'submitted');
 
     if (user.role === 'researcher' && status.end == null) {
         const hasSomeUploaded = requirements.some((req) => req.status.toLowerCase() === 'uploaded');
@@ -325,14 +325,14 @@ const Footer = ({user, status, requirements, alert, loading, handleUpload, handl
             </>
         )
     }
-    else if (user.role === 'staff' && status.status !== 'Approved' && hasSomeSubmitted) {
+    else if (user.role === 'staff' && status.status !== 'Approved' && hasEverySubmitted) {
         return (
             <>
                 <Divider />
                 <CardFooter className="justify-end">
                     {alert.message && <Alert description={alert.message} title={alert.title} color={alert.type} />}
                     <Button color="primary" variant="shadow" onPress={() => handleApprove()} isLoading={loading}>
-                        Approve Requirements
+                        Approve All the Submitted Requirements
                     </Button>
                 </CardFooter>
             </>

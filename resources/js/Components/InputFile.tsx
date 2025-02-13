@@ -4,7 +4,7 @@ interface InputFileProps extends Partial<InputHTMLAttributes<HTMLInputElement>> 
     label?: string;
     reverseButton?: boolean;
     file: File | File[] | null;
-    isError: boolean;
+    isError?: boolean;
     errorText?: string;
     handleSelectFile: ChangeEventHandler<HTMLInputElement> | undefined;
 }
@@ -26,13 +26,13 @@ const InputFile = ({ label, reverseButton, file, isError, errorText, handleSelec
 
     return (
         <div className={inputProps.className}>
-            <label aria-labelledby={label || 'file-inputs'} className={"cursor-pointer "}>
+            <label aria-labelledby={label || 'file-inputs'}>
                 {label && (
                     <div className="mb-3">
                         <h3>{label}</h3>
                     </div>
                 )}
-                <div className={`w-full h-9 rounded-3xl border border-gray-300 items-center inline-flex ${!reverseButton && 'justify-between pl-4'}`}>
+                <div className={`w-full h-9 rounded-3xl border border-gray-300 items-center inline-flex cursor-pointer ${!reverseButton && 'justify-between pl-4'}`}>
                     {reverseButton && (
                         <div className="flex w-28 h-9 px-2 flex-col bg-indigo-500 rounded-l-3xl shadow text-white text-xs font-semibold leading-4 items-center justify-center cursor-pointer focus:outline-none">
                             Choose File

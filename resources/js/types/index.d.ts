@@ -129,12 +129,11 @@ export interface AppReviewResult {
     app_profile_id: string;
     name: string;
     file_url: string;
-    status: string;
+    version: number;
+    date_uploaded: string;
     created_at?: string;
     updated_at?: string;
     documents?: AppDocument[];
-    reviewed_document_ids?: string[];
-    feedback?: string;
     [key: string]: any;
 }
 

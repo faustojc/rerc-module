@@ -6,11 +6,9 @@ import React, { useEffect, useState } from "react";
 import { ClipboardError, MdiAccountAdd, MdiCalendar, MdiDeleteForever, UserAlt } from "@/Components/Icons";
 
 const PanelMeeting = ({user, application, status, handleUpdateApplication}: ApplicationFormProps) => {
-    const [panelMembers, setPanelMembers] = useState<PanelMember[]>(
-        application.panels != null ? application.panels : []
-    );
+    const [panelMembers, setPanelMembers] = useState<PanelMember[]>(application.panels ?? []);
     const [meeting, setMeeting] = useState<Date | null>(
-        application.meeting != null ? new Date(application.meeting.meeting_date) : null
+        application.meeting ? new Date(application.meeting.meeting_date) : null
     );
     const [isDraft, setIsDraft] = useState(false);
 
@@ -50,6 +48,11 @@ const PanelMeeting = ({user, application, status, handleUpdateApplication}: Appl
             console.error(error.response.data.message ?? 'An error occurred while assigning panel members and scheduling the meeting.');
         }
     }
+
+    useEffect(() => {
+        setPanelMembers(application.panels ?? []);
+        setMeeting(application.meeting ? new Date(application.meeting.meeting_date) : null);
+    }, [application.panels, application.meeting]);
 
     useEffect(() => {
         const draft = localStorage.getItem("draft");
@@ -105,15 +108,23 @@ const PanelMeeting = ({user, application, status, handleUpdateApplication}: Appl
                                 />
                                 <h3 className="text-lg">Panel Members</h3>
                                 <div className="md:grid grid-cols-2 flex flex-col gap-2 w-full items-start justify-items-start">
-                                    {panelMembers.map((panelMember, index) => (
-                                        <User
-                                            key={index}
-                                            name={`${panelMember.firstname} ${panelMember.lastname}`}
-                                            avatarProps={{
-                                                icon: <UserAlt/>,
-                                            }}
-                                        />
-                                    ))}
+                                    {panelMembers.map((panelMember, index) => {
+                                        let panelName = `${panelMember.firstname} ${panelMember.lastname}`;
+
+                                        if (user.role === 'researcher') {
+                                            panelName = `Panel ${index + 1}`;
+                                        }
+
+                                        return (
+                                            <User
+                                                key={index}
+                                                name={panelName}
+                                                avatarProps={{
+                                                    icon: <UserAlt/>,
+                                                }}
+                                            />
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -230,38 +241,33 @@ const PanelScheduleForm = ({
 
     return (
         <div>
-            <Card className="mb-3">
+            <Card className="px-3 mb-3">
                 <CardBody className="flex-row gap-3 items-center justify-between">
-                    <div className="flex flex-row gap-3 items-center">
-                        <div className="p-2 bg-success-100 rounded-full">
-                            <MdiCalendar />
+                    <div className="w-full">
+                        <div className="flex flex-row items-center justify-between">
+                            <h3 className="text-lg mb-2">Schedule Meeting</h3>
+                            {isDraft && (
+                                <Chip color="secondary" variant="shadow" size="sm" className="ml-auto">
+                                    Draft
+                                </Chip>
+                            )}
                         </div>
-                        <div>
-                            <div className="flex flex-row items-center justify-between">
-                                <h3 className="text-lg mb-2">Schedule Meeting</h3>
-                                {isDraft && (
-                                    <Chip color="secondary" variant="shadow" size="sm" className="ml-auto">
-                                        Draft
-                                    </Chip>
-                                )}
-                            </div>
-                            <div className="flex flex-row gap-3">
-                                <DatePicker
-                                    hideTimeZone
-                                    showMonthAndYearPickers
-                                    aria-labelledby="Meeting Date"
-                                    value={meeting ? new CalendarDate(meeting!.getFullYear(), meeting!.getMonth(), meeting!.getDate()): null}
-                                    onChange={handleSetDate}
-                                    className="max-w-[220px]"
-                                />
-                                <TimeInput
-                                    hideTimeZone
-                                    aria-labelledby="Meeting Time"
-                                    value={meeting ? new Time(meeting!.getHours(), meeting!.getMinutes()) : null}
-                                    onChange={handleSetTime}
-                                    className="max-w-[220px]"
-                                />
-                            </div>
+                        <div className="flex flex-row gap-3">
+                            <DatePicker
+                                hideTimeZone
+                                showMonthAndYearPickers
+                                aria-labelledby="Meeting Date"
+                                value={meeting ? new CalendarDate(meeting!.getFullYear(), meeting!.getMonth(), meeting!.getDate()): null}
+                                onChange={handleSetDate}
+                                className="max-w-[220px]"
+                            />
+                            <TimeInput
+                                hideTimeZone
+                                aria-labelledby="Meeting Time"
+                                value={meeting ? new Time(meeting!.getHours(), meeting!.getMinutes()) : null}
+                                onChange={handleSetTime}
+                                className="max-w-[220px]"
+                            />
                         </div>
                     </div>
                 </CardBody>
@@ -269,7 +275,7 @@ const PanelScheduleForm = ({
             <Card className="p-3">
                 <CardHeader className="flex-col items-start">
                     <div className="flex flex-row items-center justify-between w-full">
-                        <h3 className="text-lg">Panel Members</h3>
+                        <h3 className="text-lg">Assign Panel Members</h3>
                         {isDraft && (
                             <Chip color="secondary" variant="shadow" size="sm" className="ml-auto">
                                 Draft

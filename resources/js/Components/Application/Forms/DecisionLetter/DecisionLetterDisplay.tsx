@@ -1,29 +1,10 @@
 import { DecisionLetter } from "@/types";
-import React, { useState } from "react";
+import React from "react";
 import { parseAbsolute } from "@internationalized/date";
 import { Button, Chip, Link } from "@nextui-org/react";
-import { CloudArrowDown, MdiDeleteForever } from "@/Components/Icons";
+import { CloudArrowDown } from "@/Components/Icons";
 
-interface DecisionLetterDisplayProps {
-    decisionLetter: DecisionLetter;
-    canDelete: boolean;
-    onDelete?: () => Promise<void>;
-}
-
-export const DecisionLetterDisplay: React.FC<DecisionLetterDisplayProps> = ({
-    decisionLetter,
-    canDelete,
-    onDelete,
-}) => {
-    const [loading, setLoading] = useState(false);
-
-    const handleDelete = async () => {
-        setLoading(true);
-
-        await onDelete!();
-
-        setLoading(false);
-    }
+export const DecisionLetterDisplay: React.FC<{decisionLetter: DecisionLetter}> = ({decisionLetter}) => {
 
     const formatDate = (dateString: string) => {
         const date = parseAbsolute(dateString, 'UTC').toDate();
@@ -50,21 +31,9 @@ export const DecisionLetterDisplay: React.FC<DecisionLetterDisplayProps> = ({
                             color="primary"
                             variant="flat"
                             startContent={<CloudArrowDown className="w-4 h-4" />}
-                            isDisabled={loading}
                         >
                             Download
                         </Button>
-                        {canDelete && onDelete && (
-                            <Button
-                                color="danger"
-                                variant="flat"
-                                startContent={<MdiDeleteForever className="w-4 h-4" />}
-                                isLoading={loading}
-                                onPress={handleDelete}
-                            >
-                                Delete
-                            </Button>
-                        )}
                     </div>
                 </div>
                 <p className="text-sm text-default-600">

@@ -254,7 +254,10 @@ class AppProfileController extends Controller
             'meeting:id,app_profile_id,meeting_date,status',
             'documents:id,app_profile_id,review_result_id,file_url,version,original_document_id,status,created_at',
             'decisionLetter:id,app_profile_id,file_name,file_path,date_uploaded,is_signed',
-            'reviewResults:id,app_profile_id,name,file_url,date_uploaded,status,reviewed_document_ids,feedback,created_at',
+            'reviewResults' => function (HasMany $query) {
+                return $query->select(['id' , 'app_profile_id' ,'name', 'file_url', 'date_uploaded', 'status' ,'version'])
+                    ->orderByDesc('date_uploaded');
+            },
             'panels:id,app_profile_id,firstname,lastname',
             'ethicsClearance:id,app_profile_id,file_url,date_clearance,date_uploaded',
         ]);
@@ -284,8 +287,8 @@ class AppProfileController extends Controller
     public function uploadPayment(Request $request, AppProfile $application)
     {
         $data = $request->validate([
-            'file' => 'required|file', // images
-            'payment_details' => 'required|string',
+            'file' => 'required|file',
+            'payment_details' => 'nullable|string',
             'message' => 'nullable|string',
         ]);
         $currentDateTime = Carbon::now();
@@ -309,7 +312,7 @@ class AppProfileController extends Controller
 
         try {
             $application->update([
-                'payment_details' => $data['payment_details'],
+                'payment_details' => $data['payment_details'] ?? NULL,
                 'payment_date' => $currentDateTime,
                 'proof_of_payment_url' => $path,
             ]);
@@ -351,12 +354,19 @@ class AppProfileController extends Controller
             'status_id' => 'required|string',
             'new_status' => 'nullable|string',
             'next_status' => 'nullable|string',
-            'is_completed' => 'nullable|boolean'
+            'is_completed' => 'nullable|boolean',
         ]);
 
         $status = $application->statuses()->find($data['status_id']);
 
         if (!empty($data['protocol_code'])) {
+            if ($application->where('protocol_code', '=', $data['protocol_code'])->exists()) {
+                return response()->json([
+                    'message' => 'Protocol code already exists.',
+                    'error' => true,
+                ], 422);
+            }
+
             $application->protocol_code = $data['protocol_code'];
             $application->protocol_date_updated = now();
         }
@@ -524,6 +534,7 @@ class AppProfileController extends Controller
         return response()->json([
             'message' => $validated['message'],
             'ethics_clearance' => $application->ethicsClearance,
+            'status' => $status,
         ]);
     }
 }
