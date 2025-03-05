@@ -11,6 +11,7 @@ use App\Http\Controllers\ReviewResultController;
 use App\Models\AppProfile;
 use App\Models\Document;
 use App\Models\EthicsClearance;
+use App\Models\ReviewerReport;
 use App\Models\ReviewResult;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -83,6 +84,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('ethics-clearances/{ethics_clearance}/download', function (EthicsClearance $ethics_clearance) {
         return Storage::disk('public')->download($ethics_clearance->file_url);
     })->name('ethics-clearances.download');
+    Route::get('/reviewer-report/{reviewer_report}/download', fn(ReviewerReport $reviewer_report) =>
+        Storage::disk('public')->download($reviewer_report->file_url)
+    )->name('reviewer-report.download');
 });
 
 require __DIR__ . '/auth.php';
