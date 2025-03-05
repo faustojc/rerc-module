@@ -1,10 +1,11 @@
 import { AppStatus } from "@/types";
-import { Card, CardBody, CardHeader, Chip, Divider } from "@nextui-org/react";
+import { Accordion, AccordionItem, Card, CardBody, CardHeader, Chip, Divider } from "@nextui-org/react";
 import React, { Fragment, useMemo } from "react";
 import { ArrowsSwitch, Check, ClockRotateRight } from "@/Components/Icons";
 import { getLocalTimeZone } from "@internationalized/date";
 import { STEPS } from "@/types/constants";
 import { statusColor } from "@/types/helpers";
+import useIsMobile from "@/Hooks/useIsMobile";
 
 interface StatusesProps {
     appStatuses: AppStatus[];
@@ -13,6 +14,79 @@ interface StatusesProps {
 }
 
 const Statuses = ({appStatuses, selectedStatus, setSelectedStatus }: StatusesProps) => {
+    const isMobile = useIsMobile();
+
+    if (isMobile) {
+        return (
+            <Accordion variant="splitted"
+                       motionProps={{
+                           variants: {
+                               enter: {
+                                   y: 0,
+                                   opacity: 1,
+                                   height: "auto",
+                                   overflowY: "unset",
+                                   transition: {
+                                       height: {
+                                           type: "spring",
+                                           stiffness: 500,
+                                           damping: 30,
+                                           duration: 0.6,
+                                       },
+                                       opacity: {
+                                           easings: "ease",
+                                           duration: 0.5,
+                                       },
+                                   },
+                               },
+                               exit: {
+                                   y: -10,
+                                   opacity: 0,
+                                   height: 0,
+                                   overflowY: "hidden",
+                                   transition: {
+                                       height: {
+                                           easings: "ease",
+                                           duration: 0.25,
+                                       },
+                                       opacity: {
+                                           easings: "ease",
+                                           duration: 0.2,
+                                       },
+                                   },
+                               },
+                           },
+                       }}
+            >
+                <AccordionItem key={1}
+                               aria-label="steps list"
+                               title="Application Process"
+                               subtitle={`Step ${selectedStatus.sequence}: ${selectedStatus.name}`}
+                >
+                    <div className="relative flex w-full pl-2 sm:px-3 py-3 flex-auto flex-col place-content-inherit align-items-inherit h-auto break-words text-left overflow-y-auto subpixel-antialiased items-start gap-4">
+                        <StepsList appStatuses={appStatuses} selectedStatus={selectedStatus} setSelectedStatus={setSelectedStatus} />
+                    </div>
+                </AccordionItem>
+            </Accordion>
+        );
+    }
+
+    return (
+        <Card className="mb-4 sm:mb-0">
+            <CardHeader className="flex-col items-start bg-success-300">
+                <h3 className="text-lg font-semibold">Application Process</h3>
+                <p className="text-sm">
+                    Statuses of the application process.
+                </p>
+            </CardHeader>
+            <CardBody className="items-start gap-4">
+                <StepsList appStatuses={appStatuses} selectedStatus={selectedStatus} setSelectedStatus={setSelectedStatus} />
+            </CardBody>
+        </Card>
+    );
+}
+
+const StepsList: React.FC<StatusesProps> = ({appStatuses, selectedStatus, setSelectedStatus}) => {
     const steps: AppStatus[] = useMemo(() => {
         return STEPS.map((step, index) => {
             const dateTime = Intl.DateTimeFormat('en-US', {
@@ -51,59 +125,46 @@ const Statuses = ({appStatuses, selectedStatus, setSelectedStatus }: StatusesPro
         return 'default';
     }
 
-
-    return (
-        <Card className="mb-4 sm:mb-0">
-            <CardHeader className="flex-col items-start bg-success-300">
-                <h3 className="text-lg font-semibold">Application Process</h3>
-                <p className="text-sm">
-                    Statuses of the application process.
-                </p>
-            </CardHeader>
-            <CardBody className="items-start gap-4">
-                {steps.map((status, index) => (
-                    <Fragment key={`${status.id}-${index}`}>
-                        <div className="grid grid-cols-3 gap-5 items-center px-4 w-full hover:bg-default-100 rounded-lg cursor-pointer" onClick={() => setSelectedStatus(status) }>
-                            <div className="flex flex-row flex-nowrap items-center justify-end gap-3">
-                                <Chip size="md" variant="shadow" color={stepsColor(status)} classNames={{
-                                    content: status.end != 'N/A' ? 'px-0' : 'p-1.5'
-                                }}>
-                                    {statusColor(status.status) == 'primary' ?
-                                        <ArrowsSwitch />
-                                        : status.end != 'N/A' ? <Check /> : <ClockRotateRight width={16} height={16} />
-                                    }
-                                </Chip>
-                                <p className="text-nowrap">
-                                    Step {status.sequence}
-                                </p>
-                            </div>
-                            <div className="col-span-2">
-                                <p className="font-bold text-wrap">{status.name}</p>
-                                <Chip variant="dot" color={statusColor(status.status)} size="sm" className="my-1 border-none">
-                                    {status.status}
-                                </Chip>
-                                <div className="w-full">
-                                    <p className="flex flex-wrap gap-x-1.5 text-sm">
-                                        Start:
-                                        <span className="">
+    return steps.map((status, index) => (
+            <Fragment key={`${status.id}-${index}`}>
+                <div className="grid grid-cols-3 gap-5 items-center px-4 w-full hover:bg-default-100 rounded-lg cursor-pointer" onClick={() => setSelectedStatus(status) }>
+                    <div className="flex flex-row flex-nowrap items-center justify-end gap-3">
+                        <Chip size="md" variant="shadow" color={stepsColor(status)} classNames={{
+                            content: status.end != 'N/A' ? 'px-0' : 'p-1.5'
+                        }}>
+                            {statusColor(status.status) == 'primary' ?
+                                <ArrowsSwitch width={18} />
+                                : status.end != 'N/A' ? <Check /> : <ClockRotateRight width={16} height={16} />
+                            }
+                        </Chip>
+                        <p className="text-nowrap">
+                            Step {status.sequence}
+                        </p>
+                    </div>
+                    <div className="col-span-2">
+                        <p className="font-bold text-wrap">{status.name}</p>
+                        <Chip variant="dot" color={statusColor(status.status)} size="sm" className="my-1 border-none">
+                            {status.status}
+                        </Chip>
+                        <div className="w-full">
+                            <p className="flex flex-wrap gap-x-1.5 text-sm">
+                                Start:
+                                <span className="">
                                             {status.start}
                                         </span>
-                                    </p>
-                                    <p className="flex flex-wrap gap-x-1.5 text-sm">
-                                        End:
-                                        <span className="">
+                            </p>
+                            <p className="flex flex-wrap gap-x-1.5 text-sm">
+                                End:
+                                <span className="">
                                             {status.end}
                                         </span>
-                                    </p>
-                                </div>
-                            </div>
+                            </p>
                         </div>
-                        {(index < 9) && <Divider key={status.sequence} />}
-                    </Fragment>
-                ))}
-            </CardBody>
-        </Card>
-    );
+                    </div>
+                </div>
+                {(index < 9) && <Divider key={status.sequence} />}
+            </Fragment>
+        ));
 }
 
 export default Statuses;

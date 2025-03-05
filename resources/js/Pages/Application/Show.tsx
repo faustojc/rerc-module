@@ -43,7 +43,7 @@ const Show = memo((props: ApplicationShowProps) => {
             <div className="py-3">
                 <ApplicationHeader application={application} />
 
-                <div className="lg:grid grid-cols-3 gap-4 mt-4">
+                <div className="lg:grid grid-cols-3 space-y-4 sm:space-y-0 gap-4 mt-4">
                     <Statuses
                         appStatuses={application.statuses}
                         selectedStatus={selectedStatus}
