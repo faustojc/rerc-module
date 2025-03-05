@@ -37,6 +37,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('applications.upload-payment');
     Route::post('/applications/{application}/assign-panel-meeting', [AppProfileController::class, 'assignPanelMeeting'])
         ->name('applications.assign-panel-meeting');
+    Route::post('/applications/{application}/upload-report', [AppProfileController::class, 'uploadReport'])
+        ->name('applications.upload-reviewer-report');
     Route::post('/applications/{application}/upload-ethics-clearance', [AppProfileController::class, 'uploadEthicsClearance'])
         ->name('applications.upload-ethics-clearance');
     Route::resource('applications', AppProfileController::class)

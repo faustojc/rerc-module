@@ -1,7 +1,7 @@
 import Authenticated from '@/Layouts/AuthenticatedLayout';
 import { ChangeEvent, FormEventHandler, useState } from "react";
 import { Head, router } from "@inertiajs/react";
-import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input, Textarea } from "@nextui-org/react";
+import { Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input, Select, SelectItem, Textarea } from "@nextui-org/react";
 import { Member } from "@/types";
 import { MdiAccountAdd, MdiArrowLeft, MdiDeleteForever } from "@/Components/Icons";
 
@@ -13,6 +13,7 @@ export default function Create() {
     });
     const [members, setMembers] = useState<Member[]>([]);
     const [files, setFiles] = useState<File[]>([]);
+    const [researchType, setResearchType] = useState<string>("internal");
 
     const [memberInput, setMemberInput] = useState({
         firstname: {
@@ -53,6 +54,7 @@ export default function Create() {
         formData.append("members", JSON.stringify(members));
         formData.append("firstname", researcher.firstname);
         formData.append("lastname", researcher.lastname);
+        formData.append("research_type", researchType);
 
         for (let i = 0; i < files.length; i++) {
             formData.append("documents[]", files[i]);
@@ -181,7 +183,15 @@ export default function Create() {
                         <Divider />
                         <CardBody className="py-5">
                             <div className="md:grid grid-cols-3 grid-rows-3 items-center gap-5">
-                                <h3 className="text-lg text-default-800">RESEARCH TITLE</h3>
+                                <div>
+                                    <h3 className="text-lg text-default-800">
+                                        RESEARCHER TITLE
+                                        <span className="text-red-500">*</span>
+                                    </h3>
+                                    <p className="text-gray-500 text-sm">
+                                        Please input your research title
+                                    </p>
+                                </div>
                                 <div className="col-span-2">
                                     <Textarea value={researchTitle}
                                               onValueChange={handleSetResearchTitle}
@@ -195,19 +205,27 @@ export default function Create() {
                                         </div>
                                     )}
                                 </div>
-                                <h3 className="text-lg text-default-800 sm:mt-0 mt-5">RESEARCHER NAME</h3>
+                                <div className="sm:mt-0 mt-5">
+                                    <h3 className="text-lg text-default-800">
+                                        RESEARCHER NAME
+                                        <span className="text-red-500">*</span>
+                                    </h3>
+                                    <p className="text-gray-500 text-sm">
+                                        Please provide your full name
+                                    </p>
+                                </div>
                                 <div className="col-span-2">
                                     <div className="flex sm:flex-row flex-col gap-3">
                                         <Input label="First name"
                                                name="firstname"
-                                               size="sm"
+                                               labelPlacement="outside"
                                                value={researcher.firstname}
                                                isInvalid={errors.researcher}
                                                onChange={handleNameInput}
                                         />
                                         <Input label="Last name"
                                                name="lastname"
-                                               size="sm"
+                                               labelPlacement="outside"
                                                value={researcher.lastname}
                                                isInvalid={errors.researcher}
                                                onChange={handleNameInput}
@@ -215,29 +233,29 @@ export default function Create() {
                                     </div>
                                     {errors.researcher && (
                                         <div className="col-span-3 mt-3">
-                                            <p className="text-red-500 text-sm">Please provide your full name</p>
+                                            <p className="text-red-500 text-sm">This field is required</p>
                                         </div>
                                     )}
                                 </div>
                                 <div className="sm:mt-0 mt-5">
-                                    <h3 className="text-lg text-default-800 mt-4">MEMBERS</h3>
+                                    <h3 className="text-lg text-default-800">MEMBERS</h3>
                                     <p className="text-gray-500 text-sm">
                                         Add the members of your research team.
                                     </p>
                                 </div>
-                                <div className="col-span-2 mt-3">
+                                <div className="col-span-2 sm:mt-0 mt-5">
                                     <div className="">
                                         <div className="flex sm:flex-row flex-col gap-3">
                                             <Input label="First name"
                                                    name="firstname"
-                                                   size="sm"
+                                                   labelPlacement="outside"
                                                    value={memberInput.firstname.value}
                                                    isInvalid={memberInput.firstname.error}
                                                    onChange={(e) => handleNameInput(e, true)}
                                             />
                                             <Input label="Last name"
                                                    name="lastname"
-                                                   size="sm"
+                                                   labelPlacement="outside"
                                                    value={memberInput.lastname.value}
                                                    isInvalid={memberInput.lastname.error}
                                                    onChange={(e) => handleNameInput(e, true)}
@@ -270,12 +288,15 @@ export default function Create() {
                                     )}
                                 </div>
                                 <div className="sm:mt-0 mt-5">
-                                    <h3 className="text-lg text-default-800 mt-4">RESEARCH DOCUMENT</h3>
+                                    <h3 className="text-lg text-default-800">
+                                        RESEARCH DOCUMENT
+                                        <span className="text-red-500">*</span>
+                                    </h3>
                                     <p className="text-gray-500 text-sm">
                                         Please upload the research document for your research proposal.
                                     </p>
                                 </div>
-                                <div>
+                                <div className="col-span-2">
                                     <div>
                                         <label className="block my-4">
                                             <span className="sr-only">Choose File</span>
@@ -320,6 +341,27 @@ export default function Create() {
                                             </div>
                                         )}
                                     </div>
+                                </div>
+                                <div className="sm:mt-0 mt-5">
+                                    <h3 className="text-lg text-default-800">
+                                        RESEARCH TYPE
+                                        <span className="text-red-500">*</span>
+                                    </h3>
+                                    <p className="text-gray-500 text-sm">
+                                        Please select the type of your research proposal.
+                                    </p>
+                                </div>
+                                <div className="col-span-2">
+                                    <Select className="max-w-sm"
+                                            aria-labelledby="Research Type"
+                                            defaultSelectedKeys={[researchType]}
+                                            value={researchType}
+                                            onSelectionChange={(value) => setResearchType(value.currentKey!)}
+                                            disallowEmptySelection
+                                    >
+                                        <SelectItem aria-labelledby="Research Type" key="internal" value="internal">Internal</SelectItem>
+                                        <SelectItem aria-labelledby="Research Type" key="external" value="external">External</SelectItem>
+                                    </Select>
                                 </div>
                             </div>
                         </CardBody>

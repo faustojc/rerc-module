@@ -8,6 +8,7 @@ import ManuscriptList from "@/Components/Application/Forms/ReviewResult/Manuscri
 import { AxiosError } from "axios";
 import ReviewResultDetails from "@/Components/Application/Forms/ReviewResult/ReviewResultDetails";
 import { toast } from "react-toastify";
+import ReviewReportsList from "@/Components/Application/Forms/ReviewResult/ReviewReportsList";
 
 const ReviewResult = ({user, application, status, handleUpdateApplication, handleMessage}: ApplicationFormProps) => {
     const [currTab, setCurrTab] = useState<string>('manuscripts');
@@ -22,7 +23,7 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
                && application.documents.some(doc => doc.status === 'Revision');
     }, [application.review_results, application.documents]);
 
-    const CanApprove = useMemo(() => {
+    const canApprove = useMemo(() => {
         return user.role === 'chairperson'
                && !hasApproved
                && hasRevisions;
@@ -117,11 +118,37 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
         });
     }
 
+    const handleUploadReport = async (file: File, message: string) => {
+        const formData = new FormData();
+        message = message || `${user.name} has uploaded a reviewer report file.`;
+
+        formData.append('file', file);
+        formData.append('message', message);
+
+        try {
+            const response = await window.axios.post(
+                route('applications.upload-reviewer-report', {application: application}),
+                formData,
+                {headers: { 'Content-Type': 'multipart/form-data' }}
+            );
+
+            handleUpdateApplication({
+                application: {
+                    reviewer_reports: [ {...response.data.reviewer_report} ]
+                }
+            });
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    }
+
     return (
         <Card className="sticky self-start top-0">
             <>
                 <NavStatus currTab={currTab} setCurrTab={setCurrTab} tabs={[
                     {label: 'Manuscripts', name: 'manuscripts'},
+                    {label: 'Reviewer Reports', name: 'review-reports'},
                     {label: 'Review Result', name: 'review-result'},
                     {label: 'Upload Review', name: 'upload-review', notFor: () => user.role !== 'staff' || hasApproved || status == null},
                     {label: 'Feedbacks', name: 'feedbacks', notFor: () => status == null},
@@ -140,15 +167,18 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
                                 <CardFooter className="flex-col items-end gap-3">
                                     {(!hasApproved && user.role !== 'chairperson' && !loading) && <Alert color="warning" description={"Waiting for the chairperson to approve the revisions."} /> }
                                     {(hasApproved && !loading) && <Alert color="success" title="Revisions of Manuscripts has been approved" />}
-                                    {CanApprove && (
+                                    {canApprove && (
                                         <Button color="primary" variant="shadow" onPress={onOpen}>
-                                            Approve Revisions
+                                            Approve All Revisions
                                         </Button>
                                     )}
                                 </CardFooter>
                             </>
                         )}
                     </>
+                )}
+                {(currTab === 'review-reports') && (
+                    <ReviewReportsList reviewerReports={application.reviewer_reports} isStaff={user.role === 'staff'} onUpload={handleUploadReport}  />
                 )}
                 {(currTab === 'review-result') && (
                     <ReviewResultDetails reviewResults={application.review_results} />
@@ -173,7 +203,7 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
                                     {(!hasApproved && !loading) && <Alert
                                          color="danger"
                                          variant="flat"
-                                         description={"Approving the revisions will mark the application as 'Approved' and will proceed to the next status."}
+                                         description={<p>Approving the revisions will mark the application as <strong>Approved</strong> and will proceed to the next step.</p>}
                                     />}
                                 </ModalBody>
                                 <ModalFooter>

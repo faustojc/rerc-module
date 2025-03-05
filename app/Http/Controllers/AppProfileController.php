@@ -10,6 +10,7 @@ use App\Models\AppStatus;
 use App\Models\Document;
 use App\Models\EthicsClearance;
 use App\Models\PanelMember;
+use App\Models\ReviewerReport;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
@@ -139,6 +140,7 @@ class AppProfileController extends Controller
 
         $validated = $request->validate([
             'research_title' => 'required|string',
+            'research_type' => 'required|string',
             'firstname' => 'required|string',
             'lastname' => 'required|string',
             'members' => 'array',
@@ -156,6 +158,7 @@ class AppProfileController extends Controller
             $appProfile->lastname = $validated['lastname'];
             $appProfile->research_title = $validated['research_title'];
             $appProfile->date_applied = now();
+            $appProfile->research_type = $validated['research_type'];
             $appProfile->save();
 
             $documents = [];
@@ -246,8 +249,7 @@ class AppProfileController extends Controller
                     ->with('messages', function (HasMany $query) {
                         $monthsAgo = Carbon::now()->subMonths(3);
 
-                        $query->select('id', 'app_status_id', 'remarks', 'by', 'created_at', 'read_status')
-                            ->where('created_at', '>=', $monthsAgo);
+                        $query->where('created_at', '>=', $monthsAgo);
                     });
             },
             'requirements:id,app_profile_id,name,file_url,date_uploaded,status,is_additional',
@@ -258,6 +260,7 @@ class AppProfileController extends Controller
                 return $query->select(['id' , 'app_profile_id' ,'name', 'file_url', 'date_uploaded', 'status' ,'version'])
                     ->orderByDesc('date_uploaded');
             },
+            'reviewerReports',
             'panels:id,app_profile_id,firstname,lastname',
             'ethicsClearance:id,app_profile_id,file_url,date_clearance,date_uploaded',
         ]);
@@ -270,7 +273,7 @@ class AppProfileController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(AppProfile $application)
+    public function destroy(AppProfile $application): JsonResponse
     {
         $application->delete();
 
@@ -284,7 +287,7 @@ class AppProfileController extends Controller
         ]);
     }
 
-    public function uploadPayment(Request $request, AppProfile $application)
+    public function uploadPayment(Request $request, AppProfile $application): JsonResponse
     {
         $data = $request->validate([
             'file' => 'required|file',
@@ -345,7 +348,7 @@ class AppProfileController extends Controller
     /**
      * Updating the application also updates the status of the application.
      */
-    public function update(Request $request, AppProfile $application)
+    public function update(Request $request, AppProfile $application): JsonResponse
     {
         $data = $request->validate([
             'protocol_code' => 'nullable|string',
@@ -410,7 +413,7 @@ class AppProfileController extends Controller
         ]);
     }
 
-    public function assignPanelMeeting(Request $request, AppProfile $application)
+    public function assignPanelMeeting(Request $request, AppProfile $application): JsonResponse
     {
         $validated = $request->validate([
             'panel_members' => 'required|json',
@@ -480,7 +483,7 @@ class AppProfileController extends Controller
         }
     }
 
-    public function uploadEthicsClearance(Request $request, AppProfile $application)
+    public function uploadEthicsClearance(Request $request, AppProfile $application): JsonResponse
     {
         $validated = $request->validate([
             'file' => 'required|file|mimes:pdf,doc,docx',
@@ -536,5 +539,55 @@ class AppProfileController extends Controller
             'ethics_clearance' => $application->ethicsClearance,
             'status' => $status,
         ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function uploadReport(Request $request, AppProfile $application): JsonResponse
+    {
+        $validated = $request->validate([
+            'message' => 'required|string',
+            'file' => 'required|file',
+        ]);
+
+        $path = Storage::disk('public')->putFile(
+            "reviewer_reports/$application->id",
+            $validated['file']
+        );
+
+        $reviewerReport = new ReviewerReport([
+            'app_profile_id' => $application->id,
+            'message' => $validated['message'],
+            'file_url' => $path,
+            'status' => 'Draft',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $application->reviewerReports()->save($reviewerReport);
+
+            DB::commit();
+            $application->load(['reviewerReports' => function (HasMany $query) {
+                $query->latest()->take(1);
+            }])->refresh();
+
+            broadcast(new ApplicationUpdated($application, message: 'New updates on Reviewer Report'))->toOthers();
+
+            return response()->json([
+                'message' => 'Report uploaded successfully.',
+                'reviewer_report' => $reviewerReport,
+            ], 201);
+        } catch (Exception $e) {
+            DB::rollBack();
+            Storage::delete($path);
+            Log::error($e->getMessage());
+
+            return response()->json([
+                'message' => 'Something went wrong while uploading the report. Please try again.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

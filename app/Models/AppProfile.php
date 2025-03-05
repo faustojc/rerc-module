@@ -68,6 +68,10 @@ use Illuminate\Support\Facades\Storage;
  * @method static Builder<static>|AppProfile whereReviewType($value)
  * @method static Builder<static>|AppProfile whereUpdatedAt($value)
  * @method static Builder<static>|AppProfile whereUserId($value)
+ * @property string $research_type
+ * @property-read Collection<int, \App\Models\ReviewerReport> $reviewerReports
+ * @property-read int|null $reviewer_reports_count
+ * @method static Builder<static>|AppProfile whereResearchType($value)
  * @mixin Eloquent
  */
 class AppProfile extends Model
@@ -89,6 +93,7 @@ class AppProfile extends Model
         'proof_of_payment_url',
         'payment_date',
         'payment_details',
+        'research_type',
     ];
 
     protected static function boot(): void
@@ -115,7 +120,7 @@ class AppProfile extends Model
             $application->reviewResults()->each(function (ReviewResult $result) {
                 $result->delete();
             });
-            $application->meetings()->each(function (Meeting $meeting) {
+            $application->meeting()->each(function (Meeting $meeting) {
                 $meeting->delete();
             });
             $application->panels()->each(function (PanelMember $panel) {
@@ -162,6 +167,11 @@ class AppProfile extends Model
         return $this->hasMany(ReviewResult::class);
     }
 
+    public function meeting(): HasOne
+    {
+        return $this->hasOne(Meeting::class);
+    }
+
     public function panels(): HasMany
     {
         return $this->hasMany(PanelMember::class);
@@ -177,9 +187,9 @@ class AppProfile extends Model
         return $this->hasOne(EthicsClearance::class);
     }
 
-    public function meeting(): HasOne
+    public function reviewerReports(): HasMany
     {
-        return $this->hasOne(Meeting::class);
+        return $this->hasMany(ReviewerReport::class);
     }
 
     public function user(): BelongsTo

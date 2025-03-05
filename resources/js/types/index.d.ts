@@ -31,6 +31,7 @@ export interface Application {
     statuses: AppStatus[],
     requirements: Requirement[],
     review_results: AppReviewResult[],
+    reviewer_reports: ReviewerReport[],
     decision_letter: DecisionLetter | null,
     panels: PanelMember[],
     ethics_clearance: EthicsClearance | null,
@@ -134,6 +135,17 @@ export interface AppReviewResult {
     created_at?: string;
     updated_at?: string;
     documents?: AppDocument[];
+    [key: string]: any;
+}
+
+export interface ReviewerReport {
+    id: string;
+    app_profile_id: string;
+    message: string;
+    status: string;
+    file_url: string;
+    created_at?: string;
+    updated_at?: string;
     [key: string]: any;
 }
 
