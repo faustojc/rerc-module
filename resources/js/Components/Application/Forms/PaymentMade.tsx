@@ -77,6 +77,7 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
                                     color="primary"
                                     href={route('applications.payment-download', {application: application})}
                                     className="px-0 py-2"
+                                    style={{ overflowWrap: 'anywhere' }}
                                 >
                                     {application.proof_of_payment_url.split('\\').pop()?.split('/').pop()}
                                 </Link>
