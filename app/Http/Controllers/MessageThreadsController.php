@@ -36,7 +36,6 @@ class MessageThreadsController extends Controller
 
             DB::commit();
 
-            $status->load('messages')->refresh();
             $message->refresh();
 
             broadcast(new SendAndUpdateFeedback($message, "New message from {$validated['by']} in $status->name"))->toOthers();

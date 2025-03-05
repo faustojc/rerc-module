@@ -161,9 +161,9 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
                                variant="flat"
                                description={alertMessage}
                         />
-                        {(user.role === 'chairperson' && !status.end) && (
-                            <Button color="secondary" variant="shadow" isLoading={loading} onPress={() => handleApprove()}>
-                                Approve
+                        {(user.role !== 'researcher' && !status.end) && (
+                            <Button color="primary" variant="shadow" isLoading={loading} onPress={() => handleApprove()}>
+                                Complete Initial Review
                             </Button>
                         )}
                     </CardFooter>

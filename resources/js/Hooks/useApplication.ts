@@ -213,13 +213,11 @@ export const useApplication = (initialApplication: Application) => {
 
             removeMessage(status.id);
 
-            toast.error('Failed to send message');
+            toast.error('Failed to send message, please try again.');
         }
     }, [application.id, addMessage, updateMessage, removeMessage]);
 
     useEffect(() => {
-        console.log(application);
-
         const channel = window.Echo.channel(`application.${application.id}`);
 
         channel.listen('.ApplicationUpdated', (data: any) => {

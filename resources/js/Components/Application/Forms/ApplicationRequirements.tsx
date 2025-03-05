@@ -1,10 +1,11 @@
 import React, { ChangeEvent, Fragment, useMemo, useState } from "react";
-import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Link, LinkIcon } from "@nextui-org/react";
+import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Link } from "@nextui-org/react";
 import { ApplicationFormProps, AppStatus, Requirement, User } from "@/types";
 import { toast } from "react-toastify";
-import { MdiDeleteForever } from "@/Components/Icons";
+import { LightUploadRounded, LinkBold, MdiDeleteForever } from "@/Components/Icons";
 import Feedbacks from "@/Components/Application/Feedbacks";
 import NavStatus from "@/Components/NavStatus";
+import { applicationRequirements } from "@/types/constants";
 
 interface AlertType {
     title?: string;
@@ -14,11 +15,11 @@ interface AlertType {
 
 const ApplicationRequirements = ({user, application, status, handleUpdateApplication, handleMessage}: ApplicationFormProps) => {
     const requirementNames = [
-        "Full Research Proposal",
-        "Checklist for Proposal",
-        "Endorsement Letters",
-        "Work Plan/Gantt Chart",
-        "Budget Proposal and Requirements",
+        "Full Research Proposal Manuscript",
+        "Agency Consent Letter",
+        "Inform Consent Form (ICF) or Free Prior and Informed Consent (FPIC)",
+        "Curriculum Vitae of the Researcher(s)",
+        "Asset Form",
         "Valid Government ID",
         "CV of Researcher",
     ]
@@ -184,44 +185,50 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
             {currTab === 'submissions' ? (
                 <div key="submissions">
                     <CardBody className="gap-6">
-                        {requirementNames.map((requirement, index) => {
+                        {applicationRequirements.map((requirement, index) => {
                             const uploaded = uploadedRequirements.filter((req) =>
-                                req.name.toLowerCase() === requirement.toLowerCase()
+                                req.name.toLowerCase() === requirement.name.toLowerCase()
                             );
 
                             return (
-                                <Fragment key={requirement}>
-                                    <div className={`sm:grid grid-cols-3${index == requirementNames.length - 1 ? ' mb-2' : ''}`}>
-                                        <h3 className="font-bold">{index + 1}. {requirement}</h3>
-                                        <div className="sm:mt-0 mt-4 col-span-2">
+                                <Fragment key={requirement.name}>
+                                    <div className={`flex flex-col gap-2${index == requirementNames.length - 1 ? ' mb-2' : ''}`}>
+                                        <div className="flex flex-row justify-between gap-3 mb-3">
+                                            <div className="flex flex-col gap-1">
+                                                <h3 className="font-bold">{index + 1}. {requirement.name}</h3>
+                                                {requirement.description && (
+                                                    <p className="text-sm text-default-400">
+                                                        {requirement.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            {user.role === 'researcher' && (
+                                                <label className="block">
+                                                    <div className="flex flex-row gap-2 cursor-pointer py-1.5 px-4 rounded-full font-semibold border-2 border-indigo-300 text-primary-700 hover:border-primary-100 hover:bg-primary-100 transition">
+                                                        <LightUploadRounded />
+                                                        Upload
+                                                    </div>
+                                                    <input
+                                                        type="file"
+                                                        name={requirement.name}
+                                                        onChange={(e) => handleFileChange(e, requirement.name)}
+                                                        className="hidden"
+                                                    />
+                                                </label>
+                                            )}
+                                        </div>
+                                        <div className="sm:mt-0 mt-4">
                                             {user.role === 'researcher' && (
                                                 <>
-                                                    <label>
-                                                        <div className="w-full h-9 rounded-3xl border border-gray-300 justify-between items-center inline-flex">
-                                                            <h2 className="text-default-900/50 text-sm font-normal leading-snug pl-4">
-                                                                {selectedFiles[requirement] && selectedFiles[requirement].length > 0
-                                                                    ? `${selectedFiles[requirement].length} file(s) selected`
-                                                                    : 'No file selected'
-                                                                }
-                                                            </h2>
-                                                            <input type="file"
-                                                                   onChange={(e) => handleFileChange(e, requirement)}
-                                                                   hidden
-                                                                   accept=".pdf,.doc,.docx"
-                                                            />
-                                                            <div className="flex w-28 h-9 px-2 flex-col bg-indigo-500 rounded-r-3xl shadow text-white text-xs font-semibold leading-4 items-center justify-center cursor-pointer focus:outline-none">
-                                                                Choose File
-                                                            </div>
-                                                        </div>
-                                                    </label>
-                                                    {selectedFiles[requirement] && selectedFiles[requirement].length > 0 && (
-                                                        <div className="my-2">
-                                                            {selectedFiles[requirement].map((file, index) => (
+                                                    {selectedFiles[requirement.name] && selectedFiles[requirement.name].length > 0 && (
+                                                        <div className="my-2 px-4 py-1 bg-default-100 shadow-lg rounded-xl">
+                                                            <h5 className="text-sm">Selected files:</h5>
+                                                            {selectedFiles[requirement.name].map((file, index) => (
                                                                 <div key={file.name} className="inline-flex flex-nowrap items-center justify-between w-full">
                                                                 <span className="text-sm text-nowrap text-ellipsis truncate">
                                                                     {file.name}
                                                                 </span>
-                                                                    <Button onPress={() => removeSelectedFile(requirement, index)}
+                                                                    <Button onPress={() => removeSelectedFile(requirement.name, index)}
                                                                             size="sm"
                                                                             variant="light"
                                                                             color="danger"
@@ -236,22 +243,29 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
                                                 </>
                                             )}
                                             {/* List of uploaded requirements */}
-                                            {(uploaded.length > 0) ? uploaded.map((u) => {
-                                                return (
-                                                    <div key={u.id} className="relative flex items-center mt-1 min-w-0">
+                                            {(uploaded.length > 0) ? uploaded.map((u) => (
+                                                <div key={u.id} className="flex flex-row justify-between mb-2">
+                                                    <div className="flex flex-col">
                                                         <Link
-                                                            className="inline-flex justify-between w-full cursor-pointer p-1"
+                                                            className="inline-flex w-full cursor-pointer p-1"
                                                             href={route('applications.requirements.download', {application: application, requirement: u})}
                                                             color="foreground"
-                                                            underline="hover"
-                                                            isExternal
+                                                            underline="always"
+                                                            download
                                                         >
+                                                            <LinkBold className="mr-2" scale={1.1} />
                                                             <p className="text-sm line-clamp-1">
                                                                 {u.file_url.split('\\').pop()?.split('/').pop()}
                                                             </p>
-                                                            <LinkIcon />
                                                         </Link>
-                                                        <Chip size="sm" variant="flat" className="mr-2" color={u.status.toLowerCase() === 'uploaded' ? 'primary' : 'success'}>
+                                                        <p className="ml-1 text-xs text-default-500">
+                                                            {new Date(u.date_uploaded).toLocaleDateString('en-US', {
+                                                                month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                                                            })}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex flex-row justify-center items-center gap-2">
+                                                        <Chip size="sm" variant="flat" color={u.status.toLowerCase() === 'uploaded' ? 'primary' : 'success'}>
                                                             {u.status}
                                                         </Chip>
                                                         {(user.role === 'researcher' && u.status.toLowerCase() !== 'approved') && (
@@ -260,8 +274,8 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
                                                             </Button>
                                                         )}
                                                     </div>
-                                                );
-                                            }) : (
+                                                </div>
+                                            )) : (
                                                 <>
                                                     {(user.role != 'researcher') && <p className="text-sm text-default-500">No files submitted</p>}
                                                 </>
@@ -269,7 +283,7 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
                                             {/* End of list of uploaded requirements */}
                                         </div>
                                     </div>
-                                    {(index < requirementNames.length - 1 && requirement.length > 1) && <Divider key={index} />}
+                                    {(index < applicationRequirements.length - 1 && requirement.name.length > 1) && <Divider key={index} />}
                                 </Fragment>
                             );
                         })}

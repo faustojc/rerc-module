@@ -69,11 +69,11 @@ const PanelMeeting = ({user, application, status, handleUpdateApplication}: Appl
     return (
         <Card className="sticky self-start top-0">
             <CardHeader className="flex-col items-start bg-success-300">
-                <h3 className="text-xl font-semibold text-start">Panel and Meeting Schedule</h3>
+                <h3 className="text-xl font-semibold text-start">Reviewer and Meeting Schedule</h3>
                 <p className="text-sm">
                     {user.role !== "staff"
-                        ? "List of panel members and schedule of the meeting."
-                        : "Assign panel members and schedule the meeting."
+                        ? "List of reviewer members and schedule of the meeting."
+                        : "Assign reviewer members and schedule the meeting."
                     }
                 </p>
             </CardHeader>
@@ -95,7 +95,7 @@ const PanelMeeting = ({user, application, status, handleUpdateApplication}: Appl
                                     </>
                                 ) : (
                                     <p className="text-center text-medium p-5">
-                                        Waiting for the staff to assign panel members and schedule the meeting.
+                                        Waiting for the staff to assign reviewer members and schedule the meeting.
                                     </p>
                                 )}
                             </>

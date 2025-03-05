@@ -43,6 +43,21 @@ export const REVIEW_TYPES: ReviewTypeInfo[] = [
     },
 ];
 
+export const applicationRequirements = [
+    { name: 'Full Research Proposal Manuscript', description: 'Following USLS IRF (approved by the technical committee)' },
+    { name: 'Agency Letter', description: 'Upload if needed' },
+    { name: 'Inform Consent Form (ICF) or Free Prior and Informed Consent (FPIC)' },
+    { name: "Researcher(s)' Curriculum Vitae" },
+    { name: 'Assent Form', description: "7 under 12-Verbal Assent; 12 under 15-Written Assent" },
+    { name: 'Parental Consent Form', description: 'All minors' },
+    { name: 'Research Instrument' },
+    { name: 'Technical Review Certificate/Approval' },
+    { name: "Recruitment Ad/s", description: 'Upload if any' },
+    { name: 'Approval/Consent', description: 'For the use of standardized test/tools' },
+    { name: 'Certificate of Translation', description: 'For foreign-based students' },
+    { name: 'Contact Details of Organization/People', description: 'The RERC will communicate with for site visits/checking' }
+]
+
 export const STEPS = [
     { sequence: 1, name: 'Application Submission' },
     { sequence: 2, name: 'Protocol Assignment' },
@@ -50,7 +65,7 @@ export const STEPS = [
     { sequence: 4, name: 'Review Type' },
     { sequence: 5, name: 'Decision Letter' },
     { sequence: 6, name: 'Payment Made' },
-    { sequence: 7, name: 'Assignment of Panel & Meeting Schedule' },
+    { sequence: 7, name: 'Assignment of Reviewers & Meeting Schedule' },
     { sequence: 8, name: 'Review Results' },
     { sequence: 9, name: 'Additional Requirements' },
     { sequence: 10, name: 'Ethics Clearance' },

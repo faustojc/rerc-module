@@ -13,7 +13,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 /**
- *
+ * 
  *
  * @property string $id
  * @property string $app_profile_id

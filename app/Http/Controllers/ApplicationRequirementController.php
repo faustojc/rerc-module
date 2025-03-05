@@ -39,7 +39,7 @@ class ApplicationRequirementController extends Controller
                     ->where('name', $index);
 
                 foreach ($files as $file) {
-                    $builder->whereLike('file_url', $file->getClientOriginalName(), boolean: 'or');
+                    $builder->whereLike('file_url', $file->getClientOriginalName());
                 }
 
                 $existingRequirement = $builder->get(['id']);
@@ -78,7 +78,10 @@ class ApplicationRequirementController extends Controller
         ], 201);
     }
 
-    public function updateStatus(Request $request, AppProfile $application)
+    /**
+     * @throws Throwable
+     */
+    public function updateStatus(Request $request, AppProfile $application): JsonResponse
     {
         $validated = $request->validate([
             'status_id' => 'required|string',
@@ -146,6 +149,9 @@ class ApplicationRequirementController extends Controller
         //
     }
 
+    /**
+     * @throws Throwable
+     */
     public function destroy(Requirement $requirement): JsonResponse
     {
         DB::beginTransaction();

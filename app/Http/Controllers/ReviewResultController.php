@@ -8,6 +8,7 @@ use App\Models\Document;
 use App\Models\ReviewResult;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -21,7 +22,7 @@ class ReviewResultController extends Controller
      *
      * @throws Throwable
      */
-    public function store(Request $request, AppProfile $application)
+    public function store(Request $request, AppProfile $application): JsonResponse
     {
         $validated = $request->validate([
             'name' => 'required|string',
@@ -77,7 +78,7 @@ class ReviewResultController extends Controller
     /**
      * @throws Throwable
      */
-    public function uploadRevision(Request $request, ReviewResult $review_result)
+    public function uploadRevision(Request $request, ReviewResult $review_result): JsonResponse
     {
         $validated = $request->validate([
             'file' => 'required|file',
