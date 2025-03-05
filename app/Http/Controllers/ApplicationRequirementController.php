@@ -112,7 +112,7 @@ class ApplicationRequirementController extends Controller
 
         $newStatus = NULL;
 
-        if ($isCompleted && !empty($validated['next_status_name'])) {
+        if ($isCompleted && !empty($validated['next_status_name']) && empty($status->end)) {
             $status->end = now();
 
             $newStatus = new AppStatus([
@@ -132,10 +132,13 @@ class ApplicationRequirementController extends Controller
                 $application->statuses()->save($newStatus);
             }
 
-            $application->statuses()->save($status);
+            if ($status->isDirty()) {
+                $application->statuses()->save($status);
+            }
+
             $application->load('requirements', 'statuses')->refresh();
 
-            broadcast(new ApplicationUpdated($application, $status, message: $message))->toOthers();
+            broadcast(new ApplicationUpdated($application, message: $message))->toOthers();
         });
 
         return response()->json([

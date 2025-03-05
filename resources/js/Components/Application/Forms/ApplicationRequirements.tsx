@@ -184,7 +184,7 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
             ]} />
             {currTab === 'submissions' ? (
                 <div key="submissions">
-                    <CardBody className="gap-6">
+                    <CardBody className="gap-6 max-h-[870px] overflow-y-auto">
                         {applicationRequirements.map((requirement, index) => {
                             const uploaded = uploadedRequirements.filter((req) =>
                                 req.name.toLowerCase() === requirement.name.toLowerCase()
@@ -317,7 +317,7 @@ const Footer = ({user, status, requirements, alert, loading, handleUpload, handl
 }) => {
     const hasEverySubmitted = requirements.every((req) => req.status.toLowerCase() === 'submitted');
 
-    if (user.role === 'researcher' && status.end == null) {
+    if (user.role === 'researcher') {
         const hasSomeUploaded = requirements.some((req) => req.status.toLowerCase() === 'uploaded');
 
         return (
@@ -331,7 +331,7 @@ const Footer = ({user, status, requirements, alert, loading, handleUpload, handl
                         </Button>
                         {hasSomeUploaded && (
                             <Button color="secondary" variant="shadow" onPress={() => handleSubmit()} isLoading={loading}>
-                                Submit Application
+                                Submit Uploaded Requirements
                             </Button>
                         )}
                     </div>
