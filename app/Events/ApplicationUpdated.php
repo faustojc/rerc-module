@@ -3,7 +3,6 @@
 namespace App\Events;
 
 use App\Models\AppProfile;
-use App\Models\AppStatus;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -17,23 +16,17 @@ class ApplicationUpdated implements ShouldQueue, ShouldBroadcast, ShouldQueueAft
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public AppProfile $application;
-    public ?AppStatus $status;
-    public ?AppStatus $newStatus;
     public string $message = "";
 
     /**
      * Create a new event instance.
      *
      * @param AppProfile $application
-     * @param AppStatus|null $status
-     * @param AppStatus|null $newStatus
      * @param string $message
      */
-    public function __construct(AppProfile $application, AppStatus $status = NULL, ?AppStatus $newStatus = NULL, string $message = "")
+    public function __construct(AppProfile $application, string $message = "")
     {
         $this->application = $application;
-        $this->status = $status;
-        $this->newStatus = $newStatus;
         $this->message = !empty($message) ? $message : "$application->research_title has a new update.";
     }
 
