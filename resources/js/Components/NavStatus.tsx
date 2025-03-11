@@ -25,9 +25,15 @@ const NavStatus = ({currTab, setCurrTab, tabs}: NavStatusProps) => {
     const displayTabs = useMemo(() => {
         if (!isMobile) return tabs;
 
-        if (tabs.length > 3) {
-            setOtherTabs(tabs.slice(2));
-            return tabs.slice(0, 2);
+        const filteredTabs = tabs.filter(t => !t.notFor);
+
+        if (tabs.length > 2 && filteredTabs.length !== 0) {
+            const other = tabs.filter((t) => t.notFor || !filteredTabs.includes(t));
+
+            other.push(filteredTabs.pop()!);
+
+            setOtherTabs(other);
+            return filteredTabs;
         }
 
         return tabs;
@@ -83,15 +89,21 @@ const NavStatus = ({currTab, setCurrTab, tabs}: NavStatusProps) => {
                         </Button>
                     </DropdownTrigger>
                     <DropdownMenu aria-label="Other tabs" items={otherTabs}>
-                        {(tab) => (
-                            <DropdownItem
-                                key={tab.label}
-                                className={currTab === tab.name ? "text-primary" : ""}
-                                onPress={() => setCurrTab(tab.name)}
-                            >
-                                {tab.label}
-                            </DropdownItem>
-                        )}
+                        {(tab) => {
+                            if (tab.notFor != null && tab.notFor()) {
+                                return null;
+                            }
+
+                            return (
+                                <DropdownItem
+                                    key={tab.label}
+                                    className={currTab === tab.name ? "text-primary" : ""}
+                                    onPress={() => setCurrTab(tab.name)}
+                                >
+                                    {tab.label}
+                                </DropdownItem>
+                            )
+                        }}
                     </DropdownMenu>
                 </Dropdown>
             )}
