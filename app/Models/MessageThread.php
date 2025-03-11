@@ -61,4 +61,11 @@ class MessageThread extends Model
     {
         return $this->belongsTo(AppStatus::class, );
     }
+
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'datetime:c',
+        ];
+    }
 }
