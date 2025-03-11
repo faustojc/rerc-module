@@ -6,6 +6,8 @@ import { getLocalTimeZone } from "@internationalized/date";
 import { STEPS } from "@/types/constants";
 import { statusColor } from "@/types/helpers";
 import useIsMobile from "@/Hooks/useIsMobile";
+import { Variants } from "framer-motion";
+import { differenceInBusinessDays } from "date-fns";
 
 interface StatusesProps {
     appStatuses: AppStatus[];
@@ -15,49 +17,46 @@ interface StatusesProps {
 
 const Statuses = ({appStatuses, selectedStatus, setSelectedStatus }: StatusesProps) => {
     const isMobile = useIsMobile();
+    const motionVariants: Variants = {
+        enter: {
+            y: 0,
+            opacity: 1,
+            height: "auto",
+            overflowY: "unset",
+            transition: {
+                height: {
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 30,
+                    duration: 0.6,
+                },
+                opacity: {
+                    easings: "ease",
+                    duration: 0.5,
+                },
+            },
+        },
+        exit: {
+            y: -10,
+            opacity: 0,
+            height: 0,
+            overflowY: "hidden",
+            transition: {
+                height: {
+                    easings: "ease",
+                    duration: 0.25,
+                },
+                opacity: {
+                    easings: "ease",
+                    duration: 0.2,
+                },
+            },
+        }
+    };
 
     if (isMobile) {
         return (
-            <Accordion variant="splitted"
-                       motionProps={{
-                           variants: {
-                               enter: {
-                                   y: 0,
-                                   opacity: 1,
-                                   height: "auto",
-                                   overflowY: "unset",
-                                   transition: {
-                                       height: {
-                                           type: "spring",
-                                           stiffness: 500,
-                                           damping: 30,
-                                           duration: 0.6,
-                                       },
-                                       opacity: {
-                                           easings: "ease",
-                                           duration: 0.5,
-                                       },
-                                   },
-                               },
-                               exit: {
-                                   y: -10,
-                                   opacity: 0,
-                                   height: 0,
-                                   overflowY: "hidden",
-                                   transition: {
-                                       height: {
-                                           easings: "ease",
-                                           duration: 0.25,
-                                       },
-                                       opacity: {
-                                           easings: "ease",
-                                           duration: 0.2,
-                                       },
-                                   },
-                               },
-                           },
-                       }}
-            >
+            <Accordion variant="splitted" motionProps={{variants: motionVariants}}>
                 <AccordionItem key={1}
                                aria-label="steps list"
                                title="Application Process"
@@ -125,6 +124,15 @@ const StepsList: React.FC<StatusesProps> = ({appStatuses, selectedStatus, setSel
         return 'default';
     }
 
+    const getDuration = (start: string, end: string) => {
+        if (end != 'N/A') {
+            const diff = differenceInBusinessDays(new Date(end), new Date(start));
+            return diff > 1 ? `${diff} days` : `${diff} day`;
+        }
+
+        return '';
+    }
+
     return steps.map((status, index) => (
             <Fragment key={`${status.id}-${index}`}>
                 <div className="grid grid-cols-3 gap-5 items-center px-4 w-full hover:bg-default-100 rounded-lg cursor-pointer" onClick={() => setSelectedStatus(status) }>
@@ -149,15 +157,22 @@ const StepsList: React.FC<StatusesProps> = ({appStatuses, selectedStatus, setSel
                         <div className="w-full">
                             <p className="flex flex-wrap gap-x-1.5 text-sm">
                                 Start:
-                                <span className="">
-                                            {status.start}
-                                        </span>
+                                <span>
+                                    {status.start}
+                                </span>
                             </p>
                             <p className="flex flex-wrap gap-x-1.5 text-sm">
                                 End:
-                                <span className="">
-                                            {status.end}
-                                        </span>
+                                <span>
+                                    {status.end}
+                                </span>
+                            </p>
+                            {/* difference in days between start and end */}
+                            <p className="flex flex-wrap gap-x-1.5 text-sm">
+                                Duration:
+                                <span className="text-default-600">
+                                    {status.end != 'N/A' && status.start != 'N/A' && getDuration(status.start, status.end)}
+                                </span>
                             </p>
                         </div>
                     </div>
