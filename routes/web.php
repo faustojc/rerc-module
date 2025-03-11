@@ -5,6 +5,7 @@ use App\Http\Controllers\AppProfileController;
 use App\Http\Controllers\AppStatusController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DecisionLetterController;
+use App\Http\Controllers\MessagePostController;
 use App\Http\Controllers\MessageThreadsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewResultController;
@@ -66,6 +67,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->shallow();
     Route::post('review-results/{review_result}/upload-revision', [ReviewResultController::class, 'uploadRevision'])
         ->name('review-results.upload-revision');
+
+    Route::apiResource('applications.message-posts', MessagePostController::class)
+        ->only(['store', 'update']);
 
     // Download routes
     Route::get('/documents/{document}/download', function (Document $document) {

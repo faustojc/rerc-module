@@ -69,9 +69,10 @@ use Illuminate\Support\Facades\Storage;
  * @method static Builder<static>|AppProfile whereUpdatedAt($value)
  * @method static Builder<static>|AppProfile whereUserId($value)
  * @property string $research_type
- * @property-read Collection<int, \App\Models\ReviewerReport> $reviewerReports
+ * @property-read Collection<int, ReviewerReport> $reviewerReports
  * @property-read int|null $reviewer_reports_count
  * @method static Builder<static>|AppProfile whereResearchType($value)
+ * @property-read \App\Models\MessagePost|null $messagePost
  * @mixin Eloquent
  */
 class AppProfile extends Model
@@ -190,6 +191,11 @@ class AppProfile extends Model
     public function reviewerReports(): HasMany
     {
         return $this->hasMany(ReviewerReport::class);
+    }
+
+    public  function messagePost(): HasOne
+    {
+        return $this->hasOne(MessagePost::class);
     }
 
     public function user(): BelongsTo

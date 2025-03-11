@@ -1,3 +1,5 @@
+import { BlockNoteSchema, defaultBlockSpecs, defaultInlineContentSpecs, defaultStyleSpecs } from "@blocknote/core";
+
 export const statusColor = (status: string) => {
     if ('pending'.includes(status.toLowerCase())) {
         return "warning";
@@ -11,3 +13,20 @@ export const statusColor = (status: string) => {
         return "primary";
     }
 };
+
+export const blockNoteSchema = () => {
+    let editedSchema: any =  {}
+    const unwantedBlocks = ['audio', 'image', 'file', 'video', 'codeBlock'];
+
+    Object.entries(defaultBlockSpecs).forEach(([blockName, blockSchema])=>{
+        if(!unwantedBlocks.includes(blockName)) {
+            editedSchema[blockName] = blockSchema
+        }
+    });
+
+    return BlockNoteSchema.create({
+        blockSpecs: {...editedSchema},
+        inlineContentSpecs: {...defaultInlineContentSpecs},
+        styleSpecs: {...defaultStyleSpecs,}
+    });
+}

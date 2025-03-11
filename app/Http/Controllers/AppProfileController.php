@@ -261,6 +261,7 @@ class AppProfileController extends Controller
                     ->orderByDesc('date_uploaded');
             },
             'reviewerReports',
+            'messagePost',
             'panels:id,app_profile_id,firstname,lastname',
             'ethicsClearance:id,app_profile_id,file_url,date_clearance,date_uploaded',
         ]);

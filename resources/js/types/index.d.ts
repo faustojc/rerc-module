@@ -33,6 +33,7 @@ export interface Application {
     review_results: AppReviewResult[],
     reviewer_reports: ReviewerReport[],
     decision_letter: DecisionLetter | null,
+    message_post: MessagePost | null,
     panels: PanelMember[],
     ethics_clearance: EthicsClearance | null,
     [key: string]: any;
@@ -165,6 +166,15 @@ export interface EthicsClearance {
     file_url: string;
     date_clearance: string;
     date_uploaded: string;
+    created_at?: string;
+    updated_at?: string;
+    [key: string]: any;
+}
+
+export interface MessagePost {
+    id: string;
+    app_profile_id: string;
+    content: string;
     created_at?: string;
     updated_at?: string;
     [key: string]: any;
