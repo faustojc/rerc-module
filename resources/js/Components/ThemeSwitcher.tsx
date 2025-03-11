@@ -1,23 +1,26 @@
-import { useTheme } from "@heroui/use-theme";
+import { Theme } from "@heroui/use-theme";
 import { Switch } from "@nextui-org/react";
 import { MoonIcon, SunIcon } from "@/Components/Icons";
 import { useEffect } from "react";
+import { useThemeSignal } from "@/types/themeSignal";
 
 export const ThemeSwitcher = () => {
-    const { theme, setTheme } = useTheme();
+    const { theme, changeTheme } = useThemeSignal();
 
     const handleThemeChange = () => {
-        setTheme(theme === 'dark' ? 'light' : 'dark');
-        localStorage.setItem('theme', theme === 'dark' ? 'light' : 'dark');
-    }
+        const newTheme: Theme = theme === "dark" ? "light" : "dark";
+
+        changeTheme(newTheme);
+        document.documentElement.className = newTheme;
+    };
 
     useEffect(() => {
-        const localTheme = localStorage.getItem('heroui-theme');
+        const localTheme = localStorage.getItem("heroui-theme") as Theme | null;
 
-        if (localTheme) {
-            setTheme(localTheme);
+        if (localTheme && localTheme !== theme) {
+            changeTheme(localTheme);
         }
-    }, [theme]);
+    }, []);
 
     return (
         <Switch
