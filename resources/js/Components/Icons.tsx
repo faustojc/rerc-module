@@ -150,3 +150,7 @@ export function Slash(props: SVGProps<SVGSVGElement>) {
 export function Empty(props: SVGProps<SVGSVGElement>) {
     return (<svg xmlns="http://www.w3.org/2000/svg" width={256} height={256} viewBox="0 0 256 256" {...props}><g fill="currentColor"><path d="M216 128a88 88 0 1 1-88-88a88 88 0 0 1 88 88" opacity={0.2}></path><path d="m198.24 62.63l15.68-17.25a8 8 0 0 0-11.84-10.76L186.4 51.86A95.95 95.95 0 0 0 57.76 193.37l-15.68 17.25a8 8 0 1 0 11.84 10.76l15.68-17.24A95.95 95.95 0 0 0 198.24 62.63M48 128a80 80 0 0 1 127.6-64.25l-107 117.73A79.63 79.63 0 0 1 48 128m80 80a79.55 79.55 0 0 1-47.6-15.75l107-117.73A79.95 79.95 0 0 1 128 208"></path></g></svg>);
 }
+
+export function Key(props: SVGProps<SVGSVGElement>) {
+    return (<svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" {...props}><path fill="currentColor" fillOpacity={0.25} d="M18.896 10H8v4h6.732a.5.5 0 0 0 .416-.223l.436-.653a.5.5 0 0 1 .832 0l.376.564a.25.25 0 0 0 .416 0l.376-.564a.5.5 0 0 1 .832 0l.415.622a.25.25 0 0 0 .385.038l1.607-1.607a.25.25 0 0 0 0-.354l-1.75-1.75a.25.25 0 0 0-.177-.073"></path><rect width={6} height={1} x={10} y={11} fill="currentColor" rx={0.5}></rect><path fill="currentColor" fillRule="evenodd" d="M3.586 8.586C3 9.172 3 10.114 3 12s0 2.828.586 3.414S5.114 16 7 16s2.828 0 3.414-.586S11 13.886 11 12s0-2.828-.586-3.414S8.886 8 7 8s-2.828 0-3.414.586M6 10a1 1 0 1 0 0 2a1 1 0 0 0 0-2" clipRule="evenodd"></path></svg>);
+}

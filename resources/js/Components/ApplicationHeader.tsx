@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardBody, Divider } from "@nextui-org/react";
 import { StatusBadge } from "@/Components/StatusBadge";
-import { ArrowsSwitch, ClockRotateRight, FlowbiteUsersSolid, MdiCalendar } from "@/Components/Icons";
+import { ArrowsSwitch, FlowbiteUsersSolid, Key, MdiCalendar } from "@/Components/Icons";
 import { Application } from "@/types";
 import { parseAbsolute } from "@internationalized/date";
 import ResearcherInfo from "@/Components/ResearcherInfo";
@@ -39,7 +39,7 @@ const ApplicationHeader: React.FC<{
                                 </div>
                                 {application.protocol_date_updated && (
                                     <div className="flex items-center text-xs sm:text-sm text-default-500 mt-1">
-                                        <ClockRotateRight className="w-4 h-4 mr-2" />
+                                        <Key className="w-6 h-6" />
                                         Protocol assigned on {formatDate(application.protocol_date_updated)}
                                     </div>
                                 )}
