@@ -30,6 +30,10 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|EthicsClearance whereFileUrl($value)
  * @method static Builder<static>|EthicsClearance whereId($value)
  * @method static Builder<static>|EthicsClearance whereUpdatedAt($value)
+ * @property Carbon|null $effective_start_date
+ * @property Carbon|null $effective_end_date
+ * @method static Builder<static>|EthicsClearance whereEffectiveEndDate($value)
+ * @method static Builder<static>|EthicsClearance whereEffectiveStartDate($value)
  * @mixin Eloquent
  */
 class EthicsClearance extends Model
@@ -43,6 +47,8 @@ class EthicsClearance extends Model
         'file_url',
         'date_clearance',
         'date_uploaded',
+        'effective_start_date',
+        'effective_end_date'
     ];
 
     public function appProfile(): BelongsTo
@@ -55,6 +61,8 @@ class EthicsClearance extends Model
         return [
             'date_clearance' => 'datetime:c',
             'date_uploaded' => 'datetime:c',
+            'effective_start_date' => 'datetime:c',
+            'effective_end_date' => 'datetime:c',
         ];
     }
 }

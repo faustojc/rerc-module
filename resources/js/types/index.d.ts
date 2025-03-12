@@ -166,6 +166,8 @@ export interface EthicsClearance {
     file_url: string;
     date_clearance: string;
     date_uploaded: string;
+    effective_start_date: string,
+    effective_end_date: string,
     created_at?: string;
     updated_at?: string;
     [key: string]: any;

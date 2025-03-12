@@ -1,13 +1,15 @@
 import { ApplicationFormProps } from "@/types";
 import React, { useCallback, useState } from "react";
-import { Button, Card, CardBody, CardHeader, Chip, DatePicker, Input, Link } from "@nextui-org/react";
+import { Button, Card, CardBody, CardHeader, Chip, DatePicker, DateRangePicker, Input, Link } from "@nextui-org/react";
 import { CloudArrowDown, DocumentCheckOutline, LightUploadRounded } from "@/Components/Icons";
 import { DateValue, getLocalTimeZone } from "@internationalized/date";
 import { toast } from "react-toastify";
+import { RangeValue } from "@react-types/shared";
 
 const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, status, handleUpdateApplication}) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [clearanceDate, setClearanceDate] = useState<DateValue | null>(null);
+    const [dateRange, setDateRange] = useState<RangeValue<DateValue> | null>(null);
     const [isUploading, setIsUploading] = useState(false);
 
     const formatDate = useCallback((dateString: string) => {
@@ -16,21 +18,15 @@ const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, sta
         const date = new Date(dateString);
 
         return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric'
+            year: 'numeric', month: 'long', day: 'numeric'
         }).format(date);
     }, []);
 
-    const clearanceDateFormat = useCallback(() => {
-        if (!clearanceDate) return '';
+    const dateToLocaleString = useCallback((date: DateValue | null) => {
+        if (!date) return '';
 
-        return clearanceDate.toDate(getLocalTimeZone()).toLocaleDateString();
-    }, [clearanceDate]);
-
-    const handleSetClearanceDate = (date: DateValue | null) => {
-        if (!date) return;
-
-        setClearanceDate(date);
-    }
+        return date.toDate(getLocalTimeZone()).toLocaleDateString();
+    }, []);
 
     const handleUpload = async () => {
         if (!selectedFile) return;
@@ -40,7 +36,9 @@ const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, sta
 
             const formData = new FormData();
             formData.append('file', selectedFile);
-            formData.append('date_clearance', clearanceDateFormat());
+            formData.append('date_clearance', dateToLocaleString(clearanceDate));
+            formData.append('effective_start_date', dateToLocaleString(dateRange!.start));
+            formData.append('effective_end_date', dateToLocaleString(dateRange!.end));
             formData.append('message', `Ethics Clearance has been uploaded by ${user.name}`);
 
             const response = await window.axios.post(
@@ -93,25 +91,43 @@ const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, sta
                         <div className="bg-primary-50/50 p-4 rounded-lg">
                             <h3 className="font-medium mb-2">Signed Ethics Clearance</h3>
                             <div className="space-y-2">
-                                <div className="flex justify-between items-center">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-sm font-medium">
+                                                {application.ethics_clearance.file_url.split('\\').pop()?.split('/').pop()}
+                                            </p>
+                                            <p className="text-xs text-default-600">
+                                                Uploaded on {formatDate(application.ethics_clearance.date_uploaded)}
+                                            </p>
+                                        </div>
+                                        <Button
+                                            as={Link}
+                                            href={route('ethics-clearances.download', {ethics_clearance: application.ethics_clearance})}
+                                            variant="flat"
+                                            color="primary"
+                                            startContent={<CloudArrowDown className="w-4 h-4" />}
+                                            download
+                                        >
+                                            Download
+                                        </Button>
+                                    </div>
                                     <div>
                                         <p className="text-sm font-medium">
-                                            {application.ethics_clearance.file_url.split('\\').pop()?.split('/').pop()}
+                                            Clearance Date
                                         </p>
                                         <p className="text-xs text-default-600">
-                                            Uploaded on {formatDate(application.ethics_clearance.date_uploaded)}
+                                            {formatDate(application.ethics_clearance.date_clearance)}
                                         </p>
                                     </div>
-                                    <Button
-                                        as={Link}
-                                        href={route('ethics-clearances.download', {ethics_clearance: application.ethics_clearance})}
-                                        variant="flat"
-                                        color="primary"
-                                        startContent={<CloudArrowDown className="w-4 h-4" />}
-                                        download
-                                    >
-                                        Download
-                                    </Button>
+                                    <div>
+                                        <p className="text-sm font-medium">
+                                            Effective Date
+                                        </p>
+                                        <p className="text-xs text-default-600">
+                                            {formatDate(application.ethics_clearance.effective_start_date)} - {formatDate(application.ethics_clearance.effective_end_date)}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -120,14 +136,14 @@ const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, sta
                     // staff upload section
                     user.role === 'staff' ? (
                         <div className="space-y-4">
-                            <div className="bg-primary-50/50 p-4 rounded-lg">
-                                <h3 className="text-primary-800 font-medium mb-2">
-                                    Upload Ethics Clearance
-                                </h3>
-                                <p className="text-sm text-primary-600 mb-4">
-                                    Please upload the signed Ethics Clearance document for this research application.
-                                </p>
-                                <div className="space-y-3">
+                            <div className="bg-primary-50/50 space-y-3 p-4 rounded-lg">
+                                <div>
+                                    <h3 className="text-primary-800 font-medium">
+                                        Upload Ethics Clearance
+                                    </h3>
+                                    <p className="text-sm text-primary-600 mb-4">
+                                        Please upload the signed Ethics Clearance document for this research application.
+                                    </p>
                                     <Input
                                         type="file"
                                         accept=".pdf,.doc,.docx"
@@ -136,33 +152,53 @@ const EthicsClearance: React.FC<ApplicationFormProps> = ({user, application, sta
                                         className="w-full"
                                         description="Upload signed Ethics Clearance (PDF, DOC, DOCX)"
                                     />
-                                    <h3 className="text-primary-800 font-medium mb-2">
+                                </div>
+                                <div>
+                                    <h3 className="text-primary-800 font-medium">
                                         Date of Clearance
                                     </h3>
                                     <p className="text-sm text-primary-600 mb-4">
                                         The date the Ethics Clearance was signed.
                                     </p>
                                     <DatePicker
-                                        className="max-w-[284px]"
+                                        className="sm:max-w-[284px]"
                                         variant="bordered"
                                         value={clearanceDate}
-                                        onChange={(date) => handleSetClearanceDate(date)}
-                                        description={clearanceDate ? formatDate(clearanceDateFormat()) : 'Select date'}
+                                        onChange={setClearanceDate}
+                                        description={clearanceDate ? formatDate(dateToLocaleString(clearanceDate)) : 'Select date'}
                                     />
-                                    {status != null && (
-                                        <div className="flex justify-end">
-                                            <Button
-                                                color="primary"
-                                                isLoading={isUploading}
-                                                isDisabled={selectedFile == null || clearanceDate == null}
-                                                onPress={handleUpload}
-                                                startContent={<LightUploadRounded className="w-4 h-4" />}
-                                            >
-                                                Upload Ethics Clearance
-                                            </Button>
-                                        </div>
-                                    )}
                                 </div>
+                                <div>
+                                    <h3 className="text-primary-800 font-medium">
+                                        Effective Date
+                                    </h3>
+                                    <p className="text-sm text-primary-600 mb-4">
+                                        The date the Ethics Clearance becomes effective.
+                                    </p>
+                                    <DateRangePicker
+                                        showMonthAndYearPickers
+                                        className="sm:max-w-[284px]"
+                                        label="Date Range (From - To)"
+                                        labelPlacement="outside"
+                                        size="sm"
+                                        variant="bordered"
+                                        value={dateRange}
+                                        onChange={setDateRange}
+                                    />
+                                </div>
+                                {status != null && (
+                                    <div className="flex justify-end">
+                                        <Button
+                                            color="primary"
+                                            isLoading={isUploading}
+                                            isDisabled={selectedFile == null || clearanceDate == null || !dateRange}
+                                            onPress={handleUpload}
+                                            startContent={<LightUploadRounded className="w-4 h-4" />}
+                                        >
+                                            Upload Ethics Clearance
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (

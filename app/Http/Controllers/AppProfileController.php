@@ -244,6 +244,14 @@ class AppProfileController extends Controller
         // Eager load the relationships
         $application->load([
             'members:id,app_profile_id,firstname,lastname',
+            'requirements:id,app_profile_id,name,file_url,date_uploaded,status,is_additional',
+            'meeting:id,app_profile_id,meeting_date,status',
+            'documents',
+            'decisionLetter',
+            'reviewerReports',
+            'messagePost',
+            'panels:id,app_profile_id,firstname,lastname',
+            'ethicsClearance',
             'statuses' => function (HasMany $query) {
                 $query->select('id', 'app_profile_id', 'name', 'sequence', 'status', 'start', 'end')
                     ->with('messages', function (HasMany $query) {
@@ -252,18 +260,10 @@ class AppProfileController extends Controller
                         $query->where('created_at', '>=', $monthsAgo);
                     });
             },
-            'requirements:id,app_profile_id,name,file_url,date_uploaded,status,is_additional',
-            'meeting:id,app_profile_id,meeting_date,status',
-            'documents:id,app_profile_id,review_result_id,file_url,version,original_document_id,status,created_at',
-            'decisionLetter:id,app_profile_id,file_name,file_path,date_uploaded,is_signed',
             'reviewResults' => function (HasMany $query) {
                 return $query->select(['id' , 'app_profile_id' ,'name', 'file_url', 'date_uploaded', 'status' ,'version'])
                     ->orderByDesc('date_uploaded');
             },
-            'reviewerReports',
-            'messagePost',
-            'panels:id,app_profile_id,firstname,lastname',
-            'ethicsClearance:id,app_profile_id,file_url,date_clearance,date_uploaded',
         ]);
 
         return Inertia::render('Application/Show', [
@@ -484,14 +484,21 @@ class AppProfileController extends Controller
         }
     }
 
+    /**
+     * @throws Throwable
+     */
     public function uploadEthicsClearance(Request $request, AppProfile $application): JsonResponse
     {
         $validated = $request->validate([
             'file' => 'required|file|mimes:pdf,doc,docx',
             'date_clearance' => 'required|string',
+            'effective_start_date' => 'required|string',
+            'effective_end_date' => 'required|string',
             'message' => 'required|string',
         ]);
         $validated['date_clearance'] = Carbon::parse($validated['date_clearance']);
+        $validated['effective_start_date'] = Carbon::parse($validated['effective_start_date']);
+        $validated['effective_end_date'] = Carbon::parse($validated['effective_end_date']);
 
         $path = Storage::disk('public')->putFileAs(
             "ethics-clearance/$application->id",
@@ -507,6 +514,8 @@ class AppProfileController extends Controller
             'file_url' => $path,
             'date_clearance' => $validated['date_clearance'],
             'date_uploaded' => now(),
+            'effective_start_date' => $validated['effective_start_date'],
+            'effective_end_date' => $validated['effective_end_date'],
         ]);
 
         DB::beginTransaction();
@@ -518,9 +527,7 @@ class AppProfileController extends Controller
 
             $application->load([
                 'ethicsClearance',
-                'statuses' => function ($query) {
-                    $query->latest()->first();
-                },
+                'statuses' => fn($query) => $query->latest()->first(),
             ]);
 
             broadcast(new ApplicationUpdated($application, message: $validated['message']))->toOthers();
@@ -537,7 +544,7 @@ class AppProfileController extends Controller
 
         return response()->json([
             'message' => $validated['message'],
-            'ethics_clearance' => $application->ethicsClearance,
+            'ethics_clearance' => $ethicsClearance,
             'status' => $status,
         ]);
     }
