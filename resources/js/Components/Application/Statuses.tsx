@@ -155,22 +155,22 @@ const StepsList: React.FC<StatusesProps> = ({appStatuses, selectedStatus, setSel
                             {status.status}
                         </Chip>
                         <div className="w-full">
-                            <p className="flex flex-wrap gap-x-1.5 text-sm">
+                            <p className="text-sm">
                                 Start:
-                                <span>
+                                <span className="ml-1">
                                     {status.start}
                                 </span>
                             </p>
-                            <p className="flex flex-wrap gap-x-1.5 text-sm">
+                            <p className="text-sm">
                                 End:
-                                <span>
+                                <span className="ml-1">
                                     {status.end}
                                 </span>
                             </p>
                             {/* difference in days between start and end */}
-                            <p className="flex flex-wrap gap-x-1.5 text-sm">
+                            <p className="text-sm">
                                 Duration:
-                                <span className="text-default-600">
+                                <span className="ml-1">
                                     {status.end != 'N/A' && status.start != 'N/A' && getDuration(status.start, status.end)}
                                 </span>
                             </p>
