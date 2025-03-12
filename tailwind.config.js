@@ -21,6 +21,7 @@ export default {
     },
     plugins: [
         forms,
+        require('@tailwindcss/typography'),
         nextui({
             defaultTheme: 'light',
         }),
