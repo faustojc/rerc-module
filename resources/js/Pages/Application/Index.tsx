@@ -36,7 +36,6 @@ const Index = (props: ApplicationIndexProps) => {
                 labelPlacement="outside"
                 size="sm"
                 variant="flat"
-                visibleMonths={2}
                 value={filters.dateRange}
                 onChange={(value) => {
                     updateFilters({ ...filters, dateRange: value }, pagination.current_page);
