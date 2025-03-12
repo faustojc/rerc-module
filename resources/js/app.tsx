@@ -38,4 +38,4 @@ createInertiaApp({
     progress: {
         color: '#4B5563',
     },
-});
+}).then((_) => console.log('ready!'));
