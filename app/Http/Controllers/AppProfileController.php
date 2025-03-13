@@ -19,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -60,43 +61,48 @@ class AppProfileController extends Controller
             $page = 1;
         }
 
-        $applications = AppProfile::query()
-            ->select(['id', 'user_id', 'firstname', 'lastname', 'research_title', 'date_applied', 'protocol_code', 'review_type'])
-            ->withCount('members', 'statuses')
-            ->with(['statuses' => function (HasMany $query) {
-                $query->select('id', 'app_profile_id', 'name', 'sequence', 'status')
-                    ->orderBy('sequence', 'desc')
-                    ->take(1);
-            }])->when($data['query'] ?? null, function (Builder $query, $search) {
-                return $query->whereRaw('LOWER(research_title) LIKE ?', [strtolower("%$search%")])
-                    ->orWhereRaw('LOWER(firstname) LIKE ?', [strtolower("%$search%")])
-                    ->orWhereRaw('LOWER(lastname) LIKE ?', [strtolower("%$search%")]);
-            })->when($data['reviewType'] ?? null, function (Builder $query, $reviewType) {
-                return $query->where('review_type', $reviewType);
-            })->when($data['step'] ?? null, function (Builder $query, $step) {
-                return $query->has('statuses', '<=', intval($step));
-            })->when($data['dateRange'] ?? null, function (Builder $query) use ($data) {
-                $start = Carbon::parse($data['dateRange']['start'])->startOfDay();
-                $end = Carbon::parse($data['dateRange']['end'])->endOfDay();
+        // create a cache key using hash
+        $cacheKey = md5(json_encode($data));
 
-                return $query->whereBetween('date_applied', [$start, $end]);
-            })->when($data['status'] ?? null, function ($query, $status) {
-                return $query->whereHas('statuses', function (Builder $q) use ($status) {
-                    $commonStatus = ['Approved', 'Assigned', 'Done', 'Signed', 'Completed', 'In Progress'];
+        $applications = Cache::flexible($cacheKey, [50, 90], function () use ($data, $user, $page) {
+            return AppProfile::query()
+                ->select(['id', 'user_id', 'firstname', 'lastname', 'research_title', 'date_applied', 'protocol_code', 'review_type'])
+                ->withCount('members')
+                ->with(['statuses' => function (HasMany $query) {
+                    $query->select('id', 'app_profile_id', 'name', 'sequence', 'status')
+                        ->orderBy('sequence', 'desc')
+                        ->take(1);
+                }])->when($data['query'] ?? null, function (Builder $query, $search) {
+                    return $query->whereRaw('LOWER(research_title) LIKE ?', [strtolower("%$search%")])
+                        ->orWhereRaw('LOWER(firstname) LIKE ?', [strtolower("%$search%")])
+                        ->orWhereRaw('LOWER(lastname) LIKE ?', [strtolower("%$search%")]);
+                })->when($data['reviewType'] ?? null, function (Builder $query, $reviewType) {
+                    return $query->where('review_type', $reviewType);
+                })->when($data['step'] ?? null, function (Builder $query, $step) {
+                    return $query->has('statuses', '<=', intval($step));
+                })->when($data['dateRange'] ?? null, function (Builder $query) use ($data) {
+                    $start = Carbon::parse($data['dateRange']['start'])->startOfDay();
+                    $end = Carbon::parse($data['dateRange']['end'])->endOfDay();
 
-                    if (!in_array($status, $commonStatus)) {
-                        $q->whereNotIn('status', $commonStatus);
-                    }
-                    else {
-                        $q->where('status', $status);
-                    }
+                    return $query->whereBetween('date_applied', [$start, $end]);
+                })->when($data['status'] ?? null, function ($query, $status) {
+                    return $query->whereHas('statuses', function (Builder $q) use ($status) {
+                        $commonStatus = ['Approved', 'Assigned', 'Done', 'Signed', 'Completed', 'In Progress'];
 
-                    return $q->orderBy('sequence', 'desc')->limit(1);
-                });
-            })->when($user->role === 'researcher', function (Builder $query) use ($user) {
-                return $query->where('user_id', $user->id);
-            })->orderByDesc('updated_at')
-            ->paginate(10, page: $page);
+                        if (!in_array($status, $commonStatus)) {
+                            $q->whereNotIn('status', $commonStatus);
+                        }
+                        else {
+                            $q->where('status', $status);
+                        }
+
+                        return $q->orderBy('sequence', 'desc')->limit(1);
+                    });
+                })->when($user->role === 'researcher', function (Builder $query) use ($user) {
+                    return $query->where('user_id', $user->id);
+                })->orderByDesc('updated_at')
+                ->paginate(10, page: $page);
+        });
 
         $canCreate = $user->can('create', AppProfile::class);
         $canDelete = $applications->contains(function ($application) {
@@ -241,30 +247,129 @@ class AppProfileController extends Controller
             return to_route('applications.index');
         }
 
-        // Eager load the relationships
-        $application->load([
-            'members:id,app_profile_id,firstname,lastname',
-            'requirements:id,app_profile_id,name,file_url,date_uploaded,status,is_additional',
-            'meeting:id,app_profile_id,meeting_date,status',
-            'documents',
-            'decisionLetter',
-            'reviewerReports',
-            'messagePost',
-            'panels:id,app_profile_id,firstname,lastname',
-            'ethicsClearance',
-            'statuses' => function (HasMany $query) {
-                $query->select('id', 'app_profile_id', 'name', 'sequence', 'status', 'start', 'end')
-                    ->with('messages', function (HasMany $query) {
-                        $monthsAgo = Carbon::now()->subMonths(3);
+        $veryLongTTL = now()->addWeeks(2); // for rarely to no change and always read
+        $shortTTL = now()->addMinutes(5);
 
-                        $query->where('created_at', '>=', $monthsAgo);
-                    });
-            },
-            'reviewResults' => function (HasMany $query) {
-                return $query->select(['id' , 'app_profile_id' ,'name', 'file_url', 'date_uploaded', 'status' ,'version'])
-                    ->orderByDesc('date_uploaded');
-            },
-        ]);
+        $latestSequence = $application->statuses->max('sequence') ?? 1;
+
+        $members = Cache::remember(
+            "application.{$application->id}.members",
+            $veryLongTTL,
+            function () use ($application) {
+                return $application->members()->select('id', 'app_profile_id', 'firstname', 'lastname')->get();
+            }
+        );
+        $application->setRelation('members', $members);
+
+        if ($latestSequence >= 5) {
+            $decisionLetter = Cache::remember(
+                "application.{$application->id}.decisionLetter",
+                now()->addMinutes(60),
+                function () use ($application) {
+                    return $application->decisionLetter()->first();
+                }
+            );
+            $application->setRelation('decisionLetter', $decisionLetter);
+        }
+
+        if ($latestSequence >= 7) {
+            $meeting = Cache::remember(
+                "application.{$application->id}.meeting",
+                $veryLongTTL,
+                function () use ($application) {
+                    return $application->meeting()->select('id', 'app_profile_id', 'meeting_date', 'status')->first();
+                }
+            );
+            $panels = Cache::remember(
+                "application.{$application->id}.panels",
+                $veryLongTTL,
+                function () use ($application) {
+                    return $application->panels()->select('id', 'app_profile_id', 'firstname', 'lastname')->get();
+                }
+            );
+
+            $application->setRelation('panels', $panels);
+            $application->setRelation('meeting', $meeting);
+        }
+
+        if ($latestSequence >= 8) {
+            $reviewResults = Cache::remember(
+                "application.{$application->id}.reviewResults",
+                now()->addMinutes(10),
+                function () use ($application) {
+                    return $application->reviewResults()
+                        ->select(['id', 'app_profile_id', 'name', 'file_url', 'date_uploaded', 'status', 'version'])
+                        ->orderByDesc('date_uploaded')
+                        ->get();
+                }
+            );
+            $application->setRelation('reviewResults', $reviewResults);
+        }
+
+        if ($latestSequence == 10) {
+            $ethicsClearance = Cache::remember(
+                "application.{$application->id}.ethicsClearance",
+                $veryLongTTL,
+                function () use ($application) {
+                    return $application->ethicsClearance()->first();
+                }
+            );
+            $application->setRelation('ethicsClearance', $ethicsClearance);
+        }
+
+        $requirements = Cache::remember(
+            "application.{$application->id}.requirements",
+            $shortTTL,
+            function () use ($application) {
+                return $application->requirements()->select('id', 'app_profile_id', 'name', 'file_url', 'date_uploaded', 'status', 'is_additional')->get();
+            }
+        );
+        $application->setRelation('requirements', $requirements);
+
+        // Cache 'documents': dynamic – short TTL (5 minutes)
+        $documents = Cache::remember(
+            "application.{$application->id}.documents",
+            $shortTTL,
+            function () use ($application) {
+                return $application->documents()->get();
+            }
+        );
+        $application->setRelation('documents', $documents);
+
+        // Cache 'reviewerReports': moderate TTL (10 minutes)
+        $reviewerReports = Cache::remember(
+            "application.{$application->id}.reviewerReports",
+            now()->addMinutes(10),
+            function () use ($application) {
+                return $application->reviewerReports()->get();
+            }
+        );
+        $application->setRelation('reviewerReports', $reviewerReports);
+
+        // Cache 'messagePost': dynamic – short TTL (5 minutes)
+        $messagePost = Cache::flexible(
+            "application.{$application->id}.messagePost",
+            [now()->addMinutes(5), now()->addMinutes(10)],
+            function () use ($application) {
+                return $application->messagePost()->get();
+            }
+        );
+        $application->setRelation('messagePost', $messagePost);
+
+        $statuses = Cache::remember(
+            "application.{$application->id}.statuses",
+            $shortTTL,
+            function () use ($application) {
+                return $application->statuses()
+                    ->select('id', 'app_profile_id', 'name', 'sequence', 'status', 'start', 'end')
+                    ->with(['messages' => function ($query) {
+                        $monthsAgo = Carbon::now()->subMonths(3);
+                        return $query->where('created_at', '>=', $monthsAgo)->get();
+                    }])
+                    ->get();
+            }
+        );
+        $application->setRelation('statuses', $statuses);
 
         return Inertia::render('Application/Show', [
             'application' => $application,
@@ -561,7 +666,7 @@ class AppProfileController extends Controller
 
         $path = Storage::disk('public')->putFile(
             "reviewer_reports/$application->id",
-            $validated['file']
+            $validated['file'],
         );
 
         $reviewerReport = new ReviewerReport([
