@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('review_results', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignId('app_profile_id')
+            $table->foreignUlid('app_profile_id')
                 ->constrained('app_profiles', 'id')
                 ->cascadeOnDelete();
 
