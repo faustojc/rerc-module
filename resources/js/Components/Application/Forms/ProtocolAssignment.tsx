@@ -1,6 +1,6 @@
 import { Button, Card, CardBody, CardFooter, CardHeader, Divider, Input } from "@nextui-org/react";
 import { Application, ApplicationFormProps, AppStatus } from "@/types";
-import React, { ChangeEvent, useState } from "react";
+import React, { useState } from "react";
 import { ClipboardError, MdiCalendar } from "@/Components/Icons";
 import { parseAbsolute } from "@internationalized/date";
 import { toast } from "react-toastify";
@@ -9,10 +9,6 @@ const ProtocolAssignment = ({user, application, status, handleUpdateApplication}
     const [protocolCode, setProtocolCode] = useState<string | null>(application.protocol_code);
     const [isError, setIsError] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
-
-    const handleSetProtocol = (e: ChangeEvent<HTMLInputElement>) => {
-        setProtocolCode(e.target.value);
-    }
 
     const handleAssignProtocol = () => {
         if (!protocolCode || protocolCode?.length === 0) {
@@ -55,17 +51,16 @@ const ProtocolAssignment = ({user, application, status, handleUpdateApplication}
                 </p>
             </CardHeader>
             <CardBody>
-                {(status && !status?.end) ? (
-                    <>
-                        {(user.role === 'staff') ? (
-                            <div className="sm:grid grid-cols-3 items-center">
-                                <h3 className="font-bold">Protocol Code</h3>
-                                <Input className="sm:mt-0 mt-4 col-span-2" isInvalid={isError} errorMessage={'Please enter the protocol code'} onChange={handleSetProtocol} />
-                            </div>
-                        ) : (
-                            <ProtocolCodeDisplay application={application} status={status} />
-                        )}
-                    </>
+                {(status && !status?.end && user.role === 'staff') ? (
+                    <div className="sm:grid grid-cols-3 items-center">
+                        <h3 className="font-bold">Protocol Code</h3>
+                        <Input
+                            className="sm:mt-0 mt-4 col-span-2"
+                            isInvalid={isError}
+                            errorMessage={'Please enter the protocol code'}
+                            onChange={(e) => setProtocolCode(e.target.value)}
+                        />
+                    </div>
                 ) : (
                     <ProtocolCodeDisplay application={application} status={status} />
                 )}
