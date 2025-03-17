@@ -29,10 +29,11 @@ const ManuscriptList: React.FC<ManuscriptListProps> = ({reviewResults, documents
         }).format(date);
     }, []);
 
-    const sortedReviewResults = useMemo(() =>
-        reviewResults.sort((a, b) => b.version - a.version),
-        [reviewResults]
-    )
+    const sortedReviewResults = useMemo(() => {
+        if (!reviewResults) return [];
+
+        return reviewResults.sort((a, b) => b.version - a.version)
+    },[reviewResults]);
 
     const handleSetFile = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -124,7 +125,7 @@ const ManuscriptList: React.FC<ManuscriptListProps> = ({reviewResults, documents
                     </TableHeader>
                     <TableBody items={documents} emptyContent={"No documents has been uploaded yet."}>
                         {(doc) => {
-                            const rr = reviewResults.find(rr => rr.id === doc.review_result_id);
+                            const rr = reviewResults?.find(rr => rr.id === doc.review_result_id);
 
                             return (
                                 <TableRow key={doc.id}>

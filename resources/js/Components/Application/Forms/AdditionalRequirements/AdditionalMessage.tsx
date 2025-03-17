@@ -18,7 +18,7 @@ const AdditionalMessage: React.FC<AdditionalMessageProps> = ({user, messagePost,
     const { theme } = useThemeSignal();
     const editor = useCreateBlockNote({
         schema: blockNoteSchema(),
-        initialContent: messagePost ? JSON.parse(messagePost.content) : undefined,
+        initialContent: messagePost?.content ? JSON.parse(messagePost.content) : undefined,
     });
 
     const [messageHTML, setMessageHTML] = useState<string | null>(null);

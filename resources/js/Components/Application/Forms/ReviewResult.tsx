@@ -19,7 +19,8 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
     const hasApproved = useMemo(() => status != null && status.end != null, [status]);
 
     const hasRevisions = useMemo(() => {
-        return application.review_results.length > 0
+        return application.review_results
+               && application.review_results.length > 0
                && application.documents.some(doc => doc.status === 'Revision');
     }, [application.review_results, application.documents]);
 
