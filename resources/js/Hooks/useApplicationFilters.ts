@@ -48,6 +48,8 @@ export const useApplicationFilters = (initialPagination: PaginationProps<Applica
     const [loading, setLoading] = useState(false);
 
     const updateFilters = useCallback((newFilters: ApplicationFilters, pageNumber: number) => {
+        if (Object.values(pagination).length === 0) return;
+        
         setLoading(true);
 
         const params = new URLSearchParams();
