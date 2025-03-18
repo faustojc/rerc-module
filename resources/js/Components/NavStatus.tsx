@@ -1,4 +1,4 @@
-import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Link, Navbar, NavbarContent, NavbarItem } from "@nextui-org/react";
+import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Navbar, NavbarContent, NavbarItem } from "@nextui-org/react";
 import { useMemo, useState } from "react";
 import useIsMobile from "@/Hooks/useIsMobile";
 import { CloseToMenuTransition, MenuToCloseTransition } from "@/Components/Icons";
@@ -71,12 +71,13 @@ const NavStatus = ({currTab, setCurrTab, tabs}: NavStatusProps) => {
 
                     return (
                         <NavbarItem key={tab.name} isActive={currTab === tab.name}>
-                            <Link color={currTab === tab.name ? 'primary' : 'foreground'} href="#" onClick={(e) => {
-                                e.preventDefault();
-                                setCurrTab(tab.name);
-                            }}>
+                            <Button color={currTab === tab.name ? 'primary' : 'default'}
+                                    onPress={() => setCurrTab(tab.name)}
+                                    variant="light"
+                                    disabled={currTab === tab.name}
+                            >
                                 {tab.label}
-                            </Link>
+                            </Button>
                         </NavbarItem>
                     )
                 })}
