@@ -87,30 +87,30 @@ const Statuses = ({appStatuses, selectedStatus, setSelectedStatus }: StatusesPro
 
 const StepsList: React.FC<StatusesProps> = ({appStatuses, selectedStatus, setSelectedStatus}) => {
     const steps: AppStatus[] = useMemo(() => {
-        return STEPS.map((step, index) => {
-            const currStatus = appStatuses.find((ap) => ap.sequence === step.sequence);
+        const statuses = appStatuses.sort((a, b) => a.sequence - b.sequence);
 
+        return STEPS.map((step, index) => {
             const dateTime = Intl.DateTimeFormat('en-US', {
                 month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: getLocalTimeZone()
             });
 
-            const startDate = currStatus?.start
-                ? dateTime.format(new Date(currStatus.start))
+            const startDate = statuses[index]?.start
+                ? dateTime.format(new Date(statuses[index].start))
                 : "N/A";
 
-            const endDate = currStatus?.end
-                ? dateTime.format(new Date(currStatus.end))
+            const endDate = statuses[index]?.end
+                ? dateTime.format(new Date(statuses[index].end))
                 : "N/A";
 
             return {
-                id: currStatus?.id ?? '',
-                app_profile_id: currStatus?.app_profile_id ?? appStatuses[0].app_profile_id,
+                id: statuses[index]?.id ?? '',
+                app_profile_id: statuses[index]?.app_profile_id ?? appStatuses[0].app_profile_id,
                 name: step.name,
-                status: currStatus?.status ?? "Pending",
-                sequence: currStatus?.sequence ?? index + 1,
+                status: statuses[index]?.status ?? "Pending",
+                sequence: statuses[index]?.sequence ?? index + 1,
                 start: startDate,
                 end: endDate,
-                messages: currStatus?.messages ?? [],
+                messages: statuses[index]?.messages ?? [],
             }
         });
     }, [appStatuses]);
