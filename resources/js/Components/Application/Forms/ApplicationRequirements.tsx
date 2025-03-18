@@ -251,7 +251,6 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
                                                             href={route('applications.requirements.download', {application: application, requirement: u})}
                                                             color="foreground"
                                                             underline="always"
-                                                            download
                                                         >
                                                             <LinkBold className="mr-2" scale={1.1} />
                                                             <p className="text-sm line-clamp-1">
