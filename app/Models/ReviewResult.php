@@ -39,6 +39,9 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|ReviewResult whereUpdatedAt($value)
  * @property int $version
  * @method static Builder<static>|ReviewResult whereVersion($value)
+ * @property string|null $status
+ * @property-read \App\Models\TFactory|null $use_factory
+ * @method static Builder<static>|ReviewResult whereStatus($value)
  * @mixin Eloquent
  */
 class ReviewResult extends Model

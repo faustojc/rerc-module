@@ -31,6 +31,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|Meeting whereMeetingDate($value)
  * @method static Builder<static>|Meeting whereStatus($value)
  * @method static Builder<static>|Meeting whereUpdatedAt($value)
+ * @property-read \App\Models\TFactory|null $use_factory
  * @mixin Eloquent
  */
 class Meeting extends Model

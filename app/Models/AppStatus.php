@@ -41,6 +41,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|AppStatus whereStart($value)
  * @method static Builder<static>|AppStatus whereStatus($value)
  * @method static Builder<static>|AppStatus whereUpdatedAt($value)
+ * @property-read \App\Models\TFactory|null $use_factory
  * @mixin Eloquent
  */
 class AppStatus extends Model

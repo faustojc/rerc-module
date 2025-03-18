@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\Storage;
  * @method static Builder<static>|Requirement whereName($value)
  * @method static Builder<static>|Requirement whereStatus($value)
  * @method static Builder<static>|Requirement whereUpdatedAt($value)
+ * @property-read \App\Models\TFactory|null $use_factory
  * @mixin Eloquent
  */
 class Requirement extends Model

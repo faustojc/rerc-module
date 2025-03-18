@@ -31,6 +31,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|AppMember whereId($value)
  * @method static Builder<static>|AppMember whereLastname($value)
  * @method static Builder<static>|AppMember whereUpdatedAt($value)
+ * @property-read \App\Models\TFactory|null $use_factory
  * @mixin Eloquent
  */
 class AppMember extends Model

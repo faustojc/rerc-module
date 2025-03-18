@@ -31,6 +31,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|PanelMember whereId($value)
  * @method static Builder<static>|PanelMember whereLastname($value)
  * @method static Builder<static>|PanelMember whereUpdatedAt($value)
+ * @property-read \App\Models\TFactory|null $use_factory
  * @mixin Eloquent
  */
 class PanelMember extends Model

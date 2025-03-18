@@ -49,6 +49,7 @@ use Laravel\Sanctum\PersonalAccessToken;
  * @method static Builder<static>|User whereRememberToken($value)
  * @method static Builder<static>|User whereRole($value)
  * @method static Builder<static>|User whereUpdatedAt($value)
+ * @property-read \App\Models\TFactory|null $use_factory
  * @mixin Eloquent
  */
 class User extends Authenticatable

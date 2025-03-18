@@ -36,6 +36,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|MessageThread whereReadStatus($value)
  * @method static Builder<static>|MessageThread whereRemarks($value)
  * @method static Builder<static>|MessageThread whereUpdatedAt($value)
+ * @property-read \App\Models\TFactory|null $use_factory
  * @mixin Eloquent
  */
 class MessageThread extends Model
