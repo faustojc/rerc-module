@@ -19,6 +19,7 @@ export interface Application {
     date_applied: string,
     protocol_code: string,
     protocol_date_updated: string,
+    is_hardcopy: boolean,
     review_type: string,
     proof_of_payment_url: string,
     payment_date: string,

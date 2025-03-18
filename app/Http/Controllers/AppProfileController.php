@@ -66,7 +66,7 @@ class AppProfileController extends Controller
 
         $applications = Cache::flexible($cacheKey, [50, 90], function () use ($data, $user, $page) {
             return AppProfile::query()
-                ->select(['id', 'user_id', 'firstname', 'lastname', 'research_title', 'date_applied', 'protocol_code', 'review_type'])
+                ->select(['id', 'user_id', 'firstname', 'lastname', 'research_title', 'date_applied', 'protocol_code', 'protocol_date_updated', 'is_hardcopy', 'review_type'])
                 ->withCount('members')
                 ->with(['statuses' => function (HasMany $query) {
                     $query->select('id', 'app_profile_id', 'name', 'sequence', 'status')
@@ -362,6 +362,7 @@ class AppProfileController extends Controller
             function () use ($application) {
                 return $application->statuses()
                     ->select('id', 'app_profile_id', 'name', 'sequence', 'status', 'start', 'end')
+                    ->orderBy('sequence')
                     ->with(['messages' => function ($query) {
                         $monthsAgo = Carbon::now()->subMonths(3);
                         return $query->where('created_at', '>=', $monthsAgo)->get();
@@ -453,11 +454,14 @@ class AppProfileController extends Controller
 
     /**
      * Updating the application also updates the status of the application.
+     *
+     * @throws Throwable
      */
     public function update(Request $request, AppProfile $application): JsonResponse
     {
         $data = $request->validate([
             'protocol_code' => 'nullable|string',
+            'is_hardcopy' => 'required|boolean',
             'review_type' => 'nullable|string',
             'message' => 'nullable|string',
             'status_id' => 'required|string',
@@ -478,6 +482,7 @@ class AppProfileController extends Controller
 
             $application->protocol_code = $data['protocol_code'];
             $application->protocol_date_updated = now();
+            $application->is_hardcopy = $data['is_hardcopy'];
         }
 
         if (!empty($data['review_type'])) {
@@ -489,14 +494,7 @@ class AppProfileController extends Controller
                 $application->save();
             }
 
-            if (!empty($status)) {
-                $status->status = $data['new_status'];
-                $status->end = $data['is_completed'] ? now() : NULL;
-
-                $application->statuses()->save($status);
-            }
-
-            if ($data['is_completed']) {
+            if ($data['is_completed'] && $status->end == NULL) {
                 $newStatus = new AppStatus([
                     'name' => $data['next_status'],
                     'sequence' => $status->sequence == 10 ? 10 : $status->sequence + 1,
@@ -505,6 +503,13 @@ class AppProfileController extends Controller
                 ]);
 
                 $application->statuses()->save($newStatus);
+            }
+
+            if (!empty($status) && $status->end == NULL) {
+                $status->status = $data['new_status'];
+                $status->end = $data['is_completed'] ? now() : NULL;
+
+                $application->statuses()->save($status);
             }
 
             $application->load('statuses')->refresh();

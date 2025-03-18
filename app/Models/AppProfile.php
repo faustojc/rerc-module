@@ -72,7 +72,10 @@ use Illuminate\Support\Facades\Storage;
  * @property-read Collection<int, ReviewerReport> $reviewerReports
  * @property-read int|null $reviewer_reports_count
  * @method static Builder<static>|AppProfile whereResearchType($value)
- * @property-read \App\Models\MessagePost|null $messagePost
+ * @property-read MessagePost|null $messagePost
+ * @property bool $is_hardcopy
+ * @property-read \App\Models\TFactory|null $use_factory
+ * @method static Builder<static>|AppProfile whereIsHardcopy($value)
  * @mixin Eloquent
  */
 class AppProfile extends Model
@@ -90,6 +93,7 @@ class AppProfile extends Model
         'date_applied',
         'protocol_code',
         'protocol_date',
+        'is_hardcopy',
         'review_type',
         'proof_of_payment_url',
         'payment_date',
@@ -209,6 +213,7 @@ class AppProfile extends Model
             'date_applied' => 'datetime:c',
             'protocol_date_updated' => 'datetime:c',
             'payment_date' => 'datetime:c',
+            'is_hardcopy' => 'boolean',
         ];
     }
 }

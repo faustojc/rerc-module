@@ -3,7 +3,6 @@
 namespace App\Events;
 
 use App\Models\AppProfile;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,7 +37,7 @@ class ApplicationUpdated implements ShouldQueue, ShouldBroadcast, ShouldQueueAft
     {
         // Assuming you have a channel for the application or users
         return [
-            new Channel('application.' . $this->application->id),
+            'application.' . $this->application->id,
         ];
     }
 
