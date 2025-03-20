@@ -112,7 +112,7 @@ const PanelMeeting = ({user, application, status, handleUpdateApplication}: Appl
                                         let panelName = `${panelMember.firstname} ${panelMember.lastname}`;
 
                                         if (user.role === 'researcher') {
-                                            panelName = `Panel ${index + 1}`;
+                                            panelName = `Reviewer ${index + 1}`;
                                         }
 
                                         return (
