@@ -73,6 +73,7 @@ const NavStatus = ({currTab, setCurrTab, tabs}: NavStatusProps) => {
                         <NavbarItem key={tab.name} isActive={currTab === tab.name}>
                             <Button color={currTab === tab.name ? 'primary' : 'default'}
                                     onPress={() => setCurrTab(tab.name)}
+                                    className={currTab === tab.name ? "font-bold" : ""}
                                     variant="light"
                                     disabled={currTab === tab.name}
                             >
@@ -98,7 +99,7 @@ const NavStatus = ({currTab, setCurrTab, tabs}: NavStatusProps) => {
                             return (
                                 <DropdownItem
                                     key={tab.label}
-                                    className={currTab === tab.name ? "text-primary" : ""}
+                                    className={currTab === tab.name ? "text-primary font-bold" : ""}
                                     onPress={() => setCurrTab(tab.name)}
                                 >
                                     {tab.label}
