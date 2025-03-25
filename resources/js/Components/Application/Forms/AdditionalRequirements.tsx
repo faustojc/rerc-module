@@ -1,5 +1,20 @@
 import { ApplicationFormProps } from "@/types";
-import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Divider, Link, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
+import {
+    Alert,
+    Button,
+    Card,
+    CardBody,
+    CardFooter,
+    CardHeader,
+    Divider,
+    Link,
+    Table,
+    TableBody,
+    TableCell,
+    TableColumn,
+    TableHeader,
+    TableRow,
+} from "@nextui-org/react";
 import React, { useCallback, useMemo, useState } from "react";
 import NavStatus from "@/Components/NavStatus";
 import Feedbacks from "@/Components/Application/Feedbacks";
@@ -35,7 +50,7 @@ const AdditionalRequirements = ({user, application, status, handleUpdateApplicat
         }
 
         return {
-            message: "Waiting for the staff to approve the additional requirements.",
+            message: "Waiting for the staff to approve the requirements or to proceed to ethics clearance",
             type: 'warning'
         }
     }, [user.role, hasApproved]);
@@ -133,7 +148,7 @@ const AdditionalRequirements = ({user, application, status, handleUpdateApplicat
             <NavStatus currTab={currTab} setCurrTab={setCurrTab} tabs={[
                 {label: 'Requirements', name: 'requirements'},
                 {label: 'Message', name: 'message'},
-                {label: 'Upload Requirement', name: 'upload', notFor: () => user.role !== 'researcher' || hasApproved},
+                {label: 'Upload Requirement', name: 'upload', notFor: () => user.role !== 'researcher' || hasApproved || status == null},
                 {label: 'Feedbacks', name: 'feedbacks', notFor: () => status == null},
             ]} />
             {currTab === 'requirements' && (
@@ -166,7 +181,7 @@ const AdditionalRequirements = ({user, application, status, handleUpdateApplicat
                     <Divider />
                     <CardFooter className="flex-col items-end gap-3">
                         {(alert.message && !loading) && <Alert variant="flat" color={alert.type} title={alert.message}  />}
-                        {(user.role === 'staff' && !hasApproved) && (
+                        {(user.role === 'staff' && !hasApproved && status != null) && (
                             <Button color="primary" variant="shadow" isLoading={loading} onPress={handleApproveRequirement}>
                                 {additionalRequirements.length > 0 ? 'Approve All Requirements' : 'Proceed to Next Step'}
                             </Button>
