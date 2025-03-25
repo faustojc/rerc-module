@@ -9,6 +9,7 @@ use App\Http\Controllers\MessagePostController;
 use App\Http\Controllers\MessageThreadsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewResultController;
+use App\Http\Controllers\ReviewTypeLogController;
 use App\Models\AppProfile;
 use App\Models\Document;
 use App\Models\EthicsClearance;
@@ -37,6 +38,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/applications/{application}/upload-payment', [AppProfileController::class, 'uploadPayment'])
         ->name('applications.upload-payment');
+    Route::post('/applications/{application}/confirm-payment', [AppProfileController::class, 'confirmPayment'])
+        ->name('applications.confirm-payment');
     Route::post('/applications/{application}/assign-panel-meeting', [AppProfileController::class, 'assignPanelMeeting'])
         ->name('applications.assign-panel-meeting');
     Route::post('/applications/{application}/upload-report', [AppProfileController::class, 'uploadReport'])
@@ -70,6 +73,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::apiResource('applications.message-posts', MessagePostController::class)
         ->only(['store', 'update']);
+
+    Route::post('applications/{application}/set-review-type', [ReviewTypeLogController::class, 'setReviewType'])
+        ->name('applications.set-review-type');
 
     // Download routes
     Route::get('/documents/{document}/download', function (Document $document) {
