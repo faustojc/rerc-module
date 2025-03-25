@@ -74,8 +74,10 @@ use Illuminate\Support\Facades\Storage;
  * @method static Builder<static>|AppProfile whereResearchType($value)
  * @property-read MessagePost|null $messagePost
  * @property bool $is_hardcopy
- * @property-read \App\Models\TFactory|null $use_factory
+ * @property-read TFactory|null $use_factory
  * @method static Builder<static>|AppProfile whereIsHardcopy($value)
+ * @property-read Collection<int, \App\Models\ReviewTypeLog> $reviewTypeLogs
+ * @property-read int|null $review_type_logs_count
  * @mixin Eloquent
  */
 class AppProfile extends Model
@@ -197,9 +199,14 @@ class AppProfile extends Model
         return $this->hasMany(ReviewerReport::class);
     }
 
-    public  function messagePost(): HasOne
+    public function messagePost(): HasOne
     {
         return $this->hasOne(MessagePost::class);
+    }
+
+    public function reviewTypeLogs(): HasMany
+    {
+        return $this->hasMany(ReviewTypeLog::class);
     }
 
     public function user(): BelongsTo
