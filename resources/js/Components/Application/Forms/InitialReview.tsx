@@ -46,7 +46,7 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
         setLoading(true);
 
         window.axios.patch(route('applications.statuses.update', {application: application, status: status}), {
-            new_status: 'Done',
+            new_status: 'Approved',
             is_completed: true,
             next_status: 'Review Type',
             message: `${application.research_title} initial review has been approved`
@@ -92,10 +92,10 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
                             <TableBody items={originalDocs}>
                                 {(document) => (
                                     <TableRow key={document.id}>
-                                        <TableCell className="text-nowrap">
+                                        <TableCell className="text-wrap">
                                             {document.file_url.split('\\').pop()?.split('/').pop()}
                                         </TableCell>
-                                        <TableCell className="text-nowrap">
+                                        <TableCell className="text-wrap">
                                             {new Date(document.created_at!).toLocaleDateString('en-US', {
                                                 month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
                                             })}
@@ -128,13 +128,13 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
                             <TableBody items={requiredDocs}>
                                 {(requirement) => (
                                     <TableRow key={requirement.id}>
-                                        <TableCell className="text-nowrap">
+                                        <TableCell className="text-wrap">
                                             {requirement.file_url.split('\\').pop()?.split('/').pop()}
                                         </TableCell>
-                                        <TableCell className="text-nowrap">
+                                        <TableCell className="text-wrap">
                                             {requirement.name}
                                         </TableCell>
-                                        <TableCell className="text-nowrap">
+                                        <TableCell className="text-wrap">
                                             {new Date(requirement.date_uploaded).toLocaleDateString('en-US', {
                                                 month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
                                             })}
@@ -161,7 +161,7 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
                                variant="flat"
                                description={alertMessage}
                         />
-                        {(user.role !== 'researcher' && status?.end) && (
+                        {(user.role !== 'researcher' && !status?.end) && (
                             <Button color="primary" variant="shadow" isLoading={loading} onPress={() => handleApprove()}>
                                 Complete Initial Review
                             </Button>
