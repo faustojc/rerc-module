@@ -257,9 +257,21 @@ class AppProfileController extends Controller
             $veryLongTTL,
             function () use ($application) {
                 return $application->members()->select('id', 'app_profile_id', 'firstname', 'lastname')->get();
-            }
+            },
         );
         $application->setRelation('members', $members);
+
+        if ($latestSequence >= 4) {
+            $reviewTypeLogs = Cache::remember(
+                "application.{$application->id}.reviewTypeLogs",
+                $shortTTL,
+                function () use ($application) {
+                    return $application->reviewTypeLogs()->select('id', 'app_profile_id', 'review_type', 'assigned_by', 'created_at')->get();
+                },
+            );
+
+            $application->setRelation('reviewTypeLogs', $reviewTypeLogs);
+        }
 
         if ($latestSequence >= 5) {
             $decisionLetter = Cache::remember(
@@ -267,7 +279,7 @@ class AppProfileController extends Controller
                 now()->addMinutes(60),
                 function () use ($application) {
                     return $application->decisionLetter()->first();
-                }
+                },
             );
             $application->setRelation('decisionLetter', $decisionLetter);
         }
@@ -278,14 +290,14 @@ class AppProfileController extends Controller
                 $veryLongTTL,
                 function () use ($application) {
                     return $application->meeting()->select('id', 'app_profile_id', 'meeting_date', 'status')->first();
-                }
+                },
             );
             $panels = Cache::remember(
                 "application.{$application->id}.panels",
                 $veryLongTTL,
                 function () use ($application) {
                     return $application->panels()->select('id', 'app_profile_id', 'firstname', 'lastname')->get();
-                }
+                },
             );
 
             $application->setRelation('panels', $panels);
@@ -301,7 +313,7 @@ class AppProfileController extends Controller
                         ->select(['id', 'app_profile_id', 'name', 'file_url', 'date_uploaded', 'status', 'version'])
                         ->orderByDesc('date_uploaded')
                         ->get();
-                }
+                },
             );
             $application->setRelation('reviewResults', $reviewResults);
         }
@@ -312,7 +324,7 @@ class AppProfileController extends Controller
                 $veryLongTTL,
                 function () use ($application) {
                     return $application->ethicsClearance()->first();
-                }
+                },
             );
             $application->setRelation('ethicsClearance', $ethicsClearance);
         }
@@ -322,7 +334,7 @@ class AppProfileController extends Controller
             $shortTTL,
             function () use ($application) {
                 return $application->requirements()->select('id', 'app_profile_id', 'name', 'file_url', 'date_uploaded', 'status', 'is_additional')->get();
-            }
+            },
         );
         $application->setRelation('requirements', $requirements);
 
@@ -332,7 +344,7 @@ class AppProfileController extends Controller
             $shortTTL,
             function () use ($application) {
                 return $application->documents()->get();
-            }
+            },
         );
         $application->setRelation('documents', $documents);
 
@@ -342,7 +354,7 @@ class AppProfileController extends Controller
             now()->addMinutes(10),
             function () use ($application) {
                 return $application->reviewerReports()->get();
-            }
+            },
         );
         $application->setRelation('reviewerReports', $reviewerReports);
 
@@ -352,7 +364,7 @@ class AppProfileController extends Controller
             [now()->addMinutes(5), now()->addMinutes(10)],
             function () use ($application) {
                 return $application->messagePost()->get();
-            }
+            },
         );
         $application->setRelation('messagePost', $messagePost);
 
@@ -368,7 +380,7 @@ class AppProfileController extends Controller
                         return $query->where('created_at', '>=', $monthsAgo)->get();
                     }])
                     ->get();
-            }
+            },
         );
         $application->setRelation('statuses', $statuses);
 
@@ -394,6 +406,9 @@ class AppProfileController extends Controller
         ]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function uploadPayment(Request $request, AppProfile $application): JsonResponse
     {
         $data = $request->validate([
@@ -405,16 +420,8 @@ class AppProfileController extends Controller
 
         $application->load('statuses');
 
-        $status = $application->statuses()->latest()->first();
-        $status->status = 'Done';
-        $status->end = $currentDateTime;
-
-        $newStatus = new AppStatus([
-            'name' => 'Assignment of Panel & Meeting Schedule',
-            'sequence' => $status->sequence + 1,
-            'status' => 'In Progress',
-            'start' => $currentDateTime,
-        ]);
+        $status = $application->statuses()->where('sequence', '=', 6)->first();
+        $status->status = 'Awaiting Confirmation';
 
         $path = Storage::disk('public')->putFile("payments/$application->id", $data['file']);
 
@@ -426,11 +433,13 @@ class AppProfileController extends Controller
                 'payment_date' => $currentDateTime,
                 'proof_of_payment_url' => $path,
             ]);
-            $application->statuses()->saveMany([$status, $newStatus]);
+            $application->statuses()->save($status);
 
             DB::commit();
 
-            $application->load('statuses')->refresh();
+            $application->load([
+                'statuses' => fn (HasMany $query) => $query->where('sequence', '=', 6)->first(),
+            ])->refresh();
 
             broadcast(new ApplicationUpdated($application, message: $data['message']))->toOthers();
         } catch (Exception) {
@@ -460,67 +469,94 @@ class AppProfileController extends Controller
     public function update(Request $request, AppProfile $application): JsonResponse
     {
         $data = $request->validate([
-            'protocol_code' => 'nullable|string',
+            'protocol_code' => 'required|string',
             'is_hardcopy' => 'required|boolean',
-            'review_type' => 'nullable|string',
             'message' => 'nullable|string',
             'status_id' => 'required|string',
-            'new_status' => 'nullable|string',
-            'next_status' => 'nullable|string',
-            'is_completed' => 'nullable|boolean',
+            'can_proceed' => 'nullable|boolean',
         ]);
+
+        if ($application->where('protocol_code', '=', $data['protocol_code'])->exists()) {
+            return response()->json([
+                'message' => 'Protocol code already exists.',
+                'error' => true,
+            ], 422);
+        }
 
         $status = $application->statuses()->find($data['status_id']);
 
-        if (!empty($data['protocol_code'])) {
-            if ($application->where('protocol_code', '=', $data['protocol_code'])->exists()) {
-                return response()->json([
-                    'message' => 'Protocol code already exists.',
-                    'error' => true,
-                ], 422);
-            }
-
+        DB::transaction(function () use (&$application, &$status, $data) {
             $application->protocol_code = $data['protocol_code'];
             $application->protocol_date_updated = now();
             $application->is_hardcopy = $data['is_hardcopy'];
-        }
+            $application->save();
 
-        if (!empty($data['review_type'])) {
-            $application->review_type = $data['review_type'];
-        }
+            if ($data['can_proceed']) {
+                $status->status = "Assigned";
+                $status->end = now();
 
-        DB::transaction(function () use (&$application, &$status, $data) {
-            if ($application->isDirty()) {
-                $application->save();
-            }
-
-            if ($data['is_completed'] && $status->end == NULL) {
-                $newStatus = new AppStatus([
-                    'name' => $data['next_status'],
-                    'sequence' => $status->sequence == 10 ? 10 : $status->sequence + 1,
+                $nextStatus = new AppStatus([
+                    'name' => "Initial Review",
+                    'sequence' => 3,
                     'status' => 'In Progress',
                     'start' => now(),
                 ]);
 
-                $application->statuses()->save($newStatus);
-            }
-
-            if (!empty($status) && $status->end == NULL) {
-                $status->status = $data['new_status'];
-                $status->end = $data['is_completed'] ? now() : NULL;
-
-                $application->statuses()->save($status);
+                $application->statuses()->saveMany([$status, $nextStatus]);
             }
 
             $application->load('statuses')->refresh();
             $status->refresh();
 
-            broadcast(new ApplicationUpdated($application, message: $data['message']))->toOthers();
+            $message = $data['message'] ?? "Protocol code has been assigned to $application->protocol_code.";
+
+            broadcast(new ApplicationUpdated($application, message: $message))->toOthers();
         });
 
         return response()->json([
             'message' => $data['message'] ?? "$application->research_title has been updated.",
             'application' => $application,
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function confirmPayment(Request $request, AppProfile $application): JsonResponse
+    {
+        $validated = $request->validate([
+            'can_confirm' => 'required|boolean',
+            'name' => 'required|string',
+        ]);
+
+        DB::transaction(function () use (&$application, $validated) {
+            $confirmStatus = $validated['can_confirm'] ? 'Confirmed' : 'Rejected';
+
+            $status = $application->statuses->where('sequence', '=', 6)->first();
+            $status->status = $confirmStatus;
+
+            if ($validated['can_confirm']) {
+                $status->end = now();
+
+                $application->statuses()->save(new AppStatus([
+                    'app_profile_id' => $application->id,
+                    'sequence' => 7,
+                    'status' => 'In Progress',
+                    'start' => now(),
+                ]));
+            }
+
+            $application->save($status);
+            $application->load([
+                'statuses' => fn (HasMany $query) => $query->where('sequence', '>=', 6)->first(),
+            ])->refresh();
+
+            broadcast(new ApplicationUpdated($application, "{$validated['name']} has $confirmStatus the uploaded payment."))->toOthers();
+        });
+
+        return response()->json([
+            'message' => "Payment status successfully updated.",
+            'statuses' => $application->statuses
         ]);
     }
 

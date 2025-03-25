@@ -23,11 +23,8 @@ const ProtocolAssignment = ({user, application, status, handleUpdateApplication}
         window.axios.patch(route('applications.update', {application: application}), {
             protocol_code: protocolCode,
             is_hardcopy: isHardcopy,
-            new_status: 'Assigned',
             status_id: status.id,
-            is_completed: true,
-            next_status: 'Initial Review',
-            message: `${application.research_title} has been assigned a protocol code ${protocolCode}`
+            can_proceed: application.protocol_code == null,
         }).then(response => {
             handleUpdateApplication({
                 application: {
