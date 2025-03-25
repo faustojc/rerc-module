@@ -20,6 +20,7 @@ export interface Application {
     protocol_code: string,
     protocol_date_updated: string,
     is_hardcopy: boolean,
+    research_type: string,
     review_type: string,
     proof_of_payment_url: string,
     payment_date: string,
@@ -31,6 +32,7 @@ export interface Application {
     documents: AppDocument[],
     statuses: AppStatus[],
     requirements: Requirement[],
+    review_type_logs: ReviewTypeLog[],
     review_results: AppReviewResult[],
     reviewer_reports: ReviewerReport[],
     decision_letter: DecisionLetter | null,
@@ -183,6 +185,16 @@ export interface MessagePost {
     [key: string]: any;
 }
 
+export interface ReviewTypeLog {
+    id: string;
+    app_profile_id: string;
+    review_type: string;
+    assigned_by: string;
+    created_at?: string;
+    updated_at?: string;
+    [key: string]: any;
+}
+
 interface PaginationProps<T> {
     current_page: number;
     data: T[];
@@ -235,8 +247,18 @@ export interface DashboardPageProps extends PageProps{
         };
         recentApplications: Application[];
         upcomingMeetings: Meeting[];
-        pendingReviews: AppReviewResult[];
-        pendingDecisionLetters: Application[];
+        pending: {
+            pendingRequirements: number,
+            pendingProtocols: number,
+            pendingInitialReviews: number,
+            pendingReviewTypes: number,
+            pendingDecisionLetters: number,
+            pendingPayments: number,
+            pendingReviewerMeetings: number,
+            pendingReviewManuscripts: number,
+            pendingAdditionalReqs: number,
+            pendingEthicsClearances: number
+        };
     };
 }
 
