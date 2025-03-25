@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useState } from "react";
-import { Button, CardBody, CardFooter, Divider, Spinner } from "@nextui-org/react";
+import { Button, CardBody, CardFooter, Divider, Spinner, Tooltip } from "@nextui-org/react";
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useThemeSignal } from "@/types/themeSignal";
@@ -48,15 +48,21 @@ const AdditionalMessage: React.FC<AdditionalMessageProps> = ({user, messagePost,
                         <div className="inline-flex items-center gap-3 px-2">
                             <h5 className="font-bold text-default-900">Controls:</h5>
                             <div className="flex flex-row gap-1">
-                                <div className="p-1 bg-default-100 rounded-lg">
-                                    <AddRounded width={18} height={18} />
-                                </div>
-                                <div className="p-1 bg-default-100 rounded-lg">
-                                    <DotsFill width={18} height={18} />
-                                </div>
-                                <div className="p-1 bg-default-100 rounded-lg">
-                                    <Slash width={18} height={18} />
-                                </div>
+                                <Tooltip content="To add a new elements">
+                                    <div className="p-1 bg-default-100 rounded-lg">
+                                        <AddRounded width={18} height={18} />
+                                    </div>
+                                </Tooltip>
+                                <Tooltip content="To remove, set color, or drag the element">
+                                    <div className="p-1 bg-default-100 rounded-lg">
+                                        <DotsFill width={18} height={18} />
+                                    </div>
+                                </Tooltip>
+                                <Tooltip content="Type / to see all commands">
+                                    <div className="p-1 bg-default-100 rounded-lg">
+                                        <Slash width={18} height={18} />
+                                    </div>
+                                </Tooltip>
                             </div>
                         </div>
                         <Divider className="my-3" />
@@ -68,7 +74,7 @@ const AdditionalMessage: React.FC<AdditionalMessageProps> = ({user, messagePost,
                     </>
                 ) : (
                     <Suspense fallback={<Spinner size="lg" />}>
-                        {messageHTML ? (
+                        {(messageHTML && messagePost?.created_at != null) ? (
                             <div className="px-[54px]">
                                 <p className="text-default-500 mb-3">
                                     Posted on {format(new Date(messagePost!.created_at || ''), 'MMMM d, yyyy h:mm a')}
