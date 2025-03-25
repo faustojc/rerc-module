@@ -1,6 +1,6 @@
 import { ApplicationFormProps } from "@/types";
-import { Button, Card, CardBody, CardFooter, CardHeader, Divider, Link, Textarea } from "@nextui-org/react";
-import React, { ChangeEvent, useState } from "react";
+import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Divider, Link, Textarea } from "@nextui-org/react";
+import React, { ChangeEvent, useMemo, useState } from "react";
 import InputFile from "@/Components/InputFile";
 import { toast } from "react-toastify";
 import { getLocalTimeZone } from "@internationalized/date";
@@ -11,6 +11,32 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
     const [details, setDetails] = useState("");
     const [isError, setIsError] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const isDecisionLetterSigned = application.decision_letter != null && application.decision_letter.is_signed;
+    const hasPayment = application.proof_of_payment_url != null;
+    const confirmedStatus: {
+        color: "success" | "danger" | "primary" | "default" | "secondary" | "warning" | undefined
+        description: string
+    } = useMemo(() => {
+        if (status.status === "Confirmed") {
+            return {
+                color: "success",
+                description: "Payment has been confirmed."
+            }
+        }
+
+        if (status.status === "Rejected") {
+            return {
+                color: "danger",
+                description: "Payment has been rejected. Please submit a new payment receipt."
+            }
+        }
+
+        return {
+            color: "primary",
+            description: "Awaiting for the Review Committee to confirm the uploaded payment."
+        }
+    }, [status.status]);
 
     const handleSelectFile = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -51,8 +77,22 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
         }).finally(() => setLoading(false));
     }
 
-    const isDecisionLetterSigned = application.decision_letter != null && application.decision_letter.is_signed;
-    const hasPayment = application.proof_of_payment_url != null;
+    const handleConfirmPayment = (canConfirm: boolean) => {
+        setLoading(true);
+
+        window.axios.post(route('applications.confirm-payment', {application: application}), {
+            can_confirm: canConfirm,
+            name: user.name
+        }).then((r) => {
+            const confirmStatus = canConfirm ? "Confirmed" : "Rejected";
+
+            toast.success(`Payment status successfully set to ${confirmStatus}.`);
+            handleUpdateApplication({application: {statuses: r.data.statuses}});
+        }).catch((error) => {
+            toast.error("Failed to confirm payment. Please try again.");
+            console.error(error);
+        }).finally(() => setLoading(false));
+    }
 
     return (
         <Card className="sticky self-start top-0">
@@ -100,6 +140,9 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
                                         inputWrapper: "!cursor-default !file:cursor-default",
                                         input: "!cursor-default !file:cursor-default"
                                     }}
+                                />
+                                <Alert color={confirmedStatus.color}
+                                       description={confirmedStatus.description}
                                 />
                             </div>
                         ) : (
@@ -151,7 +194,20 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
                     </p>
                 )}
             </CardBody>
-            {(user.role === "researcher" && !hasPayment && status != null) && (
+            {user.role === "staff" && (
+                <>
+                    <Divider />
+                    <CardFooter className="justify-end">
+                        <Button color="primary" variant="shadow" onPress={() => handleConfirmPayment(true)} isLoading={loading}>
+                            Confirm Payment
+                        </Button>
+                        <Button color="secondary" variant="shadow" onPress={() => handleConfirmPayment(false)} isLoading={loading}>
+                            Reject Payment
+                        </Button>
+                    </CardFooter>
+                </>
+            )}
+            {(user.role === "researcher" && !hasPayment) && (
                 <>
                     <Divider />
                     <CardFooter className="justify-end">
