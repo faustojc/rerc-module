@@ -19,7 +19,7 @@ import RecentApplicationsList from "@/Components/Dashboard/RecentApplicationsLis
 import ReviewTypeStats from "@/Components/Dashboard/ReviewTypeStats";
 import { DashboardPageProps } from "@/types";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 
 const Dashboard: React.FC<DashboardPageProps> = ({ stats, auth }) => {
     const isStaffOrChairperson = ['staff', 'chairperson'].includes(auth.user.role);
@@ -68,61 +68,71 @@ const Dashboard: React.FC<DashboardPageProps> = ({ stats, auth }) => {
                                 title="Review Application Requirements"
                                 value={stats.pending.pendingRequirements}
                                 icon={<DocumentCheckOutline className="w-6 h-6" />}
-                                onPress={() => {}}
+                                as={Link}
+                                href={`${route('applications.index')}?selectedStep=1`}
                             />
                             <StatsCard
                                 title="Assign Protocol Code"
                                 value={stats.pending.pendingProtocols}
                                 icon={<IconPending className="w-6 h-6" />}
-                                onPress={() => {}}
+                                as={Link}
+                                href={`${route('applications.index')}?selectedStep=2`}
                             />
                             <StatsCard
                                 title="Take Initial Review"
                                 value={stats.pending.pendingInitialReviews}
                                 icon={<IconMessagePreview className="w-6 h-6" />}
-                                onPress={() => {}}
+                                as={Link}
+                                href={`${route('applications.index')}?selectedStep=3`}
                             />
                             <StatsCard
                                 title="Assign Review Type"
                                 value={stats.pending.pendingReviewTypes}
                                 icon={<IconAssignmentOutline className="w-6 h-6" />}
-                                onPress={() => {}}
+                                as={Link}
+                                href={`${route('applications.index')}?selectedStep=4`}
                             />
                             <StatsCard
                                 title="Upload Decision Letter"
                                 value={stats.pending.pendingDecisionLetters}
                                 icon={<IconDocumentUpload className="w-6 h-6" />}
-                                onPress={() => {}}
+                                as={Link}
+                                href={`${route('applications.index')}?selectedStep=5`}
                             />
                             <StatsCard
                                 title="Confirm Uploaded Payments"
                                 value={stats.pending.pendingPayments}
                                 icon={<IconReceipt className="w-6 h-6" />}
-                                onPress={() => {}}
+                                as={Link}
+                                href={`${route('applications.index')}?selectedStep=6`}
                             />
                             <StatsCard
                                 title="Assign Reviewers and Meeting"
                                 value={stats.pending.pendingReviewerMeetings}
                                 icon={<IconMeetingRoom className="w-6 h-6" />}
-                                onPress={() => {}}
+                                as={Link}
+                                href={`${route('applications.index')}?selectedStep=7`}
                             />
                             <StatsCard
                                 title="Review Manuscript Revisions"
                                 value={stats.pending.pendingReviewManuscripts}
                                 icon={<IconWrite className="w-6 h-6" />}
-                                onPress={() => {}}
+                                as={Link}
+                                href={`${route('applications.index')}?selectedStep=8`}
                             />
                             <StatsCard
                                 title="Confirm Additional Requirements"
                                 value={stats.pending.pendingAdditionalReqs}
                                 icon={<DocumentCheckOutline className="w-6 h-6" />}
-                                onPress={() => {}}
+                                as={Link}
+                                href={`${route('applications.index')}?selectedStep=9`}
                             />
                             <StatsCard
                                 title="Ethics Clearance Issuance"
                                 value={stats.pending.pendingEthicsClearances}
                                 icon={<IconLightBalance className="w-6 h-6" />}
-                                onPress={() => {}}
+                                as={Link}
+                                href={`${route('applications.index')}?selectedStep=10`}
                             />
                         </div>
                     </div>

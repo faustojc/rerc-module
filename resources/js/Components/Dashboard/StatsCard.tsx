@@ -9,7 +9,8 @@ interface StatsCardProps {
     color?: "primary" | "secondary" | "default" | "warning";
     icon: React.ReactNode;
     description?: string;
-    onPress?: () => void;
+    as?: React.ElementType;
+    href?: string;
     trend?: {
         value: number;
         isPositive: boolean;
@@ -21,18 +22,21 @@ const StatsCard: React.FC<StatsCardProps> = ({
     value,
     color,
     icon,
-    onPress,
+    as,
+    href,
     description,
     trend,
 }) => {
     const [isHovered, setIsHovered] = React.useState<boolean>(false);
 
-    const isPressable = onPress != undefined && value != 0;
+    const isPressable = href != undefined && value != 0;
 
     return (
         <Card
             isPressable={isPressable}
             className={isPressable ? 'border-2 border-secondary-200 hover:border-primary-500' : ''}
+            as={isPressable ? as : 'div'}
+            href={href}
             onMouseEnter={() => {
                 if (isPressable) setIsHovered(true)
             }}

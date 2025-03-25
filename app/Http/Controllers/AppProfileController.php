@@ -44,6 +44,7 @@ class AppProfileController extends Controller
             'step' => 'nullable|string',
             'dateRange' => 'nullable|array',
             'status' => 'nullable|string',
+            'selectedStep' => 'nullable|integer',
         ]);
 
         $page = $data['page'] ?? 1;
@@ -72,7 +73,12 @@ class AppProfileController extends Controller
                     $query->select('id', 'app_profile_id', 'name', 'sequence', 'status')
                         ->orderBy('sequence', 'desc')
                         ->take(1);
-                }])->when($data['query'] ?? null, function (Builder $query, $search) {
+                }])->when($data['selectedStep'] ?? null, function (Builder $query, $step) {
+                    return $query->whereHas('statuses', function (Builder $q) use ($step) {
+                        return $q->where('sequence', $step)
+                            ->where('end', null);
+                    });
+                })->when($data['query'] ?? null, function (Builder $query, $search) {
                     return $query->whereRaw('LOWER(research_title) LIKE ?', [strtolower("%$search%")])
                         ->orWhereRaw('LOWER(firstname) LIKE ?', [strtolower("%$search%")])
                         ->orWhereRaw('LOWER(lastname) LIKE ?', [strtolower("%$search%")]);
@@ -540,13 +546,14 @@ class AppProfileController extends Controller
 
                 $application->statuses()->save(new AppStatus([
                     'app_profile_id' => $application->id,
+                    'name' => 'Assignment of Panel & Meeting Schedule',
                     'sequence' => 7,
                     'status' => 'In Progress',
                     'start' => now(),
                 ]));
             }
 
-            $application->save($status);
+            $application->statuses()->save($status);
             $application->load([
                 'statuses' => fn (HasMany $query) => $query->where('sequence', '>=', 6)->first(),
             ])->refresh();
