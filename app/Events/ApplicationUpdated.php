@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\AppProfile;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,12 +34,9 @@ class ApplicationUpdated implements ShouldQueue, ShouldBroadcast, ShouldQueueAft
      * Get the channels the event should broadcast on.
      *
      */
-    public function broadcastOn(): array
+    public function broadcastOn(): Channel
     {
-        // Assuming you have a channel for the application or users
-        return [
-            'application.' . $this->application->id,
-        ];
+        return new Channel('application.' . $this->application->id);
     }
 
     /**
