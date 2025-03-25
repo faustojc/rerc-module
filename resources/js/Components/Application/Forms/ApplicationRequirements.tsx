@@ -314,7 +314,7 @@ const Footer = ({user, status, requirements, alert, loading, handleUpload, handl
     handleSubmit: () => void,
     handleApprove: () => void
 }) => {
-    const hasEverySubmitted = requirements.every((req) => req.status.toLowerCase() === 'submitted');
+    const hasEverySubmitted = requirements.length > 0 && requirements.every((req) => req.status.toLowerCase() === 'submitted');
 
     if (user.role === 'researcher') {
         const hasSomeUploaded = requirements.some((req) => req.status.toLowerCase() === 'uploaded');

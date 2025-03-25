@@ -160,7 +160,7 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
                             reviewResults={application.review_results}
                             documents={application.documents}
                             onUploadRevision={handleUploadRevision}
-                            canUpload={user.role === 'researcher' && !hasApproved}
+                            canUpload={user.role === 'researcher' && !hasApproved && status != null}
                         />
                         {hasRevisions && (
                             <>

@@ -18,25 +18,29 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
         color: "success" | "danger" | "primary" | "default" | "secondary" | "warning" | undefined
         description: string
     } = useMemo(() => {
-        if (status.status === "Confirmed") {
-            return {
-                color: "success",
-                description: "Payment has been confirmed."
+        if (status != null) {
+            if (status.status === "Confirmed") {
+                return {
+                    color: "success",
+                    description: "Payment has been confirmed."
+                }
             }
-        }
 
-        if (status.status === "Rejected") {
-            return {
-                color: "danger",
-                description: "Payment has been rejected. Please submit a new payment receipt."
+            if (status.status === "Rejected") {
+                return {
+                    color: "danger",
+                    description: "Payment has been rejected. Please submit a new payment receipt."
+                }
             }
         }
 
         return {
             color: "primary",
-            description: "Awaiting for the Review Committee to confirm the uploaded payment."
+            description: user.role === 'researcher'
+                ? "Awaiting for the Review Committee to confirm the uploaded payment."
+                : "Double check the uploaded payment receipt before confirming."
         }
-    }, [status.status]);
+    }, [status]);
 
     const handleSelectFile = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -109,38 +113,40 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
                 {isDecisionLetterSigned ? (
                     <>
                         {hasPayment ? (
-                            <div className="flex flex-col items-start p-3">
-                                <h3 className="font-semibold text-start">Payment Receipt</h3>
-                                <Link
-                                    showAnchorIcon
-                                    underline="hover"
-                                    color="primary"
-                                    href={route('applications.payment-download', {application: application})}
-                                    className="px-0 py-2"
-                                    style={{ overflowWrap: 'anywhere' }}
-                                >
-                                    {application.proof_of_payment_url.split('\\').pop()?.split('/').pop()}
-                                </Link>
-                                <h3 className="font-semibold mt-4">
-                                    Date Uploaded:
-                                </h3>
-                                <p>
-                                    <>
+                            <div className="flex flex-col items-start space-y-5 p-3">
+                                <div>
+                                    <h3 className="font-semibold text-start">Payment Receipt</h3>
+                                    <Link
+                                        showAnchorIcon
+                                        underline="hover"
+                                        color="primary"
+                                        href={route('applications.payment-download', {application: application})}
+                                        className="px-0 py-2"
+                                        style={{ overflowWrap: 'anywhere' }}
+                                    >
+                                        {application.proof_of_payment_url.split('\\').pop()?.split('/').pop()}
+                                    </Link>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold">Date Uploaded:</h3>
+                                    <p>
                                         {Intl.DateTimeFormat('en-US', {
                                             year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "numeric", timeZone: getLocalTimeZone()
                                         }).format(new Date(application.payment_date))}
-                                    </>
-                                </p>
-                                <h3 className="font-semibold mt-4 mb-2">Payment Details:</h3>
-                                <Textarea
-                                    isReadOnly
-                                    defaultValue={application.payment_details ?? "No details provided."}
-                                    minRows={1}
-                                    classNames={{
-                                        inputWrapper: "!cursor-default !file:cursor-default",
-                                        input: "!cursor-default !file:cursor-default"
-                                    }}
-                                />
+                                    </p>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold mb-2">Payment Details:</h3>
+                                    <Textarea
+                                        isReadOnly
+                                        defaultValue={application.payment_details ?? "No details provided."}
+                                        minRows={1}
+                                        classNames={{
+                                            inputWrapper: "!cursor-default !file:cursor-default",
+                                            input: "!cursor-default !file:cursor-default"
+                                        }}
+                                    />
+                                </div>
                                 <Alert color={confirmedStatus.color}
                                        description={confirmedStatus.description}
                                 />
@@ -194,14 +200,14 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
                     </p>
                 )}
             </CardBody>
-            {user.role === "staff" && (
+            {(user.role === "staff" && hasPayment && status?.end == null) && (
                 <>
                     <Divider />
-                    <CardFooter className="justify-end">
+                    <CardFooter className="justify-end gap-4">
                         <Button color="primary" variant="shadow" onPress={() => handleConfirmPayment(true)} isLoading={loading}>
                             Confirm Payment
                         </Button>
-                        <Button color="secondary" variant="shadow" onPress={() => handleConfirmPayment(false)} isLoading={loading}>
+                        <Button color="danger" variant="bordered" onPress={() => handleConfirmPayment(false)} isLoading={loading}>
                             Reject Payment
                         </Button>
                     </CardFooter>
