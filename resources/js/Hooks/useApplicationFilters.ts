@@ -23,8 +23,8 @@ export const useApplicationFilters = (initialPagination: PaginationProps<Applica
                 ...pagination,
                 current_page: 1,
             })
-            searchParams.set('page', pageParam);
-            //window.history.replaceState({}, '', `${window.location.pathname}?${searchParams.toString()}`);
+            //searchParams.set('page', pageParam);
+            //window.history.pushState({}, '', `${window.location.pathname}?${searchParams.toString()}`);
         }
 
         const startDate = searchParams.get('dateRange[start]');
@@ -49,10 +49,10 @@ export const useApplicationFilters = (initialPagination: PaginationProps<Applica
 
     const updateFilters = useCallback((newFilters: ApplicationFilters, pageNumber: number) => {
         if (Object.values(pagination).length === 0) return;
-        
+
         setLoading(true);
 
-        const params = new URLSearchParams();
+        const params = new URLSearchParams(window.location.search);
         const page = Math.min(pageNumber, pagination.last_page);
         params.set('page', page.toString());
 
@@ -65,12 +65,16 @@ export const useApplicationFilters = (initialPagination: PaginationProps<Applica
             params.set('dateRange[end]', newFilters.dateRange.end.toDate(getLocalTimeZone()).toLocaleDateString("default", {year: 'numeric', month: '2-digit', day: '2-digit'}));
         }
 
-        //window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+        // get all the other params that are not part of the filters
+        const otherParams = Array.from(params).filter(([key]) => !Object.keys(newFilters).includes(key));
+
+        window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
         setFilters(newFilters);
 
         window.axios.get(
             route('applications.index', {
                 ...newFilters,
+                ...Object.fromEntries(otherParams),
                 page: pageNumber,
                 dateRange: newFilters.dateRange ? {
                     start: newFilters.dateRange.start.toDate(getLocalTimeZone()).toISOString(),
@@ -113,8 +117,6 @@ export const useApplicationFilters = (initialPagination: PaginationProps<Applica
     }, [pagination.current_page]);
 
     useEffect(() => {
-        console.log('filters: ', filters);
-
         const channel = window.Echo.channel('application-list');
 
         channel.listen('.ApplicationCreated', (event: any) => {
