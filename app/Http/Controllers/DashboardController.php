@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\AppProfile;
+use App\Models\AppStatus;
 use App\Models\Meeting;
-use App\Models\ReviewResult;
 use Illuminate\Database\Eloquent\Builder;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         // Get total applications
         $totalApplications = AppProfile::count();
@@ -27,7 +28,6 @@ class DashboardController extends Controller
             })->count(),
         ];
 
-        // Get recent applications with pagination
         // Get applications by review type
         $applicationsByReviewType = [
             'exempted' => AppProfile::where('review_type', '=', 'exempted')->count(),
@@ -46,17 +46,60 @@ class DashboardController extends Controller
             ->where('status', '=',  'Done')
             ->get();
 
-        // Get pending reviews
-        $pendingReviews = ReviewResult::whereDoesntHave('documents')->get();
+        // Application statuses count
+        $pendingRequirementsCount = AppStatus::query()
+            ->where('sequence', '=', 1)
+            ->where('end', '=', null)
+            ->count();
 
-        // Get applications pending decision letters
-        $pendingDecisionLetters = AppProfile::whereDoesntHave('decisionLetter')
+        $pendingProtocolCount = AppStatus::query()
+            ->where('sequence', '=', 2)
+            ->where('end', '=',null)
+            ->count();
+
+        $pendingInitialReviewCount = AppStatus::query()
+            ->where('sequence', '=', 3)
+            ->where('end', '=',null)
+            ->count();
+
+        $pendingReviewTypeCount = AppStatus::query()
+            ->where('sequence', '=', 4)
+            ->where('end', '=',null)
+            ->count();
+
+        $pendingDecisionLettersCount = AppProfile::whereDoesntHave('decisionLetter')
             ->whereHas('statuses', function(Builder $query) {
-                $query->where('sequence', '=', 5);
+                $query->where('sequence', '=', 5)
+                    ->where('end', '=', null);
             })
             ->orWhereHas('decisionLetter', function(Builder $query) {
                 $query->where('is_signed', false);
-            })->get();
+            })->count();
+
+        $pendingPaymentCount = AppStatus::query()
+            ->where('sequence', '=', 6)
+            ->where('end', '=', null)
+            ->count();
+
+        $pendingReviewerMeetingCount = AppStatus::query()
+            ->where('sequence', '=', 7)
+            ->where('end', '=', null)
+            ->count();
+
+        $pendingReviewManuscriptsCount = AppStatus::query()
+            ->where('sequence', '=', 8)
+            ->where('end', '=', null)
+            ->count();
+
+        $pendingAdditionalReqCount = AppStatus::query()
+            ->where('sequence', '=', 9)
+            ->where('end', '=', null)
+            ->count();
+
+        $pendingEthicsClearanceCount = AppStatus::query()
+            ->where('sequence', '=', 10)
+            ->where('end', '=', null)
+            ->count();
 
         return Inertia::render('Dashboard', [
             'stats' => [
@@ -65,8 +108,18 @@ class DashboardController extends Controller
                 'applicationsByReviewType' => $applicationsByReviewType,
                 'recentApplications' => $recentApplications,
                 'upcomingMeetings' => $upcomingMeetings,
-                'pendingReviews' => $pendingReviews,
-                'pendingDecisionLetters' => $pendingDecisionLetters,
+                'pending' => [
+                    'pendingRequirements' => $pendingRequirementsCount,
+                    'pendingProtocols' => $pendingProtocolCount,
+                    'pendingInitialReviews' => $pendingInitialReviewCount,
+                    'pendingReviewTypes' => $pendingReviewTypeCount,
+                    'pendingDecisionLetters' => $pendingDecisionLettersCount,
+                    'pendingPayments' => $pendingPaymentCount,
+                    'pendingReviewerMeetings' => $pendingReviewerMeetingCount,
+                    'pendingReviewManuscripts' => $pendingReviewManuscriptsCount,
+                    'pendingAdditionalReqs' => $pendingAdditionalReqCount,
+                    'pendingEthicsClearances' => $pendingEthicsClearanceCount
+                ]
             ],
         ]);
     }
