@@ -1,7 +1,18 @@
 import { PageProps } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { Button, Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@nextui-org/react";
-import { ArrowRight, Check, ClockRotateRight, Dashboard, DocumentAdd, DocumentCheckOutline, IconsMessage, QuillInfo, ShieldCheckLine, UserAlt } from "@/Components/Icons";
+import {
+    ArrowRight,
+    Check,
+    ClockRotateRight,
+    Dashboard,
+    DocumentAdd,
+    DocumentCheckOutline,
+    IconMessage,
+    QuillInfo,
+    ShieldCheckLine,
+    UserAlt,
+} from "@/Components/Icons";
 import { FeatureCard } from "@/Components/FeatureCard";
 import { ProcessStep } from "@/Components/ProcessStep";
 
@@ -120,7 +131,7 @@ export default function Welcome({
                                 description="Safe storage and handling of all research-related documents"
                             />
                             <FeatureCard
-                                icon={<IconsMessage className="w-6 h-6 text-primary-500" />}
+                                icon={<IconMessage className="w-6 h-6 text-primary-500" />}
                                 title="Integrated Messaging"
                                 description="Direct communication channel with the ethics committee"
                             />
