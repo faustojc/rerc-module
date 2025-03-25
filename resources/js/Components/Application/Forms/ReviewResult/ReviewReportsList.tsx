@@ -1,9 +1,9 @@
 import React, { useRef } from "react";
 import { ReviewerReport } from "@/types";
-import { Alert, Avatar, Button, CardBody, CardFooter, CardHeader, Divider, Input, Link, Tooltip } from "@nextui-org/react";
+import { Alert, Button, CardBody, CardFooter, CardHeader, Divider, Input, Link, Tooltip } from "@nextui-org/react";
 import { CloudArrowDown, FeDocument, MdiFileDocumentArrowRight, SendFill } from "@/Components/Icons";
 import { toast } from "react-toastify";
-import DateReadable from "@/Components/DateReadable";
+import { TimelineLog, TimelineLogMessage } from "@/Components/TimelineLog";
 
 interface ReviewReportsListProps {
     reviewerReports: ReviewerReport[];
@@ -70,44 +70,27 @@ const ReviewReportsList: React.FC<ReviewReportsListProps> = ({reviewerReports, i
             </CardHeader>
             <CardBody className="px-5 max-h-[1093px] overflow-y-auto">
                 {(reviewerReports && reviewerReports.length > 0) ? (
-                    <ol className="relative border-s border-default-200 dark:border-default-700">
-                        {reviewerReports.map((report) => {
-                            const dateFormat = new Date(report.created_at!).toLocaleString('en-US', {
-                                    month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric'
-                                });
-
-                            return (
-                                <li key={report.id} className="mb-10 ms-6">
-                                    <span className="absolute flex items-center justify-center w-6 h-6 rounded-full -start-3">
-                                        <Avatar className="w-6 h-6" />
-                                    </span>
-                                    <div className="flex flex-col gap-3 p-4 border border-default-200 rounded-lg shadow-xs">
-                                        <div className="items-start justify-between sm:flex gap-7">
-                                            <DateReadable date={new Date(report.created_at!)} className="mb-1 text-xs font-normal text-default-400 sm:order-last sm:mb-0" />
-                                            <div className="text-sm font-normal text-default-500">
-                                                {report.message}
-                                            </div>
-                                        </div>
-                                        <time className="text-xs font-normal text-default-500">
-                                            {`Uploaded on ${dateFormat}`}
-                                        </time>
-                                        <div>
-                                            <Button
-                                                as={Link}
-                                                href={route('reviewer-report.download', {reviewer_report: report})}
-                                                variant="flat"
-                                                color="primary"
-                                                startContent={<CloudArrowDown className="w-4 h-4" />}
-                                                download
-                                            >
-                                                Download
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </li>
-                            )
-                        })}
-                    </ol>
+                    <TimelineLog
+                        items={reviewerReports}
+                        actions={(report) => (
+                            <Button
+                                as={Link}
+                                href={route('reviewer-report.download', {reviewer_report: report})}
+                                variant="flat"
+                                color="primary"
+                                startContent={<CloudArrowDown className="w-4 h-4" />}
+                                download
+                            >
+                                Download
+                            </Button>
+                        )}
+                    >
+                        {(report) => (
+                            <TimelineLogMessage>
+                                {report.message}
+                            </TimelineLogMessage>
+                        )}
+                    </TimelineLog>
                 ) : (
                     <Alert color="default" variant="flat" description="The Staff has not uploaded any review reports yet." />
                 )}
