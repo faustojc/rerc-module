@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Link } from '@inertiajs/react';
 
 interface ReviewTypeStatsProps {
     data: {
@@ -16,19 +17,19 @@ const ReviewTypeStats: React.FC<ReviewTypeStatsProps> = ({ data }) => {
                 return {
                     label: 'Exempted',
                     description: '14 weekdays processing time',
-                    color: 'bg-green-100 text-green-800',
+                    color: 'success',
                 };
             case 'expedited':
                 return {
                     label: 'Expedited',
                     description: '21 weekdays processing time',
-                    color: 'bg-blue-100 text-blue-800',
+                    color: 'primary',
                 };
             case 'fullBoard':
                 return {
                     label: 'Full Board',
                     description: '15-21 weekdays processing time',
-                    color: 'bg-orange-100 text-orange-800',
+                    color: 'warning',
                 };
             default:
                 return {
@@ -48,14 +49,23 @@ const ReviewTypeStats: React.FC<ReviewTypeStatsProps> = ({ data }) => {
                 <div className="space-y-4">
                     {Object.entries(data).map(([type, count]) => {
                         const info = getReviewTypeInfo(type);
+                        const isPressable = count > 0;
+                        
                         return (
-                            <div
+                            <Card
                                 key={type}
-                                className={`p-4 rounded-lg ${info.color}`}
+                                className={`p-4 rounded-lg shadow-none
+                                bg-${info.color}-100 text-${info.color}-800
+                                ${!isPressable ? 'cursor-default' : `border-2 hover:border-${info.color}`}`}
+                                isPressable={isPressable}
+                                as={isPressable ? Link : 'div'}
+                                // @ts-ignore
+                                href={`${route('applications.index')}?reviewType=${type}`}
+                                fullWidth
                             >
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h4 className="font-medium">
+                                        <h4 className="font-medium text-start">
                                             {info.label}
                                         </h4>
                                         <p className="text-sm mt-1">
@@ -75,7 +85,7 @@ const ReviewTypeStats: React.FC<ReviewTypeStatsProps> = ({ data }) => {
                                         }}
                                     />
                                 </div>
-                            </div>
+                            </Card>
                         );
                     })}
                 </div>

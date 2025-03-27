@@ -11,7 +11,6 @@ import {
     IconReceipt,
     IconWrite,
     MdiCalendar,
-    UserAlt,
 } from "@/Components/Icons";
 import React from "react";
 import StatsCard from "@/Components/Dashboard/StatsCard";
@@ -29,7 +28,7 @@ const Dashboard: React.FC<DashboardPageProps> = ({ stats, auth }) => {
             <Head title="Dashboard" />
 
             <div className="py-6 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <StatsCard
                         title="Total Applications"
                         value={stats.totalApplications}
@@ -40,12 +39,6 @@ const Dashboard: React.FC<DashboardPageProps> = ({ stats, auth }) => {
                         title="In Progress"
                         value={stats.applicationsByStatus.inProgress}
                         icon={<ClockRotateRight className="w-6 h-6" />}
-                    />
-                    <StatsCard
-                        title="Pending Initial Reviews"
-                        value={stats.pending.pendingInitialReviews}
-                        icon={<UserAlt className="w-6 h-6" />}
-                        color="warning"
                     />
                     <StatsCard
                         title="Upcoming Meetings"
@@ -61,7 +54,7 @@ const Dashboard: React.FC<DashboardPageProps> = ({ stats, auth }) => {
                 </div>
 
                 {isStaffOrChairperson && (
-                    <div>
+                    <div className="p-3 sm:px-0">
                         <h4 className="text-xl font-medium mb-3">Pending Application Statuses</h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 grid-flow-row gap-6">
                             <StatsCard

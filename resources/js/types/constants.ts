@@ -3,7 +3,7 @@ import { ClipboardListLine, FlowbiteUsersSolid, MdiLightClock } from "@/Componen
 
 export const REVIEW_TYPES: ReviewTypeInfo[] = [
     {
-        value: 'exempt',
+        value: 'exempted',
         label: 'Exempted Review',
         description: 'For minimal risk research involving standard procedures.',
         processingTime: '14 weekdays',

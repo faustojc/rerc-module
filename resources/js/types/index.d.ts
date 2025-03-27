@@ -216,7 +216,7 @@ interface PaginationProps<T> {
 }
 
 export interface ReviewTypeInfo {
-    value: 'exempt' | 'expedited' | 'full board';
+    value: 'exempted' | 'expedited' | 'full board';
     label: string;
     description: string;
     processingTime: string;
