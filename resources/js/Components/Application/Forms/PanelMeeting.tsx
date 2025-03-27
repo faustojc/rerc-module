@@ -1,5 +1,5 @@
 import { ApplicationFormProps, PanelMember } from "@/types";
-import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Chip, DatePicker, Divider, Input, TimeInput, User } from "@nextui-org/react";
+import { Alert, Button, Card, CardBody, CardHeader, Chip, DatePicker, Divider, Input, TimeInput, User } from "@nextui-org/react";
 import { DateValue, TimeValue } from "@react-types/datepicker";
 import { CalendarDate, getLocalTimeZone, Time } from "@internationalized/date";
 import React, { useEffect, useState } from "react";
@@ -83,16 +83,14 @@ const PanelMeeting = ({user, application, status, handleUpdateApplication}: Appl
                         {!status.end ? (
                             <>
                                 {(user.role == 'staff') ? (
-                                    <>
-                                        <PanelScheduleForm panelMembers={panelMembers}
-                                                           meeting={meeting}
-                                                           isDraft={isDraft}
-                                                           setPanelMembers={setPanelMembers}
-                                                           setMeeting={setMeeting}
-                                                           setIsDraft={setIsDraft}
-                                                           handleSubmit={handleSubmit}
-                                        />
-                                    </>
+                                    <PanelScheduleForm panelMembers={panelMembers}
+                                                       meeting={meeting}
+                                                       isDraft={isDraft}
+                                                       setPanelMembers={setPanelMembers}
+                                                       setMeeting={setMeeting}
+                                                       setIsDraft={setIsDraft}
+                                                       handleSubmit={handleSubmit}
+                                    />
                                 ) : (
                                     <p className="text-center text-medium p-5">
                                         Waiting for the staff to assign reviewer members and schedule the meeting.
@@ -240,8 +238,8 @@ const PanelScheduleForm = ({
     }
 
     return (
-        <div>
-            <Card className="px-3 mb-3">
+        <>
+            <div>
                 <CardBody className="flex-row gap-3 items-center justify-between">
                     <div className="w-full">
                         <div className="flex flex-row items-center justify-between">
@@ -271,8 +269,8 @@ const PanelScheduleForm = ({
                         </div>
                     </div>
                 </CardBody>
-            </Card>
-            <Card className="p-3">
+            </div>
+            <div>
                 <CardHeader className="flex-col items-start">
                     <div className="flex flex-row items-center justify-between w-full">
                         <h3 className="text-lg">Assign Panel Members</h3>
@@ -325,20 +323,20 @@ const PanelScheduleForm = ({
                         <p className="text-center text-medium mt-2">No panel members yet.</p>
                     )}
                 </CardBody>
-                <Divider/>
-                <CardFooter className="flex-col items-center gap-3">
+                <Divider className="my-4"/>
+                <div className="flex flex-col items-center gap-3">
                     {displayAlert && (<Alert color="success" title="Draft Saved"/>)}
                     <div className="flex justify-end gap-3 w-full">
                         <Button color="secondary" variant="flat" onPress={() => handleSaveDraft()}>
                             Save as Draft
                         </Button>
-                        <Button color="primary" variant="shadow" isLoading={loading} onPress={handleAssignPanelMeeting}>
-                            Assign & Schedule
+                        <Button color="primary" isLoading={loading} onPress={handleAssignPanelMeeting}>
+                            Assign and Schedule
                         </Button>
                     </div>
-                </CardFooter>
-            </Card>
-        </div>
+                </div>
+            </div>
+        </>
     )
 }
 
