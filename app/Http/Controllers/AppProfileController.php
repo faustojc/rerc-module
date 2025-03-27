@@ -567,6 +567,9 @@ class AppProfileController extends Controller
         ]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function assignPanelMeeting(Request $request, AppProfile $application): JsonResponse
     {
         $validated = $request->validate([
@@ -587,7 +590,7 @@ class AppProfileController extends Controller
 
         $newStatus = new AppStatus([
             'name' => 'Review Result',
-            'sequence' => $latestStatus->sequence + 1,
+            'sequence' => 8,
             'status' => 'In Progress',
             'start' => $currentDateTime,
         ]);
@@ -597,20 +600,22 @@ class AppProfileController extends Controller
             'status' => 'Scheduled',
         ];
 
+        DB::beginTransaction();
+
         try {
-            DB::transaction(function () use (&$application, $latestStatus, $newStatus, $meeting, $validated) {
-                $application->statuses()->saveMany([$latestStatus, $newStatus]);
-                $application->meeting()->create($meeting);
+            $application->statuses()->saveMany([$latestStatus, $newStatus]);
+            $application->meeting()->create($meeting);
 
-                $panelData = collect($validated['panel_members'])->map(function ($member) {
-                    return new PanelMember([
-                        'firstname' => $member['firstname'],
-                        'lastname' => $member['lastname'],
-                    ]);
-                })->all();
+            $panelData = collect($validated['panel_members'])->map(function ($member) {
+                return new PanelMember([
+                    'firstname' => $member['firstname'],
+                    'lastname' => $member['lastname'],
+                ]);
+            })->all();
 
-                $application->panels()->saveMany($panelData);
-            });
+            $application->panels()->saveMany($panelData);
+
+            DB::commit();
 
             $application->load(['statuses' => function ($query) {
                 $query->latest();
@@ -626,6 +631,7 @@ class AppProfileController extends Controller
                 'new_status' => $newStatus,
             ]);
         } catch (Exception $e) {
+            DB::rollBack();
             Log::error('Panel meeting assignment failed', [
                 'error' => $e->getMessage(),
             ]);
