@@ -160,7 +160,7 @@ const AdditionalRequirements = ({user, application, status, handleUpdateApplicat
                                 <TableColumn>DATE UPLOADED</TableColumn>
                                 <TableColumn>ACTIONS</TableColumn>
                             </TableHeader>
-                            <TableBody items={additionalRequirements}>
+                            <TableBody items={additionalRequirements} emptyContent="No additional requirements has been uploaded yet">
                                 {(r) => (
                                     <TableRow>
                                         <TableCell>{r.name}</TableCell>
@@ -174,19 +174,20 @@ const AdditionalRequirements = ({user, application, status, handleUpdateApplicat
                                 )}
                             </TableBody>
                         </Table>
-                        {additionalRequirements.length === 0 && (
-                            <p className="text-center text-sm text-default-500">No additional requirements uploaded.</p>
-                        )}
                     </CardBody>
-                    <Divider />
-                    <CardFooter className="flex-col items-end gap-3">
-                        {(alert.message && !loading) && <Alert variant="flat" color={alert.type} title={alert.message}  />}
-                        {(user.role === 'staff' && !hasApproved && status != null) && (
-                            <Button color="primary" variant="shadow" isLoading={loading} onPress={handleApproveRequirement}>
-                                {additionalRequirements.length > 0 ? 'Approve All Requirements' : 'Proceed to Next Step'}
-                            </Button>
-                        )}
-                    </CardFooter>
+                    {status != null && (
+                        <>
+                            <Divider />
+                            <CardFooter className="flex-col items-end gap-3">
+                                {(alert.message && !loading) && <Alert variant="flat" color={alert.type} title={alert.message}  />}
+                                {(user.role === 'staff' && !hasApproved) && (
+                                    <Button color="primary" variant="shadow" isLoading={loading} onPress={handleApproveRequirement}>
+                                        {additionalRequirements.length > 0 ? 'Approve All Requirements' : 'Proceed to Next Step'}
+                                    </Button>
+                                )}
+                            </CardFooter>
+                        </>
+                    )}
                 </>
             )}
             {currTab === 'message' && (

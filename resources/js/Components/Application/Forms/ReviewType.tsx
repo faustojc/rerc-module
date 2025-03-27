@@ -142,7 +142,12 @@ const ReviewType = ({user, application, status, handleUpdateApplication}: Applic
                                 />
                                 <Button
                                     color="primary"
-                                    isDisabled={!reviewType || reviewType.length === 0 || assignedBy.length === 0 || status == null}
+                                    isDisabled={!reviewType
+                                                || reviewType.length === 0
+                                                || (reviewType && application.review_type && reviewType.length > 0 && reviewType == application.review_type)
+                                                || assignedBy.length === 0
+                                                || status == null
+                                                || loading}
                                     onPress={onOpen}
                                 >
                                     {application.review_type ? 'Update Review Type' : 'Assign Review Type'}
