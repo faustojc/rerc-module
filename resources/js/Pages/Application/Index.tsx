@@ -1,13 +1,14 @@
 import Authenticated from "@/Layouts/AuthenticatedLayout";
 import { Application, PageProps, PaginationProps } from "@/types";
 import { Button, Card, CardBody, CardHeader, DateRangePicker, Input, Select, SelectItem } from "@nextui-org/react";
-import { ClearRound, MdiSearch } from "@/Components/Icons";
-import React, { useCallback, useState } from "react";
+import { ClearRound, IconFileTypeExcel, MdiSearch } from "@/Components/Icons";
+import React, { useCallback, useRef, useState } from "react";
 import { Head, Link } from "@inertiajs/react";
 import { REVIEW_TYPES, STEPS } from "@/types/constants";
 import ResearchList from "@/Components/Application/ResearchList";
 import { useApplicationFilters } from "@/Hooks/useApplicationFilters";
 import EmptyCard from "@/Components/EmptyCard";
+import { useDownloadExcel } from "react-export-table-to-excel";
 
 export interface ApplicationIndexProps extends PageProps {
     applications: PaginationProps<Application>,
@@ -26,6 +27,13 @@ const Index = (props: ApplicationIndexProps) => {
     } = useApplicationFilters(props.applications);
 
     const [search, setSearch] = useState<string>('');
+    const tableRef = useRef<HTMLTableElement>(null);
+
+    const { onDownload } = useDownloadExcel({
+        currentTableRef: tableRef.current,
+        filename: 'Users table',
+        sheet: 'Users',
+    })
 
     const DateRangePickerDisplay = useCallback(
         React.forwardRef<HTMLElement, any>((_, ref) => (
@@ -77,6 +85,15 @@ const Index = (props: ApplicationIndexProps) => {
                                     {props.canCreate && (
                                         <Button color="primary" variant="flat" href={route('applications.create')} as={Link}>
                                             Create Application
+                                        </Button>
+                                    )}
+                                    {props.auth.user.role !== 'researcher' && (
+                                        <Button color="primary"
+                                                variant="flat"
+                                                startContent={<IconFileTypeExcel className="w-6 h-6" />}
+                                                onPress={onDownload}
+                                        >
+                                            Export to Excel
                                         </Button>
                                     )}
                                 </div>
@@ -170,7 +187,13 @@ const Index = (props: ApplicationIndexProps) => {
 
                             </CardHeader>
                             <CardBody>
-                                <ResearchList pagination={pagination} handleDelete={handleDelete} handleSetPage={handleSetPage} loading={loading} canDelete={props.canDelete} />
+                                <ResearchList pagination={pagination}
+                                              tableRef={tableRef}
+                                              handleDelete={handleDelete}
+                                              handleSetPage={handleSetPage}
+                                              loading={loading}
+                                              canDelete={props.canDelete}
+                                />
                             </CardBody>
                         </Card>
                     </>

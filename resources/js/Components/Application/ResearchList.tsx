@@ -23,13 +23,14 @@ import { Link } from "@inertiajs/react";
 
 interface ResearchListProps {
     pagination: PaginationProps<Application>;
+    tableRef: React.RefObject<HTMLTableElement>;
     handleDelete: (application: Application) => void;
     handleSetPage: (page: number) => void;
     loading: boolean;
     canDelete: boolean;
 }
 
-const ResearchList: React.FC<ResearchListProps> = ({pagination, handleDelete, handleSetPage, loading, canDelete}) => {
+const ResearchList: React.FC<ResearchListProps> = ({pagination, tableRef, handleDelete, handleSetPage, loading, canDelete}) => {
     const pages = useMemo(() => Math.ceil(pagination.total / pagination.per_page), [pagination.total, pagination.per_page]);
 
     const items = useMemo(() => {
@@ -87,14 +88,14 @@ const ResearchList: React.FC<ResearchListProps> = ({pagination, handleDelete, ha
 
     return (
         <>
-            <Table removeWrapper aria-label="Example static collection table">
+            <Table removeWrapper aria-label="Example static collection table" ref={tableRef}>
                 <TableHeader columns={[
                     { key: 'research_title', label: 'RESEARCH TITLE' },
                     { key: 'main_researcher', label: 'RESEARCHER' },
                     { key: 'current_status', label: 'STATUS' },
                     { key: 'date_applied', label: 'DATE APPLIED' },
                     { key: 'protocol_code', label: 'PROTOCOL CODE' },
-                    { key: 'actions', label: 'ACTIONS' },
+                    { key: 'actions', label: '' },
                 ]}>
                     {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
                 </TableHeader>
