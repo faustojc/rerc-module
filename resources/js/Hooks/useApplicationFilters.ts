@@ -17,14 +17,10 @@ export const useApplicationFilters = (initialPagination: PaginationProps<Applica
         let pageParam = searchParams.get('page');
 
         if (pageParam != null && parseInt(pageParam) > pagination.last_page) {
-            pageParam = '1';
-
             setPagination({
                 ...pagination,
                 current_page: 1,
             })
-            //searchParams.set('page', pageParam);
-            //window.history.pushState({}, '', `${window.location.pathname}?${searchParams.toString()}`);
         }
 
         const startDate = searchParams.get('dateRange[start]');
