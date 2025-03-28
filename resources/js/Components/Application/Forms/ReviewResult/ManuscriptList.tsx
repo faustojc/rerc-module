@@ -71,16 +71,24 @@ const ManuscriptList: React.FC<ManuscriptListProps> = ({reviewResults, documents
             </CardHeader>
             <CardBody>
                 {canUpload && (
-                    <div className="mb-5">
-                        <h3 className="text-lg font-semibold mb-3">Upload Revision</h3>
-                        <div className="flex flex-col gap-3">
-                            <div className="flex flex-col sm:flex-row sm:gap-7 gap-3 justify-between sm:items-end">
+                    <div className="mb-5 p-4 bg-default-50 rounded-lg border-1 border-primary-500">
+                        <div className="mb-6">
+                            <h3 className="text-lg font-semibold">Upload Revision</h3>
+                            <p className="text-sm">
+                                Download the latest review result document to make changes and upload a new revision based on it.
+                            </p>
+                        </div>
+                        <div className="flex flex-col gap-7">
+                            <div className="flex flex-col sm:flex-row sm:gap-7 gap-5 justify-between">
                                 <Select items={sortedReviewResults}
-                                        className="sm:max-w-[270px]"
+                                        className="sm:max-w-[250px]"
                                         placeholder="Select Review Result"
                                         aria-labelledby="Select Review Result"
+                                        color="primary"
+                                        variant="bordered"
                                         value={reviewResult?.id}
                                         onSelectionChange={(id) => setReviewResult(sortedReviewResults.find(rr => rr.id === id.currentKey) ?? null)}
+                                        onClick={(e) => e.preventDefault()}
                                 >
                                     {(rr) => (
                                         <SelectItem aria-labelledby="Select Review Result" key={rr.id} value={rr.id}>
@@ -93,17 +101,18 @@ const ManuscriptList: React.FC<ManuscriptListProps> = ({reviewResults, documents
                                            type="file"
                                            accept=".pdf,.doc,.docx"
                                            className="flex-grow"
-                                           reverseButton
                                 />
                             </div>
-                            <Button color="primary"
+                            <Button color="success"
                                     variant="flat"
                                     className="self-end"
+                                    size="lg"
                                     startContent={<LightUploadRounded />}
                                     isLoading={loading}
-                                    onPress={() => handleUpload()}
+                                    onPress={handleUpload}
+                                    fullWidth
                             >
-                                Upload
+                                Upload Revision
                             </Button>
                         </div>
                         {isError && (
@@ -130,13 +139,13 @@ const ManuscriptList: React.FC<ManuscriptListProps> = ({reviewResults, documents
                             return (
                                 <TableRow key={doc.id}>
                                     <TableCell>V{doc.version}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-wrap">
                                         {doc.file_url.split('\\').pop()?.split('/').pop()}
                                     </TableCell>
                                     <TableCell>
                                         {rr ? `RR ${rr.version}` : 'N/A'}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell  className="text-wrap">
                                         {formatDate(doc.created_at!)}
                                     </TableCell>
                                     <TableCell>
