@@ -1,4 +1,19 @@
-import { Alert, Button, Card, CardBody, CardFooter, CardHeader, Divider, Link, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
+import {
+    Alert,
+    Button,
+    Card,
+    CardBody,
+    CardFooter,
+    CardHeader,
+    Divider,
+    Link,
+    Table,
+    TableBody,
+    TableCell,
+    TableColumn,
+    TableHeader,
+    TableRow,
+} from "@nextui-org/react";
 import React, { useMemo } from "react";
 import { ApplicationFormProps } from "@/types";
 import NavStatus from "@/Components/NavStatus";
@@ -39,7 +54,7 @@ const InitialReview = ({user, application, status, handleUpdateApplication, hand
             return 'Double check the uploaded documents and requirements before approving the initial review.';
         }
 
-        return 'Waiting for approval from the chairperson';
+        return 'Waiting for approval from the RERC Staff/Chairperson';
     }, [user.role, status]);
 
     const handleApprove = () => {
