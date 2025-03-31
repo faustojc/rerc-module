@@ -12,7 +12,6 @@ const PanelMeeting = ({user, application, status, handleUpdateApplication}: Appl
     );
     const [isDraft, setIsDraft] = useState(false);
 
-    const hasPayment = application.proof_of_payment_url != null;
     const dateFormat = Intl.DateTimeFormat("en-US", {
         year: "numeric",
         month: "long",
@@ -78,9 +77,9 @@ const PanelMeeting = ({user, application, status, handleUpdateApplication}: Appl
                 </p>
             </CardHeader>
             <CardBody className="px-5">
-                {hasPayment ? (
+                {status != null ? (
                     <>
-                        {!status.end ? (
+                        {!status?.end ? (
                             <>
                                 {(user.role == 'staff') ? (
                                     <PanelScheduleForm panelMembers={panelMembers}
@@ -132,8 +131,8 @@ const PanelMeeting = ({user, application, status, handleUpdateApplication}: Appl
                         <ClipboardError className="w-12 h-12 text-default-400 mx-auto mb-3" />
                         <p className="text-default-500">
                             {user.role == 'researcher'
-                                ? "Please upload the proof of payment first."
-                                : "Please wait for the researchers to upload their proof of payment receipt before assigning panel members and scheduling the meeting."
+                                ? "Please upload the proof of payment receipt and must be confirmed by the RERC Staff."
+                                : "The researchers proof of payment receipt must be confirmed before assigning panel members and scheduling the meeting."
                             }
                         </p>
                     </p>

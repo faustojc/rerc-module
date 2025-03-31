@@ -12,7 +12,7 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
     const [isError, setIsError] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const isDecisionLetterSigned = application.decision_letter != null && application.decision_letter.is_signed;
+    const isDecisionLetterSigned = application.decision_letter != null && application.decision_letter.is_signed && status != null;
     const hasPayment = application.proof_of_payment_url != null;
     const confirmedStatus: {
         color: "success" | "danger" | "primary" | "default" | "secondary" | "warning" | undefined
@@ -29,7 +29,9 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
             if (status.status === "Rejected") {
                 return {
                     color: "danger",
-                    description: "Payment has been rejected. Please submit a new payment receipt."
+                    description: user.role === 'researcher'
+                        ? "Payment has been rejected. Please submit a new payment receipt."
+                        : "Payment rejected. Please wait for the Researcher to upload a new payment receipt."
                 }
             }
         }
@@ -40,7 +42,7 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
                 ? "Awaiting for the Review Committee to confirm the uploaded payment."
                 : "Double check the uploaded payment receipt before confirming."
         }
-    }, [status]);
+    }, [user.role, status]);
 
     const handleSelectFile = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -147,36 +149,19 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
                                         }}
                                     />
                                 </div>
-                                <Alert color={confirmedStatus.color}
-                                       description={confirmedStatus.description}
-                                />
+
+                                {user.role === "researcher" && status?.status === "Rejected" && (
+                                    <div className="border-1 border-primary-500 rounded-md w-full p-3">
+                                        <InputPayment file={file} details={details} isError={isError} setDetails={setDetails} handleSelectFile={handleSelectFile} />
+                                    </div>
+                                )}
+
+                                <Alert color={confirmedStatus.color} description={confirmedStatus.description} />
                             </div>
                         ) : (
                             <>
                                 {user.role === "researcher" ? (
-                                    <>
-                                        <InputFile
-                                            label="Upload Payment Receipt"
-                                            type="file"
-                                            accept="image/*"
-                                            file={file}
-                                            handleSelectFile={handleSelectFile}
-                                            isError={isError}
-                                        />
-                                        <h3 className="text-start my-4">
-                                            Payment Details
-                                            <span className="ml-2 text-default-900/50">
-                                                (optional)
-                                            </span>
-                                        </h3>
-                                        <Textarea
-                                            name="details"
-                                            placeholder="Enter details of the payment."
-                                            maxRows={2}
-                                            value={details}
-                                            onValueChange={setDetails}
-                                        />
-                                    </>
+                                    <InputPayment file={file} details={details} isError={isError} setDetails={setDetails} handleSelectFile={handleSelectFile} />
                                 ) : (
                                     <div className="text-center py-8">
                                         <ClipboardError className="w-12 h-12 text-default-400 mx-auto mb-3" />
@@ -200,7 +185,7 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
                     </p>
                 )}
             </CardBody>
-            {(user.role === "staff" && hasPayment && status?.end == null) && (
+            {(user.role === "staff" && hasPayment && status != null && status?.end == null && status?.status === "Awaiting Confirmation") && (
                 <>
                     <Divider />
                     <CardFooter className="justify-end gap-4">
@@ -213,7 +198,7 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
                     </CardFooter>
                 </>
             )}
-            {(user.role === "researcher" && !hasPayment) && (
+            {(user.role === "researcher" && status != null && ['Rejected', 'In Progress'].includes(status?.status ?? '')) && (
                 <>
                     <Divider />
                     <CardFooter className="justify-end">
@@ -225,6 +210,40 @@ const PaymentMade = ({user, application, status, handleUpdateApplication}: Appli
             )}
         </Card>
     );
+}
+
+const InputPayment: React.FC<{
+    file: File | null,
+    details: string,
+    isError: boolean,
+    setDetails: (value: string) => void,
+    handleSelectFile: (e: ChangeEvent<HTMLInputElement>) => void
+}> = ({ file, details, isError, setDetails, handleSelectFile }) => {
+    return (
+        <>
+            <InputFile
+                label="Upload Payment Receipt"
+                type="file"
+                accept="image/*"
+                file={file}
+                handleSelectFile={handleSelectFile}
+                isError={isError}
+            />
+            <h3 className="text-start my-4">
+                Payment Details
+                <span className="ml-2 text-default-900/50">
+                    (optional)
+                </span>
+            </h3>
+            <Textarea
+                name="details"
+                placeholder="Enter details of the payment."
+                maxRows={2}
+                value={details}
+                onValueChange={setDetails}
+            />
+        </>
+    )
 }
 
 export default PaymentMade;

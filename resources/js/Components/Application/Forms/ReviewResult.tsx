@@ -46,7 +46,7 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
 
             handleUpdateApplication({
                 application: {
-                    review_results: [response.data.review_result, ...application.review_results]
+                    review_results: [response.data.review_result]
                 }
             })
         } catch (error: any) {

@@ -1,9 +1,13 @@
 import { AppReviewResult } from "@/types";
 import { Button, CardBody, CardHeader, Link, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@nextui-org/react";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { CloudArrowDown } from "@/Components/Icons";
 
 const ReviewResultDetails: React.FC<{reviewResults: AppReviewResult[]}> = ({reviewResults}) => {
+    const sortedReviews = useMemo(() => {
+        return reviewResults.sort((a, b) => b.version - a.version);
+    }, [reviewResults]);
+
     const formatDate = useCallback((dateString?: string) => {
         if (!dateString) return '';
 
@@ -30,7 +34,7 @@ const ReviewResultDetails: React.FC<{reviewResults: AppReviewResult[]}> = ({revi
                         <TableColumn>DATE UPLOADED</TableColumn>
                         <TableColumn>ACTION</TableColumn>
                     </TableHeader>
-                    <TableBody items={reviewResults ?? []} emptyContent={"No review results has been uploaded yet."}>
+                    <TableBody items={sortedReviews ?? []} emptyContent={"No review results has been uploaded yet."}>
                         {(reviewResult) => {
                             return (
                                 <TableRow key={reviewResult.id}>
