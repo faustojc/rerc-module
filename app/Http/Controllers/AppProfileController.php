@@ -65,49 +65,58 @@ class AppProfileController extends Controller
         // create a cache key using hash
         $cacheKey = md5(json_encode($data));
 
-        $applications = Cache::flexible($cacheKey, [50, 90], function () use ($data, $user, $page) {
-            return AppProfile::query()
-                ->select(['id', 'user_id', 'firstname', 'lastname', 'research_title', 'date_applied', 'protocol_code', 'protocol_date_updated', 'is_hardcopy', 'review_type'])
-                ->withCount('members')
-                ->with(['statuses' => function (HasMany $query) {
-                    $query->select('id', 'app_profile_id', 'name', 'sequence', 'status')
-                        ->orderBy('sequence', 'desc')
-                        ->take(1);
-                }])->when($data['selectedStep'] ?? null, function (Builder $query, $step) {
-                    return $query->whereHas('statuses', function (Builder $q) use ($step) {
-                        return $q->where('sequence', $step)
-                            ->where('end', null);
-                    });
-                })->when($data['query'] ?? null, function (Builder $query, $search) {
-                    return $query->whereRaw('LOWER(research_title) LIKE ?', [strtolower("%$search%")])
-                        ->orWhereRaw('LOWER(firstname) LIKE ?', [strtolower("%$search%")])
-                        ->orWhereRaw('LOWER(lastname) LIKE ?', [strtolower("%$search%")]);
-                })->when($data['reviewType'] ?? null, function (Builder $query, $reviewType) {
-                    return $query->where('review_type', $reviewType);
-                })->when($data['step'] ?? null, function (Builder $query, $step) {
-                    return $query->has('statuses', '<=', intval($step));
-                })->when($data['dateRange'] ?? null, function (Builder $query) use ($data) {
-                    $start = Carbon::parse($data['dateRange']['start'])->startOfDay();
-                    $end = Carbon::parse($data['dateRange']['end'])->endOfDay();
+        $appQuery = AppProfile::query()
+            ->select(['id', 'user_id', 'firstname', 'lastname', 'research_title', 'date_applied', 'protocol_code', 'protocol_date_updated', 'is_hardcopy', 'review_type'])
+            ->withCount('members')
+            ->with(['statuses' => function (HasMany $query) {
+                $query->select('id', 'app_profile_id', 'name', 'sequence', 'status')
+                    ->orderBy('sequence', 'desc')
+                    ->take(1);
+            }])->when($data['selectedStep'] ?? null, function (Builder $query, $step) {
+                return $query->whereHas('statuses', function (Builder $q) use ($step) {
+                    return $q->where('sequence', $step)
+                        ->where('end', null);
+                });
+            })->when($data['query'] ?? null, function (Builder $query, $search) {
+                return $query->whereRaw('LOWER(research_title) LIKE ?', [strtolower("%$search%")])
+                    ->orWhereRaw('LOWER(firstname) LIKE ?', [strtolower("%$search%")])
+                    ->orWhereRaw('LOWER(lastname) LIKE ?', [strtolower("%$search%")]);
+            })->when($data['reviewType'] ?? null, function (Builder $query, $reviewType) {
+                return $query->where('review_type', $reviewType);
+            })->when($data['step'] ?? null, function (Builder $query, $step) {
+                return $query->has('statuses', '<=', intval($step));
+            })->when($data['dateRange'] ?? null, function (Builder $query) use ($data) {
+                $start = Carbon::parse($data['dateRange']['start'])->startOfDay();
+                $end = Carbon::parse($data['dateRange']['end'])->endOfDay();
 
-                    return $query->whereBetween('date_applied', [$start, $end]);
-                })->when($data['status'] ?? null, function ($query, $status) {
-                    return $query->whereHas('statuses', function (Builder $q) use ($status) {
-                        $commonStatus = ['Approved', 'Assigned', 'Done', 'Signed', 'Completed', 'In Progress'];
+                return $query->whereBetween('date_applied', [$start, $end]);
+            })->when($data['status'] ?? null, function ($query, $status) {
+                return $query->whereHas('statuses', function (Builder $q) use ($status) {
+                    $commonStatus = ['Approved', 'Assigned', 'Done', 'Signed', 'Completed', 'In Progress'];
 
-                        if (!in_array($status, $commonStatus)) {
-                            $q->whereNotIn('status', $commonStatus);
-                        }
-                        else {
-                            $q->where('status', $status);
-                        }
+                    if (!in_array($status, $commonStatus)) {
+                        $q->whereNotIn('status', $commonStatus);
+                    }
+                    else {
+                        $q->where('status', $status);
+                    }
 
-                        return $q->orderBy('sequence', 'desc')->limit(1);
-                    });
-                })->when($user->role === 'researcher', function (Builder $query) use ($user) {
-                    return $query->where('user_id', $user->id);
-                })->orderByDesc('updated_at')
-                ->paginate(10, page: $page);
+                    return $q->orderBy('sequence', 'desc')->limit(1);
+                });
+            })->when($user->role === 'researcher', function (Builder $query) use ($user) {
+                return $query->where('user_id', $user->id);
+            })->orderByDesc('updated_at');
+
+        $applications = Cache::flexible($cacheKey, [50, 90], function () use ($appQuery, $user, $page) {
+            // if the user's role is researcher set te page number to total number of applications
+            if ($user->role === 'researcher') {
+                $pageNumber = AppProfile::where('user_id', $user->id)->count();
+
+                return $appQuery->paginate($pageNumber, page: 1);
+            }
+            else {
+                return $appQuery->paginate(10, page: $page);
+            }
         });
 
         $canCreate = $user->can('create', AppProfile::class);

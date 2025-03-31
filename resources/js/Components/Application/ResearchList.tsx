@@ -154,7 +154,7 @@ const ResearchList: React.FC<ResearchListProps> = ({pagination, tableRef, handle
                     )}
                 </TableBody>
             </Table>
-            {items.length > 0 && (
+            {items.length > 0 && !canDelete && (
                 <div className="flex justify-between items-center">
                     <div className="flex justify-end">
                         <span className="text-sm text-gray-500">Showing {pagination.data.length} of {pagination.total} entries</span>

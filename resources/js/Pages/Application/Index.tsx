@@ -24,7 +24,7 @@ const Index = (props: ApplicationIndexProps) => {
         updateFilters,
         handleSetPage,
         handleDelete,
-    } = useApplicationFilters(props.applications);
+    } = useApplicationFilters(props.auth.user, props.applications);
 
     const [search, setSearch] = useState<string>('');
     const tableRef = useRef<HTMLTableElement>(null);

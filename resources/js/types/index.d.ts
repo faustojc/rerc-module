@@ -232,7 +232,7 @@ export interface ApplicationFilters {
     status?: string; //latest step
 }
 
-export interface DashboardPageProps extends PageProps{
+export interface DashboardPageProps extends PageProps {
     stats: {
         totalApplications: number;
         applicationsByStatus: {

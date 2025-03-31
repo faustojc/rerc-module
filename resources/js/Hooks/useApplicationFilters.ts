@@ -1,9 +1,9 @@
-import { Application, ApplicationFilters, PaginationProps } from "@/types";
+import { Application, ApplicationFilters, PaginationProps, User } from "@/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getLocalTimeZone, parseDate } from "@internationalized/date";
 import { toast } from "react-toastify";
 
-export const useApplicationFilters = (initialPagination: PaginationProps<Application>) => {
+export const useApplicationFilters = (user: User, initialPagination: PaginationProps<Application>) => {
     const [pagination, setPagination] = useState(initialPagination);
 
     const changeDateStringFormat = (date: string) => {
@@ -113,6 +113,8 @@ export const useApplicationFilters = (initialPagination: PaginationProps<Applica
     }, [pagination.current_page]);
 
     useEffect(() => {
+        if (user.role === 'researcher') return;
+
         const channel = window.Echo.channel('application-list');
 
         channel.listen('.ApplicationCreated', (event: any) => {
