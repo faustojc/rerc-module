@@ -390,14 +390,13 @@ class AppProfileController extends Controller
                 return $application->statuses()
                     ->select('id', 'app_profile_id', 'name', 'sequence', 'status', 'start', 'end')
                     ->orderBy('sequence')
-                    ->with(['messages' => function ($query) {
-                        $monthsAgo = Carbon::now()->subMonths(3);
-                        return $query->where('created_at', '>=', $monthsAgo)->get();
-                    }])
                     ->get();
             },
         );
         $application->setRelation('statuses', $statuses);
+
+        // Eager load the statuses.messages relationship
+        $application->load('statuses.messages');
 
         return Inertia::render('Application/Show', [
             'application' => $application,
@@ -572,7 +571,7 @@ class AppProfileController extends Controller
 
         return response()->json([
             'message' => "Payment status successfully updated.",
-            'statuses' => $application->statuses
+            'statuses' => $application->statuses,
         ]);
     }
 
