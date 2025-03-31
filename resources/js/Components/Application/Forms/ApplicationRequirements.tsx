@@ -14,18 +14,7 @@ interface AlertType {
 }
 
 const ApplicationRequirements = ({user, application, status, handleUpdateApplication, handleMessage}: ApplicationFormProps) => {
-    const requirementNames = [
-        "Full Research Proposal Manuscript",
-        "Agency Consent Letter",
-        "Inform Consent Form (ICF) or Free Prior and Informed Consent (FPIC)",
-        "Curriculum Vitae of the Researcher(s)",
-        "Asset Form",
-        "Valid Government ID",
-        "CV of Researcher",
-    ]
-
     const [currTab, setCurrTab] = useState<string>('submissions');
-
     const [selectedFiles, setSelectedFiles] = useState<{ [key: string]: File[] }>({});
 
     const [loading, setLoading] = useState<boolean>(false);
@@ -192,7 +181,7 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
 
                             return (
                                 <Fragment key={requirement.name}>
-                                    <div className={`flex flex-col gap-2${index == requirementNames.length - 1 ? ' mb-2' : ''}`}>
+                                    <div className={`flex flex-col gap-2${index == applicationRequirements.length - 1 ? ' mb-2' : ''}`}>
                                         <div className="flex flex-row justify-between gap-3 mb-3">
                                             <div className="flex flex-col gap-1">
                                                 <h3 className="font-bold">{index + 1}. {requirement.name}</h3>
