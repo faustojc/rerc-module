@@ -22,7 +22,7 @@ It aims to:
     - **RERC Chairperson**: Oversee applications and make final decisions.
 
 - **Real-time Updates**:
-    - Utilizes **Laravel Reverb** for instant UI updates and notifications.
+    - Utilizes **Pusher** for real-time UI updates and notifications.
     - **ReactJS Toast Notifications** alert users of application updates.
 
 - **Dynamic UI**:
@@ -32,10 +32,10 @@ It aims to:
 
 - **Backend Framework**: Laravel 11
 - **Frontend**: Inertia.js with ReactJS v18
-- **Real-time Communication**: Laravel Reverb
+- **Real-time Communication**: Pusher
 - **Databases**:
     - **Development**: SQLite
-    - **Production**: PostgresSQL
+    - **Production**: NeonDB (PostgreSQL)
 
 ## 🎯 Getting Started
 
@@ -124,7 +124,7 @@ Follow these instructions to get a copy of the project up and running on your lo
     - Sign up and create a new research ethics application.
     - Upload required documents and submit for review.
     - Receive real-time updates on the status of your application.
-    - Communicate with RERC members through the messaging system.
+    - Communicate with RERC members through the mini messaging system.
 
 - **For RERC Staffs and Chairpersons**:
     - Log in to access all research applications.
@@ -170,4 +170,4 @@ This project is private and intended for University of St. La Salle use only. Un
 - **Laravel Documentation**: [https://laravel.com/docs/11.x](https://laravel.com/docs/11.x)
 - **Inertia.js Documentation**: [https://inertiajs.com/](https://inertiajs.com/)
 - **ReactJS Documentation**: [https://react.dev/](https://react.dev/)
-- **Laravel Reverb**: [https://laravel.com/docs/11.x/reverb](https://laravel.com/docs/11.x/reverb)
+- **Pusher Documentation**: [https://pusher.com/docs/](https://pusher.com/docs/)
