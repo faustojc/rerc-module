@@ -262,7 +262,7 @@ class AppProfileController extends Controller
             return to_route('applications.index');
         }
 
-        $veryLongTTL = now()->addWeeks(2); // for rarely to no change and always read
+        $veryLongTTL = now()->addWeeks(2);
         $shortTTL = now()->addMinutes(5);
 
         $latestSequence = $application->statuses->max('sequence') ?? 1;
@@ -331,6 +331,18 @@ class AppProfileController extends Controller
                 },
             );
             $application->setRelation('reviewResults', $reviewResults);
+            $application->load('reviewerReports');
+        }
+
+        if ($latestSequence >= 9) {
+            $messagePost = Cache::flexible(
+                "application.{$application->id}.messagePost",
+                [now()->addMinutes(5), now()->addMinutes(10)],
+                function () use ($application) {
+                    return $application->messagePost()->get();
+                },
+            );
+            $application->setRelation('messagePost', $messagePost);
         }
 
         if ($latestSequence == 10) {
@@ -344,45 +356,6 @@ class AppProfileController extends Controller
             $application->setRelation('ethicsClearance', $ethicsClearance);
         }
 
-        $requirements = Cache::remember(
-            "application.{$application->id}.requirements",
-            $shortTTL,
-            function () use ($application) {
-                return $application->requirements()->select('id', 'app_profile_id', 'name', 'file_url', 'date_uploaded', 'status', 'is_additional')->get();
-            },
-        );
-        $application->setRelation('requirements', $requirements);
-
-        // Cache 'documents': dynamic – short TTL (5 minutes)
-        $documents = Cache::remember(
-            "application.{$application->id}.documents",
-            $shortTTL,
-            function () use ($application) {
-                return $application->documents()->get();
-            },
-        );
-        $application->setRelation('documents', $documents);
-
-        // Cache 'reviewerReports': moderate TTL (10 minutes)
-        $reviewerReports = Cache::remember(
-            "application.{$application->id}.reviewerReports",
-            now()->addMinutes(10),
-            function () use ($application) {
-                return $application->reviewerReports()->get();
-            },
-        );
-        $application->setRelation('reviewerReports', $reviewerReports);
-
-        // Cache 'messagePost': dynamic – short TTL (5 minutes)
-        $messagePost = Cache::flexible(
-            "application.{$application->id}.messagePost",
-            [now()->addMinutes(5), now()->addMinutes(10)],
-            function () use ($application) {
-                return $application->messagePost()->get();
-            },
-        );
-        $application->setRelation('messagePost', $messagePost);
-
         $statuses = Cache::remember(
             "application.{$application->id}.statuses",
             $shortTTL,
@@ -395,8 +368,8 @@ class AppProfileController extends Controller
         );
         $application->setRelation('statuses', $statuses);
 
-        // Eager load the statuses.messages relationship
-        $application->load('statuses.messages');
+        // Eager load the most frequent accessed relations
+        $application->load(['statuses.messages', 'documents', 'requirements']);
 
         return Inertia::render('Application/Show', [
             'application' => $application,
