@@ -1,5 +1,6 @@
 import { ApplicationFormProps, ReviewTypeInfo } from "@/types";
 import {
+    Alert,
     Button,
     Card,
     CardBody,
@@ -95,7 +96,7 @@ const ReviewType = ({user, application, status, handleUpdateApplication}: Applic
                 ]} />
                 {currTab === 'log' && (
                     <CardBody className="px-5 max-h-[1093px] overflow-y-auto">
-                        {application.review_type_logs.length > 0 && (
+                        {application.review_type_logs != null && application.review_type_logs.length > 0 ? (
                             <TimelineLog items={application.review_type_logs}>
                                 {(log) => (
                                     <TimelineLogMessage>
@@ -106,7 +107,7 @@ const ReviewType = ({user, application, status, handleUpdateApplication}: Applic
                                     </TimelineLogMessage>
                                 )}
                             </TimelineLog>
-                        )}
+                        ) : <Alert description="The RERC Staff/Chairperson hasn't initially assigned the review type." />}
                     </CardBody>
                 )}
                 {currTab === 'review-type' && (
