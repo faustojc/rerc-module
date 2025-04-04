@@ -149,7 +149,7 @@ const ReviewResult = ({user, application, status, handleUpdateApplication, handl
             <>
                 <NavStatus currTab={currTab} setCurrTab={setCurrTab} tabs={[
                     {label: 'Manuscripts', name: 'manuscripts'},
-                    {label: 'Reviewer Reports', name: 'review-reports'},
+                    {label: 'Reviewer Reports', name: 'review-reports', notFor: () => status == null},
                     {label: 'Review Result', name: 'review-result'},
                     {label: 'Upload Review', name: 'upload-review', notFor: () => user.role !== 'staff' || hasApproved || status == null},
                     {label: 'Feedbacks', name: 'feedbacks', notFor: () => status == null},
