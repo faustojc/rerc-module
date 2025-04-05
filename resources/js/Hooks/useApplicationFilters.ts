@@ -52,14 +52,22 @@ export const useApplicationFilters = (user: User, initialPagination: PaginationP
         const page = Math.min(pageNumber, pagination.last_page);
         params.set('page', page.toString());
 
-        if (newFilters.query) params.set('query', newFilters.query.trim());
-        if (newFilters.reviewType) params.set('reviewType', newFilters.reviewType);
-        if (newFilters.step) params.set('step', newFilters.step);
-        if (newFilters.status) params.set('status', newFilters.status);
-        if (newFilters.dateRange) {
-            params.set('dateRange[start]', newFilters.dateRange.start.toDate(getLocalTimeZone()).toLocaleDateString("default", {year: 'numeric', month: '2-digit', day: '2-digit'}));
-            params.set('dateRange[end]', newFilters.dateRange.end.toDate(getLocalTimeZone()).toLocaleDateString("default", {year: 'numeric', month: '2-digit', day: '2-digit'}));
-        }
+        const filterParams = {
+            query: newFilters.query?.trim(),
+            reviewType: newFilters.reviewType,
+            step: newFilters.step,
+            status: newFilters.status,
+            dateRangeStart: newFilters.dateRange?.start.toDate(getLocalTimeZone()).toLocaleDateString("default", { year: 'numeric', month: '2-digit', day: '2-digit' }),
+            dateRangeEnd: newFilters.dateRange?.end.toDate(getLocalTimeZone()).toLocaleDateString("default", { year: 'numeric', month: '2-digit', day: '2-digit' })
+        };
+
+        Object.entries(filterParams).forEach(([key, value]) => {
+            if (value) {
+                params.set(key, value);
+            } else {
+                params.delete(key);
+            }
+        });
 
         // get all the other params that are not part of the filters
         const otherParams = Array.from(params).filter(([key]) => !Object.keys(newFilters).includes(key));
