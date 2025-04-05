@@ -17,9 +17,7 @@ export const setCurrentTheme = (theme: Theme): void => {
 
 export const subscribeTheme = (callback: ThemeChangeCallback): (() => void) => {
     listeners.add(callback);
-    return () => {
-        listeners.delete(callback);
-    };
+    return () => listeners.delete(callback);
 };
 
 // A custom hook that uses the theme signal.
