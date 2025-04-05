@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { ReviewerReport } from "@/types";
 import { Alert, Button, CardBody, CardFooter, CardHeader, Divider, Input, Link, Tooltip } from "@nextui-org/react";
-import { CloudArrowDown, FeDocument, MdiFileDocumentArrowRight, SendFill } from "@/Components/Icons";
+import { CloudArrowDown, FeDocument, MdiDeleteForever, MdiFileDocumentArrowRight, SendFill } from "@/Components/Icons";
 import { toast } from "react-toastify";
 import { TimelineLog, TimelineLogMessage } from "@/Components/TimelineLog";
 
@@ -100,7 +100,7 @@ const ReviewReportsList: React.FC<ReviewReportsListProps> = ({reviewerReports, i
                     <Divider />
                     <CardFooter className="flex-col items-start gap-3">
                         {file && (
-                            <div className="flex flex-row items-center gap-2 max-w-xs bg-default-100 rounded-lg p-2">
+                            <div className="relative flex flex-row items-center gap-2 max-w-xs bg-default-100 rounded-lg p-2">
                                 <FeDocument width={30} />
                                 <div>
                                     <p className="line-clamp-1">{file.name}</p>
@@ -108,12 +108,24 @@ const ReviewReportsList: React.FC<ReviewReportsListProps> = ({reviewerReports, i
                                         {sizeDisplay(file.size)}
                                     </p>
                                 </div>
+                                <Button
+                                    variant="light"
+                                    color="danger"
+                                    size="sm"
+                                    isIconOnly
+                                    onPress={() => {
+                                        setFile(null);
+                                        fileInputRef.current!.value = '';
+                                    }}
+                                >
+                                    <MdiDeleteForever />
+                                </Button>
                             </div>
                         )}
                         <div className="flex flex-row items-center gap-3 w-full">
                             <Tooltip content="Attach a file up to 10MB">
                                 <label className="block">
-                                    <div className="flex flex-row gap-2 cursor-pointer py-1.5 px-4 rounded-lg font-semibold text-primary-700 bg-default-200 hover:border-primary-100 hover:bg-primary-100 transition">
+                                    <div className="flex flex-row gap-2 cursor-pointer py-1.5 px-4 rounded-lg font-semibold bg-default-200 hover:border-primary-100 hover:bg-primary-100 transition">
                                         <MdiFileDocumentArrowRight />
                                     </div>
                                     <input
