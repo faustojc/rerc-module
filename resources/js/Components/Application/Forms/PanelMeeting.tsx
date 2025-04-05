@@ -92,18 +92,17 @@ const PanelMeeting = ({user, application, status, handleUpdateApplication}: Appl
                                     />
                                 ) : (
                                     <p className="text-center text-medium p-5">
-                                        Waiting for the staff to assign reviewer members and schedule the meeting.
+                                        Waiting for the staff to assign reviewers and schedule the meeting.
                                     </p>
                                 )}
                             </>
                         ) : (
                             <div className="flex flex-col items-start gap-3 p-3">
-                                <Alert color="primary"
-                                       title="Meeting Date"
+                                <Alert title="Meeting Date"
                                        description={dateFormat.format(meeting!)}
                                        icon={<MdiCalendar/>}
                                 />
-                                <h3 className="text-lg">Panel Members</h3>
+                                <h3 className="text-lg">Reviewers</h3>
                                 <div className="md:grid grid-cols-2 flex flex-col gap-2 w-full items-start justify-items-start">
                                     {panelMembers.map((panelMember, index) => {
                                         let panelName = `${panelMember.firstname} ${panelMember.lastname}`;
@@ -272,7 +271,7 @@ const PanelScheduleForm = ({
             <div>
                 <CardHeader className="flex-col items-start">
                     <div className="flex flex-row items-center justify-between w-full">
-                        <h3 className="text-lg">Assign Panel Members</h3>
+                        <h3 className="text-lg">Assign Reviewers</h3>
                         {isDraft && (
                             <Chip color="secondary" variant="shadow" size="sm" className="ml-auto">
                                 Draft
