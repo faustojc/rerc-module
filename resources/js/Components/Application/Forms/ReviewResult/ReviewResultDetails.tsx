@@ -4,8 +4,12 @@ import React, { useCallback, useMemo } from "react";
 import { CloudArrowDown } from "@/Components/Icons";
 
 const ReviewResultDetails: React.FC<{reviewResults: AppReviewResult[]}> = ({reviewResults}) => {
-    const sortedReviews = useMemo(() => {
-        return reviewResults.sort((a, b) => b.version - a.version);
+    const sortedReviews: AppReviewResult[] = useMemo(() => {
+        if (reviewResults) {
+            return reviewResults.sort((a, b) => b.version - a.version);
+        }
+
+        return [];
     }, [reviewResults]);
 
     const formatDate = useCallback((dateString?: string) => {
