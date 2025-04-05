@@ -17,9 +17,7 @@ export const ThemeSwitcher = () => {
     useEffect(() => {
         const localTheme = localStorage.getItem("heroui-theme") as Theme | null;
 
-        if (localTheme && localTheme !== theme) {
-            changeTheme(localTheme);
-        }
+        changeTheme(localTheme ?? 'light');
     }, []);
 
     return (
