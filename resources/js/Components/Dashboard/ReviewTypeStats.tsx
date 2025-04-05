@@ -51,6 +51,8 @@ const ReviewTypeStats: React.FC<ReviewTypeStatsProps> = ({ data }) => {
                         const info = getReviewTypeInfo(type);
                         const isPressable = count > 0;
                         
+                        const fixType = type === 'fullBoard' ? 'full board' : type;
+
                         return (
                             <Card
                                 key={type}
@@ -60,7 +62,7 @@ const ReviewTypeStats: React.FC<ReviewTypeStatsProps> = ({ data }) => {
                                 isPressable={isPressable}
                                 as={isPressable ? Link : 'div'}
                                 // @ts-ignore
-                                href={`${route('applications.index')}?reviewType=${type}`}
+                                href={`${route('applications.index')}?reviewType=${fixType}`}
                                 fullWidth
                             >
                                 <div className="flex justify-between items-start">
@@ -76,7 +78,6 @@ const ReviewTypeStats: React.FC<ReviewTypeStatsProps> = ({ data }) => {
                                         {count}
                                     </div>
                                 </div>
-                                {/* Optional: Add a progress bar */}
                                 <div className="mt-2 w-full bg-white/50 rounded-full h-2">
                                     <div
                                         className="h-2 rounded-full bg-current opacity-50"
