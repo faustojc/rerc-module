@@ -262,7 +262,7 @@ class AppProfileController extends Controller
             return to_route('applications.index');
         }
 
-        $veryLongTTL = now()->addWeeks(2);
+        $veryLongTTL = now()->addWeeks();
         $shortTTL = now()->addMinutes(5);
 
         $latestSequence = $application->statuses->max('sequence') ?? 1;
@@ -276,22 +276,25 @@ class AppProfileController extends Controller
         );
         $application->setRelation('members', $members);
 
-        if ($latestSequence >= 4) {
-            $reviewTypeLogs = Cache::remember(
+        // do not cache if relation is empty
+        if ($latestSequence >= 4 && $application->has('reviewTypeLogs')->exists()) {
+            $reviewTypeLogs = Cache::flexible(
                 "application.{$application->id}.reviewTypeLogs",
-                $shortTTL,
+                [$shortTTL, now()->addMinutes(10)],
                 function () use ($application) {
-                    return $application->reviewTypeLogs()->select('id', 'app_profile_id', 'review_type', 'assigned_by', 'created_at')->get();
+                    return $application->reviewTypeLogs()
+                        ->select('id', 'app_profile_id', 'review_type', 'assigned_by', 'created_at')
+                        ->get();
                 },
             );
 
             $application->setRelation('reviewTypeLogs', $reviewTypeLogs);
         }
 
-        if ($latestSequence >= 5) {
+        if ($latestSequence >= 5 && $application->has('decisionLetter')->exists()) {
             $decisionLetter = Cache::remember(
                 "application.{$application->id}.decisionLetter",
-                now()->addMinutes(60),
+                $veryLongTTL,
                 function () use ($application) {
                     return $application->decisionLetter()->first();
                 },
@@ -299,7 +302,10 @@ class AppProfileController extends Controller
             $application->setRelation('decisionLetter', $decisionLetter);
         }
 
-        if ($latestSequence >= 7) {
+        if ($latestSequence >= 7
+            && $application->has('meeting')->exists()
+            && $application->has('panels')->exists()
+        ) {
             $meeting = Cache::remember(
                 "application.{$application->id}.meeting",
                 $veryLongTTL,
@@ -320,24 +326,28 @@ class AppProfileController extends Controller
         }
 
         if ($latestSequence >= 8) {
-            $reviewResults = Cache::remember(
-                "application.{$application->id}.reviewResults",
-                now()->addMinutes(10),
-                function () use ($application) {
-                    return $application->reviewResults()
-                        ->select(['id', 'app_profile_id', 'name', 'file_url', 'date_uploaded', 'status', 'version'])
-                        ->orderByDesc('date_uploaded')
-                        ->get();
-                },
-            );
-            $application->setRelation('reviewResults', $reviewResults);
+            if ($application->has('reviewResults')->exists()) {
+                $reviewResults = Cache::remember(
+                    "application.{$application->id}.reviewResults",
+                    $veryLongTTL,
+                    function () use ($application) {
+                        return $application->reviewResults()
+                            ->select(['id', 'app_profile_id', 'name', 'file_url', 'date_uploaded', 'status', 'version'])
+                            ->orderByDesc('date_uploaded')
+                            ->get();
+                    },
+                );
+
+                $application->setRelation('reviewResults', $reviewResults);
+            }
+
             $application->load('reviewerReports');
         }
 
-        if ($latestSequence >= 9) {
+        if ($latestSequence >= 9 && $application->has('messagePost')->exists()) {
             $messagePost = Cache::flexible(
                 "application.{$application->id}.messagePost",
-                [now()->addMinutes(5), now()->addMinutes(10)],
+                [now()->addMinutes(3), now()->addMinutes(7)],
                 function () use ($application) {
                     return $application->messagePost()->get();
                 },
@@ -345,7 +355,7 @@ class AppProfileController extends Controller
             $application->setRelation('messagePost', $messagePost);
         }
 
-        if ($latestSequence == 10) {
+        if ($latestSequence == 10 && $application->has('ethicsClearance')->exists()) {
             $ethicsClearance = Cache::remember(
                 "application.{$application->id}.ethicsClearance",
                 $veryLongTTL,
@@ -356,9 +366,9 @@ class AppProfileController extends Controller
             $application->setRelation('ethicsClearance', $ethicsClearance);
         }
 
-        $statuses = Cache::remember(
+        $statuses = Cache::flexible(
             "application.{$application->id}.statuses",
-            $shortTTL,
+            [now()->addMinutes(5), now()->addMinutes(10)],
             function () use ($application) {
                 return $application->statuses()
                     ->select('id', 'app_profile_id', 'name', 'sequence', 'status', 'start', 'end')
@@ -595,6 +605,22 @@ class AppProfileController extends Controller
             })->all();
 
             $application->panels()->saveMany($panelData);
+
+            // update the cache for panels and meeting
+            Cache::remember(
+                "application.{$application->id}.panels",
+                now()->addWeeks(2),
+                function () use ($application) {
+                    return $application->panels()->select('id', 'app_profile_id', 'firstname', 'lastname')->get();
+                },
+            );
+            Cache::remember(
+                "application.{$application->id}.meeting",
+                now()->addWeeks(2),
+                function () use ($application) {
+                    return $application->meeting()->select('id', 'app_profile_id', 'meeting_date')->first();
+                },
+            );
 
             DB::commit();
 
