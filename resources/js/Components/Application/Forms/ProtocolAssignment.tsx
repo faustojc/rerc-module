@@ -130,9 +130,9 @@ const ProtocolAssignment = ({user, application, status, handleUpdateApplication}
                         )}
                     </>
                 )}
-                <div className="mt-6 bg-gray-50 p-4 rounded-lg">
+                <div className="mt-6 bg-default-100 p-4 rounded-lg">
                     <h3 className="font-medium mb-2">About Protocol Code</h3>
-                    <div className="space-y-2 text-sm text-gray-600">
+                    <div className="space-y-2 text-sm text-default-600">
                         <p>
                             • The protocol code is a unique identifier assigned to your research application.
                         </p>
