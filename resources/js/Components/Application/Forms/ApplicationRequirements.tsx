@@ -173,7 +173,7 @@ const ApplicationRequirements = ({user, application, status, handleUpdateApplica
             ]} />
             {currTab === 'submissions' ? (
                 <div key="submissions">
-                    <CardBody className="gap-6 sm:max-h-[870px] sm:overflow-y-auto">
+                    <CardBody className="gap-6 sm:max-h-[820px] sm:overflow-y-auto">
                         {applicationRequirements.map((requirement, index) => {
                             const uploaded = uploadedRequirements.filter((req) =>
                                 req.name.toLowerCase() === requirement.name.toLowerCase()
