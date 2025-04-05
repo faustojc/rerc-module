@@ -34,6 +34,10 @@ const AdditionalRequirements = ({user, application, status, handleUpdateApplicat
     const [loading, setLoading] = useState<boolean>(false);
     const [hasApproved, setHasApproved] = useState<boolean>(status != null && status.end != null);
 
+    const additionalRequirements = useMemo(() => {
+        return application.requirements.filter(r => r.is_additional);
+    }, [application.requirements]);
+
     const alert: AlertType = useMemo(() => {
         if (hasApproved) {
             return {
@@ -44,8 +48,10 @@ const AdditionalRequirements = ({user, application, status, handleUpdateApplicat
 
         if (user.role === 'staff') {
             return {
-                message: "Double check the additional requirements before approving.",
-                type: 'warning'
+                message: additionalRequirements.length > 0
+                    ? "Double check the additional requirements before approving."
+                    : "You may skip this step if there are no additional requirements.",
+                type: additionalRequirements.length > 0 ? 'warning' : 'primary'
             };
         }
 
@@ -53,11 +59,7 @@ const AdditionalRequirements = ({user, application, status, handleUpdateApplicat
             message: "Waiting for the staff to approve the requirements or to proceed to ethics clearance",
             type: 'warning'
         }
-    }, [user.role, hasApproved]);
-
-    const additionalRequirements = useMemo(() => {
-        return application.requirements.filter(r => r.is_additional);
-    }, [application.requirements]);
+    }, [user.role, hasApproved, additionalRequirements]);
 
     const formatDate = useCallback((dateString?: string) => {
         if (!dateString) return '';
